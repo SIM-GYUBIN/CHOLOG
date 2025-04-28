@@ -20,7 +20,6 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.BAD_REQUEST, "A002", "리프레시 토큰이 존재하지 않습니다"),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "유효하지 않은 리프레시 토큰입니다");
 
-
     private final HttpStatus status;
     private final String code;
     private final String message;
