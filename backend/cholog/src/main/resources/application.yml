@@ -1,0 +1,7 @@
+#spring.application.name=cholog
+spring:
+  application:
+    name: cholog
+  profiles:
+    include: secret
+    active: local
