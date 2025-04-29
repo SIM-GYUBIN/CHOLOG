@@ -2,6 +2,7 @@ package com.ssafy.cholog.global.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,9 +15,10 @@ import java.time.LocalDateTime;
 public class CommonResponse<T> {
 
     private final boolean success;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final T data;
     @JsonInclude(JsonInclude.Include.NON_NULL)
-//    @Schema(hidden = true)
+    @Schema(hidden = true)
     private final ErrorResponse error;
     private final LocalDateTime timestamp;
 
