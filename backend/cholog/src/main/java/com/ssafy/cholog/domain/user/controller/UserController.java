@@ -1,9 +1,9 @@
-package com.ssafy.cholog.domain.auth.controller;
+package com.ssafy.cholog.domain.user.controller;
 
-import com.ssafy.cholog.domain.auth.dto.LoginResult;
-import com.ssafy.cholog.domain.auth.dto.request.LoginRequest;
-import com.ssafy.cholog.domain.auth.dto.response.LoginResponse;
-import com.ssafy.cholog.domain.auth.service.AuthService;
+import com.ssafy.cholog.domain.user.dto.LoginResult;
+import com.ssafy.cholog.domain.user.dto.request.LoginRequest;
+import com.ssafy.cholog.domain.user.dto.response.LoginResponse;
+import com.ssafy.cholog.domain.user.service.UserService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.response.CommonResponse;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
@@ -18,18 +18,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
-@Tag(name = "인증", description = "인증 & 인가 API")
-public class AuthController {
+@Tag(name = "사용자", description = "사용자 관련 API")
+public class UserController {
 
-    private final AuthService authService;
+    private final UserService userService;
 
     @GetMapping("/login")
     @Operation(summary = "로그인 처리", description = "로그인 호출 API")
     @ApiErrorCodeExamples({ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<CommonResponse<LoginResponse>> login(LoginRequest loginRequest) {
-        LoginResult loginResult = authService.login(loginRequest);
+        LoginResult loginResult = userService.login(loginRequest);
 
         ResponseCookie accessTokenCookie = CookieUtil.makeAccessTokenCookie(loginResult.getAccessToken());
         ResponseCookie refreshTokenCookie = CookieUtil.makeRefreshTokenCookie(loginResult.getRefreshToken());

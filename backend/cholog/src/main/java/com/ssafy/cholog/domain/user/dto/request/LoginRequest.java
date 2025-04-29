@@ -1,4 +1,4 @@
-package com.ssafy.cholog.domain.auth.dto.request;
+package com.ssafy.cholog.domain.user.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;

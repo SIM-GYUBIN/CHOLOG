@@ -1,4 +1,4 @@
-package com.ssafy.cholog.domain.auth.dto.response;
+package com.ssafy.cholog.domain.user.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
