@@ -4,6 +4,7 @@ var Logger = class {
     this.appKey = "";
   }
   static {
+    // private static apiEndpoint = "https://www.cholog-server.shop/log";
     this.apiEndpoint = "http://localhost:8080/logs";
   }
   static {
@@ -124,6 +125,64 @@ var Logger = class {
       }
     }
   }
+  /**
+   * 자체 로거 메서드 (콘솔 출력 X)
+   */
+  /**
+   * INFO 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  static info(...args) {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("info", args);
+  }
+  /**
+   * WARN 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  static warn(...args) {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("warn", args);
+  }
+  /**
+   * ERROR 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  static error(...args) {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("error", args);
+  }
+  /**
+   * DEBUG 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  static debug(...args) {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("debug", args);
+  }
+  /**
+   * TRACE 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  static trace(...args) {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("trace", args);
+  }
 };
 
 // src/core/networkInterceptor.ts
@@ -148,16 +207,22 @@ var EventTracker = class {
 };
 
 // src/index.ts
-var ChologSDK = {
+var Cholog = {
   init: (config) => {
     Logger.init(config);
     NetworkInterceptor.init(config);
     ErrorCatcher.init();
     EventTracker.init();
-  }
+  },
+  log: Logger.info.bind(Logger),
+  info: Logger.info.bind(Logger),
+  warn: Logger.warn.bind(Logger),
+  error: Logger.error.bind(Logger),
+  debug: Logger.debug.bind(Logger),
+  trace: Logger.trace.bind(Logger)
 };
-var index_default = ChologSDK;
+var index_default = Cholog;
 export {
-  ChologSDK,
+  Cholog,
   index_default as default
 };
