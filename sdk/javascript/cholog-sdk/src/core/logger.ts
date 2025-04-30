@@ -2,12 +2,14 @@ interface LogEntry {
   level: string;
   message: string;
   timestamp: string;
+  // tags?: string[];
 }
 
 type LogLevel = "log" | "info" | "warn" | "error" | "debug" | "trace";
 
 export class Logger {
   private static appKey: string = "";
+  // private static apiEndpoint = "https://www.cholog-server.shop/log";
   private static apiEndpoint = "http://localhost:8080/logs";
   private static originalConsole: {
     log: Console["log"];
@@ -28,7 +30,6 @@ export class Logger {
    */
   public static init(config: {
     appKey: string;
-    apiEndpoint?: string;
     batchInterval?: number;
     maxQueueSize?: number;
   }): void {
@@ -39,7 +40,6 @@ export class Logger {
     }
 
     this.appKey = config.appKey;
-    if (config.apiEndpoint) this.apiEndpoint = config.apiEndpoint;
     if (config.batchInterval) this.batchInterval = config.batchInterval;
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
 
@@ -143,5 +143,71 @@ export class Logger {
         );
       }
     }
+  }
+
+  /**
+   * 자체 로거 메서드 (콘솔 출력 X)
+   */
+
+  /**
+   * INFO 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  public static info(...args: any[]): void {
+    // init이 호출되었는지 (appKey가 설정되었는지 등) 확인하는 로직 추가 가능
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("info", args);
+  }
+
+  /**
+   * WARN 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  public static warn(...args: any[]): void {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("warn", args);
+  }
+
+  /**
+   * ERROR 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  public static error(...args: any[]): void {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    // 에러 객체가 인자로 들어올 경우 스택 트레이스를 포함하도록 처리 강화 가능
+    this.queueLog("error", args);
+  }
+
+  /**
+   * DEBUG 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  public static debug(...args: any[]): void {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("debug", args);
+  }
+
+  /**
+   * TRACE 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
+   * @param args 로그 데이터
+   */
+  public static trace(...args: any[]): void {
+    if (!this.appKey) {
+      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
+      return;
+    }
+    this.queueLog("trace", args);
   }
 }
