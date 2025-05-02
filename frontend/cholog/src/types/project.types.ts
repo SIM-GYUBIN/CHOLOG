@@ -3,7 +3,11 @@
  */
 
 // 기본 에러 타입
-type ErrorCode = "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR";
+type ErrorCode =
+  | "INVALID_REQUEST"
+  | "UNAUTHORIZED"
+  | "NOT_FOUND"
+  | "INTERNAL_ERROR";
 
 // 기본 API 응답 타입
 interface BaseResponse {
@@ -57,4 +61,43 @@ export interface ProjectState {
   isLoading: boolean;
   error: BaseResponse["error"] | null;
   projects: Project[];
+}
+
+// 삭제 요청: projectId만 필요 (PathVariable로 전달)
+export interface DeleteProjectRequest {
+  projectId: number;
+}
+
+// 삭제 응답
+export interface DeleteProjectResponse extends BaseResponse {
+  data: {
+    id: number;
+  };
+}
+
+// 프로젝트 토큰 생성 응답
+export interface GenerateTokenResponse extends BaseResponse {
+  data: {
+    token: string;
+  };
+}
+
+// 프로젝트 참여 요청
+export interface JoinProjectRequest {
+  token: string;
+}
+
+// 프로젝트 참여 응답
+export interface JoinProjectResponse extends BaseResponse {
+  data: Record<string, never>; // 빈 객체
+}
+
+// 프로젝트 탈퇴 요청
+export interface LeaveProjectRequest {
+  projectId: string;
+}
+
+// 프로젝트 탈퇴 응답
+export interface LeaveProjectResponse extends BaseResponse {
+  data: Record<string, never>; // {}
 }
