@@ -36,7 +36,6 @@ var Logger = class {
       return;
     }
     this.appKey = config.appKey;
-    if (config.apiEndpoint) this.apiEndpoint = config.apiEndpoint;
     if (config.batchInterval) this.batchInterval = config.batchInterval;
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
     this.overrideConsoleMethods();
@@ -187,8 +186,121 @@ var Logger = class {
 
 // src/core/networkInterceptor.ts
 var NetworkInterceptor = class {
-  static init(config) {
-    console.log("Network Interceptor initialized");
+  static {
+    this.isInitialized = false;
+  }
+  static {
+    // 원래 함수들을 저장할 변수
+    this.originalFetch = null;
+  }
+  static {
+    this.originalXhrSend = null;
+  }
+  // 필요시 open도 저장: private static originalXhrOpen: typeof XMLHttpRequest.prototype.open | null = null;
+  static generateRequestId() {
+    if (crypto && crypto.randomUUID) {
+      return crypto.randomUUID();
+    } else {
+      console.warn(
+        "crypto.randomUUID is not available. Using basic fallback for Request ID."
+      );
+      return `fallback-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    }
+  }
+  /**
+   * window.fetch를 패치하여 X-Request-ID 헤더를 추가
+   */
+  static patchFetch() {
+    this.originalFetch = window.fetch;
+    const self = this;
+    window.fetch = async (input, init) => {
+      const requestId = self.generateRequestId();
+      const modifiedInit = { ...init || {} };
+      let currentHeaders = modifiedInit.headers;
+      let newHeaders;
+      if (currentHeaders instanceof Headers) {
+        newHeaders = new Headers(currentHeaders);
+      } else if (Array.isArray(currentHeaders)) {
+        newHeaders = new Headers(currentHeaders);
+      } else if (typeof currentHeaders === "object" && currentHeaders !== null) {
+        newHeaders = new Headers(currentHeaders);
+      } else {
+        newHeaders = new Headers();
+      }
+      newHeaders.set("X-Request-ID", requestId);
+      modifiedInit.headers = newHeaders;
+      if (!self.originalFetch) {
+        console.error("Original fetch function not found!");
+        return Promise.reject(new Error("Original fetch not available"));
+      }
+      return self.originalFetch.call(window, input, modifiedInit);
+    };
+  }
+  /**
+   * XMLHttpRequest.prototype.send를 패치하여 X-Request-ID 헤더를 추가합니다.
+   */
+  static patchXMLHttpRequest() {
+    this.originalXhrSend = XMLHttpRequest.prototype.send;
+    const self = this;
+    XMLHttpRequest.prototype.send = function(body) {
+      const requestId = self.generateRequestId();
+      try {
+        this.setRequestHeader("X-Request-ID", requestId);
+      } catch (e) {
+        console.error(
+          "Cholog SDK: Failed to set X-Request-ID header. Was XHR opened first?",
+          e
+        );
+      }
+      if (!self.originalXhrSend) {
+        console.error("Original XHR send function not found!");
+        return;
+      }
+      return self.originalXhrSend.apply(this, arguments);
+    };
+  }
+  /**
+   * Network Interceptor를 초기화합니다.
+   * fetch와 XMLHttpRequest에 대한 패치를 적용합니다.
+   */
+  static init() {
+    if (this.isInitialized) {
+      console.warn("NetworkInterceptor is already initialized.");
+      return;
+    }
+    if (typeof window === "undefined" || typeof XMLHttpRequest === "undefined") {
+      console.warn(
+        "NetworkInterceptor: Not running in a browser environment? Skipping patch."
+      );
+      return;
+    }
+    try {
+      this.patchFetch();
+      this.patchXMLHttpRequest();
+      this.isInitialized = true;
+      console.log("Cholog NetworkInterceptor initialized successfully.");
+    } catch (error) {
+      console.error(
+        "Cholog SDK: Failed to initialize NetworkInterceptor.",
+        error
+      );
+    }
+  }
+  /**
+   * (선택 사항) 패치된 함수들을 원래대로 복원합니다.
+   */
+  static restore() {
+    if (!this.isInitialized) return;
+    if (this.originalFetch) {
+      window.fetch = this.originalFetch;
+    }
+    if (this.originalXhrSend) {
+      XMLHttpRequest.prototype.send = this.originalXhrSend;
+    }
+    this.originalFetch = null;
+    this.originalXhrSend = null;
+    this.isInitialized = false;
+    console.log("Cholog NetworkInterceptor restored original functions.");
   }
 };
 
@@ -210,7 +322,7 @@ var EventTracker = class {
 var Cholog = {
   init: (config) => {
     Logger.init(config);
-    NetworkInterceptor.init(config);
+    NetworkInterceptor.init();
     ErrorCatcher.init();
     EventTracker.init();
   },
