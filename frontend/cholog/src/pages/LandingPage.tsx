@@ -13,7 +13,7 @@ const LandingPage = () => {
         timestamp="2024-03-19T15:30:00Z"
         message="GET request to /api/users failed"
         apiPath="/api/users"
-        level="ERROR"
+        level="INFO"
         traceId="trace-abc-123"
         spanId="span-xyz-789"
         details={{

@@ -58,7 +58,7 @@ export default function EachLog({
           <img src={getLevelIcon(level)} alt={`${level.toLowerCase()} 아이콘`} />
           <div className="font-semibold">{level}</div>
         </div>
-        <div className="text-sm text-gray-500">{formattedTime}</div>
+        <div className="text-sm text-blue-900">{formattedTime}</div>
       </div>
       
       <div className="mb-2">
