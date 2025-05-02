@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
               placeholder="email"
               value={email}
               onChange={handleEmailChange}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400"
+              className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
           </div>
 
@@ -86,7 +86,7 @@ const LoginPage: React.FC = () => {
               placeholder="password"
               value={password}
               onChange={handlePasswordChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
+              className="caret-lime-500 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
           </div>
 
@@ -101,7 +101,7 @@ const LoginPage: React.FC = () => {
               placeholder="confirm password"
               value={confirmPassword}
               onChange={handleConfirmChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
+              className="caret-lime-500 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
           </div>
 
