@@ -55,7 +55,7 @@ export default function EachLog({
     <div className="border rounded-lg p-4 mb-4 hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <img src={getLevelIcon(level)} alt={`${level.toLowerCase()} 아이콘`} />
+          <img src={getLevelIcon(level)} alt={`${level.toLowerCase()} 아이콘`} className="w-8 h-8" />
           <div className="font-semibold">{level}</div>
         </div>
         <div className="text-sm text-blue-900">{formattedTime}</div>
