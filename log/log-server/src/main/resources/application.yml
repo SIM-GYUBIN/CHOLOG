@@ -1,0 +1,10 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: log-server
+
+logstash:
+  url: http://docker-elk-logstash-1:50000
