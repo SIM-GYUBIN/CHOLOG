@@ -6,7 +6,7 @@ import { EventTracker } from "./core/eventTracker";
 export const Cholog = {
   init: (config: { appKey: string }) => {
     Logger.init(config);
-    NetworkInterceptor.init(config);
+    NetworkInterceptor.init();
     ErrorCatcher.init();
     EventTracker.init();
   },
