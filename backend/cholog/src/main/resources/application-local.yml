@@ -28,3 +28,8 @@ logging:
     com.ssafy.ddukdoc: DEBUG
     com.ssafy.ddukdoc.global.config.WebClientConfig: DEBUG
     com.zaxxer.hikari: TRACE
+
+app:
+  domain:
+    url: http://localhost:5173
+    cors-origins: http://localhost:5173, http://localhost:5174

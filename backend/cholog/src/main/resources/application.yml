@@ -1,4 +1,3 @@
-#spring.application.name=cholog
 spring:
   application:
     name: cholog
