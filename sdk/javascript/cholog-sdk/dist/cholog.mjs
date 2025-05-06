@@ -35,13 +35,17 @@ var TraceContext = class {
 // src/core/logger.ts
 var Logger = class {
   static {
-    this.appKey = "";
+    this.projectKey = "";
   }
   static {
-    // private static apiEndpoint = "https://www.cholog-server.shop/log";
+    this.environment = "";
+  }
+  static {
+    // environment 필드 추가
     this.apiEndpoint = "http://localhost:8080/logs";
   }
   static {
+    // 이전과 동일
     this.originalConsole = null;
   }
   static {
@@ -66,10 +70,11 @@ var Logger = class {
    */
   static init(config) {
     if (this.originalConsole !== null) {
-      console.warn("Logger already initialized.");
+      console.warn("Cholog: Logger already initialized.");
       return;
     }
-    this.appKey = config.appKey;
+    this.projectKey = config.projectKey;
+    this.environment = config.environment;
     if (config.batchInterval) this.batchInterval = config.batchInterval;
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
     this.overrideConsoleMethods();
@@ -87,31 +92,79 @@ var Logger = class {
       debug: console.debug.bind(console),
       trace: console.trace.bind(console)
     };
-    console.log = (...args) => this.queueAndPrint("info", args);
-    console.info = (...args) => this.queueAndPrint("info", args);
-    console.warn = (...args) => this.queueAndPrint("warn", args);
-    console.error = (...args) => this.queueAndPrint("error", args);
-    console.debug = (...args) => this.queueAndPrint("debug", args);
-    console.trace = (...args) => this.queueAndPrint("trace", args);
+    console.log = (...args) => this.queueAndPrint("info", "console", ...args);
+    console.info = (...args) => this.queueAndPrint("info", "console", ...args);
+    console.warn = (...args) => this.queueAndPrint("warn", "console", ...args);
+    console.error = (...args) => this.queueAndPrint("error", "console", ...args);
+    console.debug = (...args) => this.queueAndPrint("debug", "console", ...args);
+    console.trace = (...args) => this.queueAndPrint("trace", "console", ...args);
   }
   /** 원본 콘솔 출력 + 큐잉 */
-  static queueAndPrint(level, args) {
+  static queueAndPrint(level, loggerName, ...args) {
     if (this.originalConsole) {
-      this.originalConsole[level](...args);
+      const originalMethod = this.originalConsole[level];
+      if (originalMethod) {
+        originalMethod(...args);
+      } else {
+        this.originalConsole.log(...args);
+      }
     }
-    this.queueLog(level, args);
+    this.prepareAndQueueLog(level, loggerName, args);
   }
-  /** 로그를 큐에 쌓고, 배치 전송 스케줄링 */
-  static queueLog(level, args) {
-    const message = args.map(
-      (arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)
-    ).join(" ");
+  // 로그를 최종 구조로 만들고 큐에 넣는 핵심 메서드
+  static prepareAndQueueLog(level, loggerName, args, directError, directHttp, directClient, directEvent) {
+    if (!this.projectKey || !this.environment) {
+      if (this.originalConsole) {
+        this.originalConsole.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+      } else {
+        console.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+      }
+      return;
+    }
+    let message = "";
+    let payload = {};
+    const otherFields = {};
+    if (args.length > 0) {
+      if (typeof args[0] === "string") {
+        message = args[0];
+        if (args.length > 1 && typeof args[1] === "object" && args[1] !== null) {
+          if (!directError && !directHttp && !directEvent) {
+            payload = { ...args[1] };
+          }
+        } else if (args.length > 1) {
+          message += " " + args.slice(1).map((arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)).join(" ");
+        }
+      } else {
+        message = args.map((arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)).join(" ");
+      }
+    }
+    if (directError) otherFields.error = directError;
+    if (directHttp) otherFields.http = directHttp;
+    if (directClient) otherFields.client = directClient;
+    if (directEvent) otherFields.event = directEvent;
     const entry = {
-      level,
-      message,
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-      traceId: TraceContext.getCurrentTraceId()
+      level: level.toUpperCase(),
+      message,
+      source: "frontend",
+      projectKey: this.projectKey,
+      environment: this.environment,
+      traceId: TraceContext.getCurrentTraceId(),
+      loggerName,
+      ...otherFields
+      // error, http, client, event 객체 포함
     };
+    if (Object.keys(payload).length > 0) {
+      entry.payload = payload;
+    }
+    if (typeof window !== "undefined" && typeof navigator !== "undefined" && typeof location !== "undefined") {
+      if (!entry.client) entry.client = {};
+      entry.client.url = window.location.href;
+      entry.client.userAgent = navigator.userAgent;
+      if (document.referrer) {
+        entry.client.referrer = document.referrer;
+      }
+    }
     const size = new Blob([JSON.stringify(entry)]).size;
     this.logQueue.push(entry);
     this.currentQueueSize += size;
@@ -144,7 +197,7 @@ var Logger = class {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "App-Key": this.appKey
+          "App-Key": this.projectKey
         },
         body: JSON.stringify(batch)
       });
@@ -155,70 +208,44 @@ var Logger = class {
       if (this.originalConsole) {
         this.originalConsole.error("Logger sendBatch error:", err);
       } else {
-        console.error(
-          "Logger sendBatch error (original console unavailable):",
-          err
-        );
+        console.error("Logger sendBatch error (original console unavailable):", err);
       }
     }
   }
-  /**
-   * 자체 로거 메서드 (콘솔 출력 X)
-   */
-  /**
-   * INFO 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  static info(...args) {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("info", args);
+  // --- Cholog 자체 로거 메서드들 ---
+  // Cholog.info("메시지", {부가정보객체}, {error객체}, {http객체} ...) 식으로 사용하지 않고,
+  // 각 모듈(ErrorCatcher, NetworkInterceptor)에서 특화된 정보를 포함하여 로깅하도록 유도
+  // 일반적인 사용: Cholog.info("단순 메시지") 또는 Cholog.info("메시지", {customPayload: "값"})
+  static log(message, customPayload) {
+    this.prepareAndQueueLog("info", "cholog", [message, customPayload || {}]);
   }
-  /**
-   * WARN 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  static warn(...args) {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("warn", args);
+  static info(message, customPayload) {
+    this.prepareAndQueueLog("info", "cholog", [message, customPayload || {}]);
   }
-  /**
-   * ERROR 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  static error(...args) {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("error", args);
+  static warn(message, customPayload) {
+    this.prepareAndQueueLog("warn", "cholog", [message, customPayload || {}]);
   }
-  /**
-   * DEBUG 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  static debug(...args) {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("debug", args);
+  static error(message, customPayload) {
+    this.prepareAndQueueLog("error", "cholog", [message, customPayload || {}]);
   }
-  /**
-   * TRACE 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  static trace(...args) {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("trace", args);
+  static debug(message, customPayload) {
+    this.prepareAndQueueLog("debug", "cholog", [message, customPayload || {}]);
+  }
+  static trace(message, customPayload) {
+    this.prepareAndQueueLog("trace", "cholog", [message, customPayload || {}]);
+  }
+  // 에러 로깅 (ErrorCatcher에서 주로 사용)
+  static logError(errorMessage, errorDetails, clientDetails) {
+    this.prepareAndQueueLog("error", "cholog-error", [errorMessage], errorDetails, void 0, clientDetails);
+  }
+  // 네트워크 로깅 (NetworkInterceptor에서 주로 사용)
+  static logHttp(message, httpDetails, clientDetails, errorDetails) {
+    const level = errorDetails || httpDetails.response && httpDetails.response.statusCode >= 400 ? "error" : "info";
+    this.prepareAndQueueLog(level, "cholog-network", [message], errorDetails, httpDetails, clientDetails);
+  }
+  // 이벤트 로깅 (EventTracker에서 주로 사용)
+  static logEvent(message, eventDetails, clientDetails) {
+    this.prepareAndQueueLog("info", "cholog-event", [message], void 0, void 0, clientDetails, eventDetails);
   }
 };
 
@@ -228,225 +255,127 @@ var NetworkInterceptor = class _NetworkInterceptor {
     this.isInitialized = false;
   }
   static {
-    // 원래 함수들을 저장할 변수
     this.originalFetch = null;
   }
   static {
     this.originalXhrSend = null;
   }
-  // 필요시 open도 저장: private static originalXhrOpen: typeof XMLHttpRequest.prototype.open | null = null;
-  // private static generateRequestId(): string {
-  //   if (crypto && crypto.randomUUID) {
-  //     return crypto.randomUUID();
-  //   } else {
-  //     // 매우 기본적인 fallback (UUID v4만큼 강력하지 않음)
-  //     console.warn(
-  //       "crypto.randomUUID is not available. Using basic fallback for Request ID."
-  //     );
-  //     return `fallback-${Date.now()}-${Math.random()
-  //       .toString(36)
-  //       .substring(2, 15)}`;
-  //   }
-  // }
-  /**
-   * window.fetch를 패치하여 X-Request-ID 헤더를 추가
-   */
   static patchFetch() {
     this.originalFetch = window.fetch;
     const self = this;
     window.fetch = async (input, init) => {
-      const requestUrl = typeof input === "string" ? input : input.toString();
-      const sdkLogApiEndpoint = Logger.getApiEndpoint();
-      if (sdkLogApiEndpoint && requestUrl.startsWith(sdkLogApiEndpoint)) {
+      const requestUrlStr = typeof input === "string" ? input : input.toString();
+      if (requestUrlStr.startsWith(Logger.getApiEndpoint())) {
         return _NetworkInterceptor.originalFetch.call(window, input, init);
       }
       let traceId = TraceContext.getCurrentTraceId();
-      let isNewTrace = false;
-      if (!traceId) {
-        traceId = TraceContext.startNewTrace();
-        isNewTrace = true;
-      }
+      if (!traceId) traceId = TraceContext.startNewTrace();
       const modifiedInit = { ...init || {} };
-      let currentHeaders = modifiedInit.headers;
-      let newHeaders;
-      if (currentHeaders instanceof Headers) {
-        newHeaders = new Headers(currentHeaders);
-      } else if (Array.isArray(currentHeaders)) {
-        newHeaders = new Headers(currentHeaders);
-      } else if (typeof currentHeaders === "object" && currentHeaders !== null) {
-        newHeaders = new Headers(currentHeaders);
-      } else {
-        newHeaders = new Headers();
-      }
-      newHeaders.set("X-Request-ID", traceId);
-      modifiedInit.headers = newHeaders;
+      modifiedInit.headers = new Headers(modifiedInit.headers);
+      modifiedInit.headers.set("X-Request-ID", traceId);
       const startTime = Date.now();
-      Logger.info(
-        `API Request START: ${typeof input === "string" ? input : input.toString()}`,
-        { traceId, method: modifiedInit.method || "GET" }
-      );
+      const requestDetails = {
+        method: (modifiedInit.method || "GET").toUpperCase(),
+        url: requestUrlStr
+      };
+      Logger.logHttp(`API Request START: ${requestDetails.method} ${requestDetails.url}`, { request: requestDetails });
       try {
-        const response = await self.originalFetch.call(
-          window,
-          input,
-          modifiedInit
-        );
+        const response = await self.originalFetch.call(window, input, modifiedInit);
         const duration = Date.now() - startTime;
-        Logger.info(`API Request END: ${response.status} ${response.url}`, {
-          traceId,
-          status: response.status,
+        const responseDetails = { statusCode: response.status };
+        Logger.logHttp(`API Request END: ${response.status} ${response.url}`, {
+          request: requestDetails,
+          response: responseDetails,
           durationMs: duration
         });
         return response;
       } catch (error) {
         const duration = Date.now() - startTime;
-        Logger.error(
-          `API Request FAILED: ${typeof input === "string" ? input : input.toString()}`,
-          { traceId, error, durationMs: duration }
+        const errorDetails = {
+          type: error?.name || "FetchError",
+          message: error?.message || "Network request failed",
+          stacktrace: error?.stack
+        };
+        Logger.logHttp(
+          `API Request FAILED: ${requestDetails.method} ${requestDetails.url}`,
+          { request: requestDetails, durationMs: duration },
+          void 0,
+          // clientDetails는 Logger가 채움
+          errorDetails
         );
         throw error;
-      } finally {
       }
     };
   }
-  /**
-   * XMLHttpRequest.prototype.send를 패치하여 X-Request-ID 헤더를 추가
-   */
   static patchXMLHttpRequest() {
     this.originalXhrSend = XMLHttpRequest.prototype.send;
     const originalXhrOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url, async, username, password) {
+    XMLHttpRequest.prototype.open = function(method, url) {
       this._chologMethod = method;
       this._chologUrl = typeof url === "string" ? url : url.toString();
       originalXhrOpen.apply(this, arguments);
     };
     XMLHttpRequest.prototype.send = function(body) {
       const xhr = this;
-      const requestUrl = xhr._chologUrl;
-      const sdkLogApiEndpoint = Logger.getApiEndpoint();
-      if (sdkLogApiEndpoint && requestUrl && requestUrl.startsWith(sdkLogApiEndpoint)) {
-        return _NetworkInterceptor.originalXhrSend.apply(
-          this,
-          arguments
-        );
+      const requestUrlStr = xhr._chologUrl;
+      if (requestUrlStr && requestUrlStr.startsWith(Logger.getApiEndpoint())) {
+        return _NetworkInterceptor.originalXhrSend.apply(this, arguments);
       }
       let traceId = TraceContext.getCurrentTraceId();
-      let isNewTrace = false;
-      if (!traceId) {
-        traceId = TraceContext.startNewTrace();
-        isNewTrace = true;
-      }
+      if (!traceId) traceId = TraceContext.startNewTrace();
       xhr._chologTraceId = traceId;
-      try {
-        this.setRequestHeader("X-Request-ID", traceId);
-      } catch (e) {
-        Logger.error("Cholog SDK: Failed to set X-Request-ID header for XHR.", {
-          traceId,
-          error: e,
-          url: xhr._chologUrl
-        });
-      }
-      const logStart = () => {
-        xhr._chologStartTime = Date.now();
-        Logger.info(
-          `API Request START: ${xhr._chologMethod || "UnknownMethod"} ${xhr._chologUrl || "UnknownURL"}`,
-          {
-            traceId: xhr._chologTraceId,
-            method: xhr._chologMethod,
-            type: "XHR"
-          }
-        );
-        xhr.removeEventListener("loadstart", logStart);
+      this.setRequestHeader("X-Request-ID", traceId);
+      const requestDetails = {
+        method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
+        url: xhr._chologUrl || "UnknownURL"
       };
-      const logEnd = () => {
-        const duration = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : void 0;
-        if (xhr.readyState === 4) {
-          if (xhr.status >= 200 && xhr.status < 400) {
-            Logger.info(
-              `API Request END: ${xhr.status} ${xhr.responseURL || xhr._chologUrl || "UnknownURL"}`,
-              {
-                traceId: xhr._chologTraceId,
-                status: xhr.status,
-                durationMs: duration,
-                type: "XHR"
-              }
-            );
-          } else if (xhr.status >= 400) {
-            Logger.error(
-              `API Request FAILED: ${xhr.status} ${xhr.responseURL || xhr._chologUrl || "UnknownURL"}`,
-              {
-                traceId: xhr._chologTraceId,
-                status: xhr.status,
-                statusText: xhr.statusText,
-                durationMs: duration,
-                type: "XHR"
-              }
-            );
+      const handleLoadEnd = () => {
+        if (!xhr._chologLogged) {
+          xhr._chologLogged = true;
+          const duration = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : void 0;
+          const responseDetails = { statusCode: xhr.status };
+          let errorDetails = void 0;
+          if (xhr.status === 0 || xhr.status >= 400) {
+            errorDetails = {
+              type: xhr.statusText || "XHRError",
+              message: `XHR request failed with status ${xhr.status}`
+            };
           }
+          Logger.logHttp(
+            `API Request ${errorDetails ? "FAILED" : "END"}: ${xhr.status} ${xhr.responseURL || requestDetails.url}`,
+            { request: requestDetails, response: responseDetails, durationMs: duration },
+            void 0,
+            errorDetails
+          );
         }
-        xhr.removeEventListener("load", logEnd);
-        xhr.removeEventListener("error", logEnd);
-        xhr.removeEventListener("abort", logEnd);
-        xhr.removeEventListener("timeout", logEnd);
+        xhr.removeEventListener("load", handleLoadEnd);
+        xhr.removeEventListener("error", handleLoadEnd);
+        xhr.removeEventListener("abort", handleLoadEnd);
+        xhr.removeEventListener("timeout", handleLoadEnd);
       };
-      xhr.addEventListener("loadstart", logStart);
-      xhr.addEventListener("load", logEnd);
-      xhr.addEventListener("error", logEnd);
-      xhr.addEventListener("abort", logEnd);
-      xhr.addEventListener("timeout", logEnd);
-      if (!_NetworkInterceptor.originalXhrSend) {
-        console.error("Original XHR send function not found!");
-        Logger.error("Original XHR send function not found!", { traceId });
-        return;
-      }
+      xhr.addEventListener("loadstart", () => {
+        xhr._chologStartTime = Date.now();
+        Logger.logHttp(`API Request START: ${requestDetails.method} ${requestDetails.url}`, {
+          request: requestDetails
+        });
+      });
+      xhr.addEventListener("load", handleLoadEnd);
+      xhr.addEventListener("error", handleLoadEnd);
+      xhr.addEventListener("abort", handleLoadEnd);
+      xhr.addEventListener("timeout", handleLoadEnd);
       return _NetworkInterceptor.originalXhrSend.apply(this, arguments);
     };
   }
-  /**
-   * Network Interceptor를 초기화
-   * fetch와 XMLHttpRequest에 대한 패치를 적용
-   */
   static init() {
-    if (this.isInitialized) {
-      console.warn("NetworkInterceptor is already initialized.");
-      return;
-    }
-    if (typeof window === "undefined" || typeof XMLHttpRequest === "undefined") {
-      console.warn(
-        "NetworkInterceptor: Not running in a browser environment? Skipping patch."
-      );
-      return;
-    }
+    if (this.isInitialized || typeof window === "undefined") return;
     try {
       this.patchFetch();
       this.patchXMLHttpRequest();
       this.isInitialized = true;
-      console.log("Cholog NetworkInterceptor initialized successfully.");
     } catch (error) {
-      console.error(
-        "Cholog SDK: Failed to initialize NetworkInterceptor.",
-        error
-      );
+      console.error("Cholog SDK: Failed to initialize NetworkInterceptor.", error);
     }
   }
-  /**
-   * 패치된 함수들을 원래대로 복원
-   */
-  // public static restore(): void {
-  //   if (!this.isInitialized) return;
-  //   if (this.originalFetch) {
-  //     window.fetch = this.originalFetch;
-  //   }
-  //   if (this.originalXhrSend) {
-  //     XMLHttpRequest.prototype.send = this.originalXhrSend;
-  //   }
-  //   // if (this.originalXhrOpen) { XMLHttpRequest.prototype.open = this.originalXhrOpen; } // open도 복원
-  //   this.originalFetch = null;
-  //   this.originalXhrSend = null;
-  //   // this.originalXhrOpen = null;
-  //   this.isInitialized = false;
-  //   console.log("Cholog NetworkInterceptor restored original functions."); // 복원 로그 (선택 사항)
-  // }
 };
 
 // src/core/errorCatcher.ts
@@ -455,99 +384,61 @@ var ErrorCatcher = class {
     this.isInitialized = false;
   }
   static {
-    // window.onerror 또는 addEventListener('error') 핸들러
-    // event: 오류 이벤트 객체 또는 메시지 문자열
-    // source: 파일 URL
-    // lineno: 줄 번호
-    // colno: 컬럼 번호
-    // error: 실제 Error 객체 (최신 브라우저에서 제공)
-    this.handleGlobalError = (event, source, lineno, colno, error) => {
-      let message;
-      let filename = source;
-      let line = lineno;
-      let column = colno;
-      let stack;
-      let errorType;
-      let errorObj = error;
-      if (event instanceof ErrorEvent && event.error) {
-        errorObj = event.error;
-        message = event.message || errorObj?.message || "Error message not available";
-        filename = event.filename;
-        line = event.lineno;
-        column = event.colno;
-        errorType = errorObj?.name;
-        stack = errorObj?.stack;
-      } else if (typeof event === "string") {
-        message = event;
-        if (errorObj) {
-          errorType = errorObj.name;
-          stack = errorObj.stack;
+    this.handleGlobalError = (eventOrMessage, source, lineno, colno, errorObj) => {
+      let logMessage = "Unhandled global error";
+      const errorDetails = { type: "UnknownError", message: "" };
+      const clientDetails = {};
+      let actualError = errorObj;
+      if (eventOrMessage instanceof ErrorEvent && eventOrMessage.error) {
+        actualError = eventOrMessage.error;
+        logMessage = eventOrMessage.message || actualError?.message || "Error message not available";
+        errorDetails.type = actualError?.name || "ErrorEvent";
+        errorDetails.message = actualError?.message || logMessage;
+        if (actualError?.stack) errorDetails.stacktrace = actualError.stack;
+      } else if (typeof eventOrMessage === "string") {
+        logMessage = eventOrMessage;
+        errorDetails.message = eventOrMessage;
+        if (actualError) {
+          errorDetails.type = actualError.name;
+          errorDetails.message = actualError.message;
+          if (actualError.stack) errorDetails.stacktrace = actualError.stack;
         }
-      } else if (errorObj) {
-        message = errorObj.message;
-        errorType = errorObj.name;
-        stack = errorObj.stack;
-      } else {
-        message = "A non-error event was captured by the error handler.";
-        errorType = "UnknownError";
+      } else if (actualError) {
+        logMessage = actualError.message;
+        errorDetails.type = actualError.name;
+        errorDetails.message = actualError.message;
+        if (actualError.stack) errorDetails.stacktrace = actualError.stack;
       }
-      if (stack?.includes("cholog") || message?.includes("Cholog SDK")) {
-        console.warn(
-          "Cholog SDK: Suppressed potential recursive error log.",
-          message
-        );
+      if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
+        Logger["originalConsole"]?.warn?.("Cholog SDK: Suppressed potential recursive error log.", logMessage);
         return;
       }
-      const details = {
-        errorType: errorType || "Error",
-        stack,
-        sourceFile: filename,
-        lineno: line,
-        colno: column,
-        userAgent: navigator.userAgent,
-        pageUrl: window.location.href
-      };
-      Logger.error(message || "Uncaught JavaScript Error", details);
+      Logger.logError(logMessage, errorDetails);
     };
   }
   static {
-    // unhandledrejection 핸들러
     this.handleUnhandledRejection = (event) => {
       let reason = event.reason;
-      let message;
-      let stack;
-      let errorType;
+      let logMessage = "Unhandled promise rejection";
+      const errorDetails = { type: "UnhandledRejection", message: "" };
       if (reason instanceof Error) {
-        message = reason.message;
-        stack = reason.stack;
-        errorType = reason.name;
+        logMessage = reason.message || "Promise rejected with an Error";
+        errorDetails.type = reason.name || "UnhandledRejectionError";
+        errorDetails.message = reason.message;
+        if (reason.stack) errorDetails.stacktrace = reason.stack;
       } else {
         try {
-          message = `Unhandled promise rejection: ${JSON.stringify(reason)}`;
+          errorDetails.message = `Reason: ${JSON.stringify(reason)}`;
         } catch {
-          message = `Unhandled promise rejection: [Non-serializable reason]`;
+          errorDetails.message = `Reason: [Non-serializable]`;
         }
-        errorType = typeof reason;
+        logMessage = `Unhandled promise rejection: ${errorDetails.message}`;
       }
-      if (stack?.includes("cholog") || message?.includes("Cholog SDK")) {
-        console.warn(
-          "Cholog SDK: Suppressed potential recursive error log.",
-          message
-        );
+      if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
+        Logger["originalConsole"]?.warn?.("Cholog SDK: Suppressed potential recursive error log.", logMessage);
         return;
       }
-      const details = {
-        errorType: errorType || "UnhandledRejection",
-        stack,
-        // Promise 오류는 특정 파일/줄번호를 알기 어려울 수 있음
-        sourceFile: stack ? void 0 : window.location.href,
-        // 스택이 없으면 현재 URL
-        userAgent: navigator.userAgent,
-        pageUrl: window.location.href,
-        reason: !(reason instanceof Error) ? String(reason) : void 0
-        // Error 객체 아닌 경우만 reason 추가
-      };
-      Logger.error(message || "Unhandled Promise Rejection", details);
+      Logger.logError(logMessage, errorDetails);
     };
   }
   static init() {
@@ -556,91 +447,53 @@ var ErrorCatcher = class {
     }
     try {
       window.onerror = this.handleGlobalError;
-      window.addEventListener(
-        "unhandledrejection",
-        this.handleUnhandledRejection
-      );
+      window.addEventListener("unhandledrejection", this.handleUnhandledRejection);
       this.isInitialized = true;
-      console.log("Cholog ErrorCatcher initialized successfully.");
     } catch (error) {
       console.error("Cholog SDK: Failed to initialize ErrorCatcher.", error);
     }
   }
-  // (선택 사항) 원래 핸들러로 복원하는 함수
-  // public static restore(): void {
-  //   if (!this.isInitialized || typeof window === "undefined") return;
-  //   window.onerror = null;
-  //   window.removeEventListener(
-  //     "unhandledrejection",
-  //     this.handleUnhandledRejection
-  //   );
-  //   // window.removeEventListener('error', this.handleGlobalError, true);
-  //   this.isInitialized = false;
-  //   console.log("Cholog ErrorCatcher restored original handlers.");
-  // }
 };
 
 // src/core/eventTracker.ts
 var EventTracker = class {
   static {
     this.config = {
-      newTraceOnClick: true,
-      // 기본적으로 클릭 시 새 트레이스 시작 (옵션으로 제어 가능하게)
-      clickTargetSelector: 'button, a, [role="button"]'
-      // 어떤 요소 클릭 시 새 트레이스 시작할지 CSS 선택자로 정의
+      // 클릭 시 새 트레이스 시작 및 로깅은 중요한 요소에만 한정
+      // 아래 선택자는 예시이며, 사용자가 커스터마이징 가능하도록 init 옵션으로 받는 것이 좋음
+      significantElementSelector: 'button, a, [role="button"], input[type="submit"], [data-cholog-action]'
     };
   }
   static init(options) {
-    if (options?.newTraceOnClick !== void 0) {
-      this.config.newTraceOnClick = options.newTraceOnClick;
+    if (options?.significantElementSelector) {
+      this.config.significantElementSelector = options.significantElementSelector;
     }
-    if (options?.clickTargetSelector) {
-      this.config.clickTargetSelector = options.clickTargetSelector;
-    }
-    this.startNewTraceForNavigation(window.location.href);
-    window.addEventListener(
-      "hashchange",
-      () => this.startNewTraceForNavigation(window.location.href)
-    );
+    this.logNavigation(window.location.href, "initial_load");
+    window.addEventListener("hashchange", () => this.logNavigation(window.location.href, "hash_change"));
     document.addEventListener(
       "click",
       (event) => {
-        if (!this.config.newTraceOnClick) {
-          if (!TraceContext.getCurrentTraceId()) TraceContext.startNewTrace();
-          this.logGeneralClick(event.target);
-          return;
-        }
         const targetElement = event.target;
-        if (targetElement.closest(this.config.clickTargetSelector)) {
-          TraceContext.startNewTrace();
-          Logger.info(`Action started: Click on interactive element`, {
-            traceId: TraceContext.getCurrentTraceId(),
-            eventType: "user.action.start",
-            element: this.getElementPath(targetElement)
-          });
-        } else {
-          if (!TraceContext.getCurrentTraceId()) TraceContext.startNewTrace();
-          this.logGeneralClick(targetElement);
+        if (targetElement.closest(this.config.significantElementSelector)) {
+          const newTraceId = TraceContext.startNewTrace();
+          const eventDetails = {
+            type: "user_action_start",
+            // 또는 "significant_click"
+            targetSelector: this.getElementPath(targetElement)
+          };
+          Logger.logEvent(`User action started: Click on ${eventDetails.targetSelector}`, eventDetails);
         }
       },
       true
+      // 캡처 단계
     );
   }
-  static logGeneralClick(targetElement) {
-    Logger.info(`User clicked (general)`, {
-      traceId: TraceContext.getCurrentTraceId(),
-      eventType: "ui.click",
-      element: this.getElementPath(targetElement)
-    });
+  static logNavigation(url, navigationType) {
+    TraceContext.startNewTrace();
+    const eventDetails = { type: navigationType };
+    Logger.logEvent(`Navigation to ${url}`, eventDetails);
   }
-  static startNewTraceForNavigation(url) {
-    const traceId = TraceContext.startNewTrace();
-    Logger.info(`Navigation to ${url}`, {
-      traceId,
-      eventType: "navigation",
-      url
-    });
-  }
+  // getElementPath는 이전과 동일하게 유지
   static getElementPath(element) {
     const parts = [];
     let currentElement = element;
@@ -655,6 +508,7 @@ var EventTracker = class {
       }
       parts.unshift(selector);
       currentElement = currentElement.parentElement;
+      if (parts.length > 5) break;
     }
     return parts.join(" > ");
   }
@@ -664,20 +518,35 @@ var EventTracker = class {
 var Cholog = {
   init: (config) => {
     TraceContext.startNewTrace();
-    Logger.init(config);
+    Logger.init({
+      projectKey: config.projectKey,
+      environment: config.environment
+    });
     NetworkInterceptor.init();
     ErrorCatcher.init();
-    EventTracker.init();
+    EventTracker.init(
+      /* eventTracker options */
+    );
     Logger.info("Cholog SDK Initialized", {
-      traceId: TraceContext.getCurrentTraceId()
+      sdk: "cholog-js",
+      // 예시 페이로드
+      version: "0.1.0-dev"
+      // SDK 버전 (하드코딩 또는 빌드 시 주입)
     });
   },
-  log: Logger.info.bind(Logger),
-  info: Logger.info.bind(Logger),
-  warn: Logger.warn.bind(Logger),
-  error: Logger.error.bind(Logger),
-  debug: Logger.debug.bind(Logger),
-  trace: Logger.trace.bind(Logger)
+  // Logger의 자체 로깅 메서드들을 직접 노출
+  // payload는 선택적 인자
+  log: (message, payload) => Logger.log(message, payload),
+  info: (message, payload) => Logger.info(message, payload),
+  warn: (message, payload) => Logger.warn(message, payload),
+  error: (message, payload) => {
+    Logger.error(message, payload);
+  },
+  debug: (message, payload) => Logger.debug(message, payload),
+  trace: (message, payload) => Logger.trace(message, payload)
+  // 필요하다면 TraceContext의 메서드도 일부 노출 가능
+  // startNewTrace: () => TraceContext.startNewTrace(),
+  // getCurrentTraceId: () => TraceContext.getCurrentTraceId(),
 };
 var index_default = Cholog;
 export {

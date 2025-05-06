@@ -28,8 +28,6 @@ export class TraceContext {
     if (crypto && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-    return `<span class="math-inline">\{prefix\}\-</span>{Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}`;
+    return `<span class="math-inline">\{prefix\}\-</span>{Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
 }
