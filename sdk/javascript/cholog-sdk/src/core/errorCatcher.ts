@@ -1,5 +1,6 @@
 // src/core/errorCatcher.ts
 import { Logger } from "./logger";
+import { TraceContext } from "./traceContext";
 
 // 오류 로그를 위한 구체적인 데이터 구조 (선택 사항, Logger.error 인자로 바로 객체 전달도 가능)
 interface ErrorLogDetails {
@@ -11,6 +12,7 @@ interface ErrorLogDetails {
   userAgent: string; // 브라우저 정보
   pageUrl: string; // 현재 페이지 URL
   reason?: string; // (UnhandledRejection 경우) 거부 이유
+  traceId?: string | null;
 }
 
 export class ErrorCatcher {

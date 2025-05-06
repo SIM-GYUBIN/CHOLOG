@@ -1,7 +1,11 @@
+// src/core/logger.ts
+import { TraceContext } from "./traceContext";
+
 interface LogEntry {
   level: string;
   message: string;
   timestamp: string;
+  traceId?: string | null;
   // tags?: string[];
 }
 
@@ -46,6 +50,10 @@ export class Logger {
     this.overrideConsoleMethods();
   }
 
+  public static getApiEndpoint(): string {
+    return this.apiEndpoint;
+  }
+
   /** console 메서드 오버라이드 */
   private static overrideConsoleMethods(): void {
     this.originalConsole = {
@@ -84,6 +92,7 @@ export class Logger {
       level,
       message,
       timestamp: new Date().toISOString(),
+      traceId: TraceContext.getCurrentTraceId(),
     };
 
     // 대략적인 사이즈 계산

@@ -1,3 +1,37 @@
+// src/core/traceContext.ts
+var TraceContext = class {
+  static {
+    this.currentTraceId = null;
+  }
+  static {
+    this.currentSpanId = null;
+  }
+  // 선택적: 스팬 개념 도입 시
+  static startNewTrace() {
+    this.currentTraceId = this.generateId("trace");
+    this.currentSpanId = null;
+    return this.currentTraceId;
+  }
+  // 필요시 Span ID도 유사하게 관리
+  // public static startNewSpan(parentId?: string): string {
+  //     this.currentSpanId = this.generateId('span');
+  //     // parentId를 사용하여 부모-자식 관계 설정 가능
+  //     return this.currentSpanId;
+  // }
+  static getCurrentTraceId() {
+    return this.currentTraceId;
+  }
+  static setCurrentTraceId(traceId) {
+    this.currentTraceId = traceId;
+  }
+  static generateId(prefix) {
+    if (crypto && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return `<span class="math-inline">{prefix}-</span>{Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  }
+};
+
 // src/core/logger.ts
 var Logger = class {
   static {
@@ -40,6 +74,9 @@ var Logger = class {
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
     this.overrideConsoleMethods();
   }
+  static getApiEndpoint() {
+    return this.apiEndpoint;
+  }
   /** console 메서드 오버라이드 */
   static overrideConsoleMethods() {
     this.originalConsole = {
@@ -72,7 +109,8 @@ var Logger = class {
     const entry = {
       level,
       message,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      traceId: TraceContext.getCurrentTraceId()
     };
     const size = new Blob([JSON.stringify(entry)]).size;
     this.logQueue.push(entry);
@@ -185,7 +223,7 @@ var Logger = class {
 };
 
 // src/core/networkInterceptor.ts
-var NetworkInterceptor = class {
+var NetworkInterceptor = class _NetworkInterceptor {
   static {
     this.isInitialized = false;
   }
@@ -197,16 +235,19 @@ var NetworkInterceptor = class {
     this.originalXhrSend = null;
   }
   // 필요시 open도 저장: private static originalXhrOpen: typeof XMLHttpRequest.prototype.open | null = null;
-  static generateRequestId() {
-    if (crypto && crypto.randomUUID) {
-      return crypto.randomUUID();
-    } else {
-      console.warn(
-        "crypto.randomUUID is not available. Using basic fallback for Request ID."
-      );
-      return `fallback-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-    }
-  }
+  // private static generateRequestId(): string {
+  //   if (crypto && crypto.randomUUID) {
+  //     return crypto.randomUUID();
+  //   } else {
+  //     // 매우 기본적인 fallback (UUID v4만큼 강력하지 않음)
+  //     console.warn(
+  //       "crypto.randomUUID is not available. Using basic fallback for Request ID."
+  //     );
+  //     return `fallback-${Date.now()}-${Math.random()
+  //       .toString(36)
+  //       .substring(2, 15)}`;
+  //   }
+  // }
   /**
    * window.fetch를 패치하여 X-Request-ID 헤더를 추가
    */
@@ -214,7 +255,17 @@ var NetworkInterceptor = class {
     this.originalFetch = window.fetch;
     const self = this;
     window.fetch = async (input, init) => {
-      const requestId = self.generateRequestId();
+      const requestUrl = typeof input === "string" ? input : input.toString();
+      const sdkLogApiEndpoint = Logger.getApiEndpoint();
+      if (sdkLogApiEndpoint && requestUrl.startsWith(sdkLogApiEndpoint)) {
+        return _NetworkInterceptor.originalFetch.call(window, input, init);
+      }
+      let traceId = TraceContext.getCurrentTraceId();
+      let isNewTrace = false;
+      if (!traceId) {
+        traceId = TraceContext.startNewTrace();
+        isNewTrace = true;
+      }
       const modifiedInit = { ...init || {} };
       let currentHeaders = modifiedInit.headers;
       let newHeaders;
@@ -227,13 +278,35 @@ var NetworkInterceptor = class {
       } else {
         newHeaders = new Headers();
       }
-      newHeaders.set("X-Request-ID", requestId);
+      newHeaders.set("X-Request-ID", traceId);
       modifiedInit.headers = newHeaders;
-      if (!self.originalFetch) {
-        console.error("Original fetch function not found!");
-        return Promise.reject(new Error("Original fetch not available"));
+      const startTime = Date.now();
+      Logger.info(
+        `API Request START: ${typeof input === "string" ? input : input.toString()}`,
+        { traceId, method: modifiedInit.method || "GET" }
+      );
+      try {
+        const response = await self.originalFetch.call(
+          window,
+          input,
+          modifiedInit
+        );
+        const duration = Date.now() - startTime;
+        Logger.info(`API Request END: ${response.status} ${response.url}`, {
+          traceId,
+          status: response.status,
+          durationMs: duration
+        });
+        return response;
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        Logger.error(
+          `API Request FAILED: ${typeof input === "string" ? input : input.toString()}`,
+          { traceId, error, durationMs: duration }
+        );
+        throw error;
+      } finally {
       }
-      return self.originalFetch.call(window, input, modifiedInit);
     };
   }
   /**
@@ -241,22 +314,92 @@ var NetworkInterceptor = class {
    */
   static patchXMLHttpRequest() {
     this.originalXhrSend = XMLHttpRequest.prototype.send;
-    const self = this;
+    const originalXhrOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, async, username, password) {
+      this._chologMethod = method;
+      this._chologUrl = typeof url === "string" ? url : url.toString();
+      originalXhrOpen.apply(this, arguments);
+    };
     XMLHttpRequest.prototype.send = function(body) {
-      const requestId = self.generateRequestId();
-      try {
-        this.setRequestHeader("X-Request-ID", requestId);
-      } catch (e) {
-        console.error(
-          "Cholog SDK: Failed to set X-Request-ID header. Was XHR opened first?",
-          e
+      const xhr = this;
+      const requestUrl = xhr._chologUrl;
+      const sdkLogApiEndpoint = Logger.getApiEndpoint();
+      if (sdkLogApiEndpoint && requestUrl && requestUrl.startsWith(sdkLogApiEndpoint)) {
+        return _NetworkInterceptor.originalXhrSend.apply(
+          this,
+          arguments
         );
       }
-      if (!self.originalXhrSend) {
+      let traceId = TraceContext.getCurrentTraceId();
+      let isNewTrace = false;
+      if (!traceId) {
+        traceId = TraceContext.startNewTrace();
+        isNewTrace = true;
+      }
+      xhr._chologTraceId = traceId;
+      try {
+        this.setRequestHeader("X-Request-ID", traceId);
+      } catch (e) {
+        Logger.error("Cholog SDK: Failed to set X-Request-ID header for XHR.", {
+          traceId,
+          error: e,
+          url: xhr._chologUrl
+        });
+      }
+      const logStart = () => {
+        xhr._chologStartTime = Date.now();
+        Logger.info(
+          `API Request START: ${xhr._chologMethod || "UnknownMethod"} ${xhr._chologUrl || "UnknownURL"}`,
+          {
+            traceId: xhr._chologTraceId,
+            method: xhr._chologMethod,
+            type: "XHR"
+          }
+        );
+        xhr.removeEventListener("loadstart", logStart);
+      };
+      const logEnd = () => {
+        const duration = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : void 0;
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 400) {
+            Logger.info(
+              `API Request END: ${xhr.status} ${xhr.responseURL || xhr._chologUrl || "UnknownURL"}`,
+              {
+                traceId: xhr._chologTraceId,
+                status: xhr.status,
+                durationMs: duration,
+                type: "XHR"
+              }
+            );
+          } else if (xhr.status >= 400) {
+            Logger.error(
+              `API Request FAILED: ${xhr.status} ${xhr.responseURL || xhr._chologUrl || "UnknownURL"}`,
+              {
+                traceId: xhr._chologTraceId,
+                status: xhr.status,
+                statusText: xhr.statusText,
+                durationMs: duration,
+                type: "XHR"
+              }
+            );
+          }
+        }
+        xhr.removeEventListener("load", logEnd);
+        xhr.removeEventListener("error", logEnd);
+        xhr.removeEventListener("abort", logEnd);
+        xhr.removeEventListener("timeout", logEnd);
+      };
+      xhr.addEventListener("loadstart", logStart);
+      xhr.addEventListener("load", logEnd);
+      xhr.addEventListener("error", logEnd);
+      xhr.addEventListener("abort", logEnd);
+      xhr.addEventListener("timeout", logEnd);
+      if (!_NetworkInterceptor.originalXhrSend) {
         console.error("Original XHR send function not found!");
+        Logger.error("Original XHR send function not found!", { traceId });
         return;
       }
-      return self.originalXhrSend.apply(this, arguments);
+      return _NetworkInterceptor.originalXhrSend.apply(this, arguments);
     };
   }
   /**
@@ -439,18 +582,95 @@ var ErrorCatcher = class {
 
 // src/core/eventTracker.ts
 var EventTracker = class {
-  static init() {
-    console.log("Event Tracker initialized");
+  static {
+    this.config = {
+      newTraceOnClick: true,
+      // 기본적으로 클릭 시 새 트레이스 시작 (옵션으로 제어 가능하게)
+      clickTargetSelector: 'button, a, [role="button"]'
+      // 어떤 요소 클릭 시 새 트레이스 시작할지 CSS 선택자로 정의
+    };
+  }
+  static init(options) {
+    if (options?.newTraceOnClick !== void 0) {
+      this.config.newTraceOnClick = options.newTraceOnClick;
+    }
+    if (options?.clickTargetSelector) {
+      this.config.clickTargetSelector = options.clickTargetSelector;
+    }
+    this.startNewTraceForNavigation(window.location.href);
+    window.addEventListener(
+      "hashchange",
+      () => this.startNewTraceForNavigation(window.location.href)
+    );
+    document.addEventListener(
+      "click",
+      (event) => {
+        if (!this.config.newTraceOnClick) {
+          if (!TraceContext.getCurrentTraceId()) TraceContext.startNewTrace();
+          this.logGeneralClick(event.target);
+          return;
+        }
+        const targetElement = event.target;
+        if (targetElement.closest(this.config.clickTargetSelector)) {
+          TraceContext.startNewTrace();
+          Logger.info(`Action started: Click on interactive element`, {
+            traceId: TraceContext.getCurrentTraceId(),
+            eventType: "user.action.start",
+            element: this.getElementPath(targetElement)
+          });
+        } else {
+          if (!TraceContext.getCurrentTraceId()) TraceContext.startNewTrace();
+          this.logGeneralClick(targetElement);
+        }
+      },
+      true
+    );
+  }
+  static logGeneralClick(targetElement) {
+    Logger.info(`User clicked (general)`, {
+      traceId: TraceContext.getCurrentTraceId(),
+      eventType: "ui.click",
+      element: this.getElementPath(targetElement)
+    });
+  }
+  static startNewTraceForNavigation(url) {
+    const traceId = TraceContext.startNewTrace();
+    Logger.info(`Navigation to ${url}`, {
+      traceId,
+      eventType: "navigation",
+      url
+    });
+  }
+  static getElementPath(element) {
+    const parts = [];
+    let currentElement = element;
+    while (currentElement && currentElement.tagName) {
+      let selector = currentElement.tagName.toLowerCase();
+      if (currentElement.id) {
+        selector += `#${currentElement.id}`;
+        parts.unshift(selector);
+        break;
+      } else if (currentElement.classList && currentElement.classList.length > 0) {
+        selector += `.${Array.from(currentElement.classList).join(".")}`;
+      }
+      parts.unshift(selector);
+      currentElement = currentElement.parentElement;
+    }
+    return parts.join(" > ");
   }
 };
 
 // src/index.ts
 var Cholog = {
   init: (config) => {
+    TraceContext.startNewTrace();
     Logger.init(config);
     NetworkInterceptor.init();
     ErrorCatcher.init();
     EventTracker.init();
+    Logger.info("Cholog SDK Initialized", {
+      traceId: TraceContext.getCurrentTraceId()
+    });
   },
   log: Logger.info.bind(Logger),
   info: Logger.info.bind(Logger),

@@ -1,14 +1,20 @@
+// src/index.ts
 import { Logger } from "./core/logger";
 import { NetworkInterceptor } from "./core/networkInterceptor";
 import { ErrorCatcher } from "./core/errorCatcher";
 import { EventTracker } from "./core/eventTracker";
+import { TraceContext } from "./core/traceContext";
 
 export const Cholog = {
   init: (config: { appKey: string }) => {
+    TraceContext.startNewTrace();
     Logger.init(config);
     NetworkInterceptor.init();
     ErrorCatcher.init();
     EventTracker.init();
+    Logger.info("Cholog SDK Initialized", {
+      traceId: TraceContext.getCurrentTraceId(),
+    });
   },
 
   log: Logger.info.bind(Logger),
@@ -20,5 +26,3 @@ export const Cholog = {
 };
 
 export default Cholog;
-
-// window에 붙이는 것은 UMD 빌드로 자동 처리됨
