@@ -237,7 +237,7 @@ var NetworkInterceptor = class {
     };
   }
   /**
-   * XMLHttpRequest.prototype.send를 패치하여 X-Request-ID 헤더를 추가합니다.
+   * XMLHttpRequest.prototype.send를 패치하여 X-Request-ID 헤더를 추가
    */
   static patchXMLHttpRequest() {
     this.originalXhrSend = XMLHttpRequest.prototype.send;
@@ -260,8 +260,8 @@ var NetworkInterceptor = class {
     };
   }
   /**
-   * Network Interceptor를 초기화합니다.
-   * fetch와 XMLHttpRequest에 대한 패치를 적용합니다.
+   * Network Interceptor를 초기화
+   * fetch와 XMLHttpRequest에 대한 패치를 적용
    */
   static init() {
     if (this.isInitialized) {
@@ -287,28 +287,154 @@ var NetworkInterceptor = class {
     }
   }
   /**
-   * (선택 사항) 패치된 함수들을 원래대로 복원합니다.
+   * 패치된 함수들을 원래대로 복원
    */
-  static restore() {
-    if (!this.isInitialized) return;
-    if (this.originalFetch) {
-      window.fetch = this.originalFetch;
-    }
-    if (this.originalXhrSend) {
-      XMLHttpRequest.prototype.send = this.originalXhrSend;
-    }
-    this.originalFetch = null;
-    this.originalXhrSend = null;
-    this.isInitialized = false;
-    console.log("Cholog NetworkInterceptor restored original functions.");
-  }
+  // public static restore(): void {
+  //   if (!this.isInitialized) return;
+  //   if (this.originalFetch) {
+  //     window.fetch = this.originalFetch;
+  //   }
+  //   if (this.originalXhrSend) {
+  //     XMLHttpRequest.prototype.send = this.originalXhrSend;
+  //   }
+  //   // if (this.originalXhrOpen) { XMLHttpRequest.prototype.open = this.originalXhrOpen; } // open도 복원
+  //   this.originalFetch = null;
+  //   this.originalXhrSend = null;
+  //   // this.originalXhrOpen = null;
+  //   this.isInitialized = false;
+  //   console.log("Cholog NetworkInterceptor restored original functions."); // 복원 로그 (선택 사항)
+  // }
 };
 
 // src/core/errorCatcher.ts
 var ErrorCatcher = class {
-  static init() {
-    console.log("Error Catcher initialized");
+  static {
+    this.isInitialized = false;
   }
+  static {
+    // window.onerror 또는 addEventListener('error') 핸들러
+    // event: 오류 이벤트 객체 또는 메시지 문자열
+    // source: 파일 URL
+    // lineno: 줄 번호
+    // colno: 컬럼 번호
+    // error: 실제 Error 객체 (최신 브라우저에서 제공)
+    this.handleGlobalError = (event, source, lineno, colno, error) => {
+      let message;
+      let filename = source;
+      let line = lineno;
+      let column = colno;
+      let stack;
+      let errorType;
+      let errorObj = error;
+      if (event instanceof ErrorEvent && event.error) {
+        errorObj = event.error;
+        message = event.message || errorObj?.message || "Error message not available";
+        filename = event.filename;
+        line = event.lineno;
+        column = event.colno;
+        errorType = errorObj?.name;
+        stack = errorObj?.stack;
+      } else if (typeof event === "string") {
+        message = event;
+        if (errorObj) {
+          errorType = errorObj.name;
+          stack = errorObj.stack;
+        }
+      } else if (errorObj) {
+        message = errorObj.message;
+        errorType = errorObj.name;
+        stack = errorObj.stack;
+      } else {
+        message = "A non-error event was captured by the error handler.";
+        errorType = "UnknownError";
+      }
+      if (stack?.includes("cholog") || message?.includes("Cholog SDK")) {
+        console.warn(
+          "Cholog SDK: Suppressed potential recursive error log.",
+          message
+        );
+        return;
+      }
+      const details = {
+        errorType: errorType || "Error",
+        stack,
+        sourceFile: filename,
+        lineno: line,
+        colno: column,
+        userAgent: navigator.userAgent,
+        pageUrl: window.location.href
+      };
+      Logger.error(message || "Uncaught JavaScript Error", details);
+    };
+  }
+  static {
+    // unhandledrejection 핸들러
+    this.handleUnhandledRejection = (event) => {
+      let reason = event.reason;
+      let message;
+      let stack;
+      let errorType;
+      if (reason instanceof Error) {
+        message = reason.message;
+        stack = reason.stack;
+        errorType = reason.name;
+      } else {
+        try {
+          message = `Unhandled promise rejection: ${JSON.stringify(reason)}`;
+        } catch {
+          message = `Unhandled promise rejection: [Non-serializable reason]`;
+        }
+        errorType = typeof reason;
+      }
+      if (stack?.includes("cholog") || message?.includes("Cholog SDK")) {
+        console.warn(
+          "Cholog SDK: Suppressed potential recursive error log.",
+          message
+        );
+        return;
+      }
+      const details = {
+        errorType: errorType || "UnhandledRejection",
+        stack,
+        // Promise 오류는 특정 파일/줄번호를 알기 어려울 수 있음
+        sourceFile: stack ? void 0 : window.location.href,
+        // 스택이 없으면 현재 URL
+        userAgent: navigator.userAgent,
+        pageUrl: window.location.href,
+        reason: !(reason instanceof Error) ? String(reason) : void 0
+        // Error 객체 아닌 경우만 reason 추가
+      };
+      Logger.error(message || "Unhandled Promise Rejection", details);
+    };
+  }
+  static init() {
+    if (this.isInitialized || typeof window === "undefined") {
+      return;
+    }
+    try {
+      window.onerror = this.handleGlobalError;
+      window.addEventListener(
+        "unhandledrejection",
+        this.handleUnhandledRejection
+      );
+      this.isInitialized = true;
+      console.log("Cholog ErrorCatcher initialized successfully.");
+    } catch (error) {
+      console.error("Cholog SDK: Failed to initialize ErrorCatcher.", error);
+    }
+  }
+  // (선택 사항) 원래 핸들러로 복원하는 함수
+  // public static restore(): void {
+  //   if (!this.isInitialized || typeof window === "undefined") return;
+  //   window.onerror = null;
+  //   window.removeEventListener(
+  //     "unhandledrejection",
+  //     this.handleUnhandledRejection
+  //   );
+  //   // window.removeEventListener('error', this.handleGlobalError, true);
+  //   this.isInitialized = false;
+  //   console.log("Cholog ErrorCatcher restored original handlers.");
+  // }
 };
 
 // src/core/eventTracker.ts
