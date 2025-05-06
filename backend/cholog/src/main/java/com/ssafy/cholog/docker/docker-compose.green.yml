@@ -1,0 +1,18 @@
+version: '3'
+services:
+  backend:
+    build: .
+    ports:
+      - "8112:80"
+    container_name: spring-booknest-green
+    volumes:
+      - /home/ubuntu/app-logs-green:/app/logs
+    environment:
+      - TZ=Asia/Seoul
+    networks:
+      - servernetwork
+
+networks:
+  servernetwork:
+    external: true
+    driver: bridge
