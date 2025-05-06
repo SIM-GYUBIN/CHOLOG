@@ -1,4 +1,3 @@
-// React import 제거
 interface ProjectCardProps {
   name: string;
   status: string;
