@@ -57,7 +57,7 @@ const LogPage = () => {
   ];
 
   return (
-    <div className="flex gap-6 p-8 max-w-7xl mx-auto">
+    <div className="flex gap-6 max-w-7xl mx-auto">
       {/* 메인 로그 섹션 */}
       <div className="flex-1 bg-white rounded-lg p-6 border border-[#E5E5E5]">
         <div className="flex items-center gap-2 mb-4">
