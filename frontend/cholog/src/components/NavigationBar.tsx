@@ -12,7 +12,7 @@ const NavigationBar = () => {
           {/* Logo on the left with navigation */}
           <div className="flex-shrink-0">
             <button 
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/projectlist')}
               className="focus:outline-none cursor-pointer"
             >
               <img src={logo} alt="Cholog logo" className="h-8 mt-2" />
@@ -21,14 +21,8 @@ const NavigationBar = () => {
           
           {/* Buttons on the right */}
           <div className="flex space-x-4">
-            <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-              Button 1
-            </button>
-            <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-              Button 2
-            </button>
-            <button className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-              Button 3
+            <button className="text-[#45556C] rounded-full text-[14px] bg-[#D1D5DB] font-medium w-12 h-12 flex items-center justify-center">
+              이름
             </button>
           </div>
         </div>
