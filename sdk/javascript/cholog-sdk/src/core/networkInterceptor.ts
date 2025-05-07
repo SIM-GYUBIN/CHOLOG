@@ -1,177 +1,170 @@
 // src/core/networkInterceptor.ts
+import { TraceContext } from "./traceContext";
+import { Logger } from "./logger";
+import { LogHttp, LogHttpRequest, LogHttpResponse, LogError, LogClient } from "../types";
 
 export class NetworkInterceptor {
   private static isInitialized = false;
-  // 원래 함수들을 저장할 변수
   private static originalFetch: typeof window.fetch | null = null;
-  private static originalXhrSend: typeof XMLHttpRequest.prototype.send | null =
-    null;
-  // 필요시 open도 저장: private static originalXhrOpen: typeof XMLHttpRequest.prototype.open | null = null;
+  // XMLHttpRequest 관련 타입은 any로 처리하거나, 더 상세한 타입 정의 필요 시 추가
+  private static originalXhrOpen: any = null;
+  private static originalXhrSend: any = null;
 
-  private static generateRequestId(): string {
-    if (crypto && crypto.randomUUID) {
-      return crypto.randomUUID();
-    } else {
-      // 매우 기본적인 fallback (UUID v4만큼 강력하지 않음)
-      console.warn(
-        "crypto.randomUUID is not available. Using basic fallback for Request ID."
-      );
-      return `fallback-${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 15)}`;
-    }
-  }
-
-  /**
-   * window.fetch를 패치하여 X-Request-ID 헤더를 추가
-   */
   private static patchFetch(): void {
-    // 원본 fetch 저장
+    if (typeof window === "undefined" || !window.fetch) return;
     this.originalFetch = window.fetch;
-    // NetworkInterceptor의 this 컨텍스트를 유지하기 위해 self 사용
-    const self = this;
 
-    // 새로운 fetch 함수 정의
-    window.fetch = async (
-      input: RequestInfo | URL,
-      init?: RequestInit
-    ): Promise<Response> => {
-      const requestId = self.generateRequestId();
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const requestUrl = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
 
-      // init 객체가 없을 수도 있으므로 안전하게 복사 또는 생성
-      // 원본 init 객체를 수정하지 않기 위해 얕은 복사 사용
+      // Cholog 자체 로그 전송 요청은 인터셉트하지 않음
+      if (requestUrl.startsWith(Logger.getApiEndpoint())) {
+        return NetworkInterceptor.originalFetch!.call(window, input, init);
+      }
+
+      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
       const modifiedInit = { ...(init || {}) };
-
-      // headers 객체 관리 (다양한 타입 처리)
-      let currentHeaders = modifiedInit.headers;
-      let newHeaders: Headers;
-
-      if (currentHeaders instanceof Headers) {
-        // Headers 객체면 복제해서 사용 (불변성 유지)
-        newHeaders = new Headers(currentHeaders);
-      } else if (Array.isArray(currentHeaders)) {
-        // 배열이면 Headers 객체로 변환
-        newHeaders = new Headers(currentHeaders);
-      } else if (
-        typeof currentHeaders === "object" &&
-        currentHeaders !== null
-      ) {
-        // 일반 객체면 Headers 객체로 변환
-        newHeaders = new Headers(currentHeaders as Record<string, string>);
-      } else {
-        // 그 외의 경우 (undefined 등) 빈 Headers 객체 생성
-        newHeaders = new Headers();
+      modifiedInit.headers = new Headers(modifiedInit.headers); // Ensure Headers object
+      if (!modifiedInit.headers.has("X-Request-ID")) {
+        // 이미 있다면 존중
+        modifiedInit.headers.set("X-Request-ID", traceId);
       }
 
-      // 새로운 Headers 객체에 Request ID 추가
-      newHeaders.set("X-Request-ID", requestId);
-      modifiedInit.headers = newHeaders;
+      const startTime = Date.now();
+      const requestDetails: LogHttpRequest = {
+        method: (
+          modifiedInit.method ||
+          (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") ||
+          "GET"
+        ).toUpperCase(),
+        url: requestUrl,
+      };
 
-      // 원본 fetch 호출 (this 컨텍스트 주의 - self.originalFetch 사용)
-      // this.originalFetch가 null 아님을 단언 (!) 또는 null 체크
-      if (!self.originalFetch) {
-        console.error("Original fetch function not found!");
-        // 에러를 던지거나 기본 fetch 동작을 시도할 수 있지만, 여기선 에러 로그만 남김
-        // 이 경우는 init 로직에 문제가 있다는 의미일 수 있음
-        return Promise.reject(new Error("Original fetch not available"));
+      // 요청 시작 로그 (선택적, 너무 많은 로그를 유발할 수 있음)
+      // Logger.logHttp(`API Request START: ${requestDetails.method} ${requestDetails.url}`, { request: requestDetails });
+
+      try {
+        const response = await NetworkInterceptor.originalFetch!.call(window, input, modifiedInit);
+        const durationMs = Date.now() - startTime;
+        const responseDetails: LogHttpResponse = { statusCode: response.status };
+
+        // clientDetails는 Logger가 자동으로 수집. 필요시 여기서 특정 정보 추가 가능.
+        Logger.logHttp(
+          `API Call: ${requestDetails.method} ${requestDetails.url} - Status ${response.status}`,
+          { request: requestDetails, response: responseDetails, durationMs },
+          undefined // clientDetails
+        );
+        return response;
+      } catch (error: any) {
+        const durationMs = Date.now() - startTime;
+        const errorDetails: LogError = {
+          type: error?.name || "FetchError",
+          message: error?.message || "Network request failed",
+          stacktrace: error?.stack,
+        };
+        Logger.logHttp(
+          `API Call FAILED: ${requestDetails.method} ${requestDetails.url}`,
+          { request: requestDetails, durationMs },
+          undefined, // clientDetails
+          errorDetails
+        );
+        throw error;
       }
-      // return self.originalFetch(input, modifiedInit);
-      return self.originalFetch.call(window, input, modifiedInit);
     };
   }
 
-  /**
-   * XMLHttpRequest.prototype.send를 패치하여 X-Request-ID 헤더를 추가
-   */
   private static patchXMLHttpRequest(): void {
-    // 원본 send 저장
+    if (typeof window === "undefined" || !window.XMLHttpRequest) return;
+
+    this.originalXhrOpen = XMLHttpRequest.prototype.open;
     this.originalXhrSend = XMLHttpRequest.prototype.send;
-    // NetworkInterceptor의 this 컨텍스트 유지
     const self = this;
 
-    // XMLHttpRequest.prototype.open도 필요시 여기서 함께 패치
+    XMLHttpRequest.prototype.open = function (method: string, url: string | URL /* ...other args */) {
+      // Cholog 관련 속성 저장
+      (this as any)._chologMethod = method;
+      (this as any)._chologUrl = typeof url === "string" ? url : url.toString();
 
-    // 새로운 send 함수 정의 (function 키워드 사용 필수: this가 XHR 인스턴스를 가리키도록)
-    XMLHttpRequest.prototype.send = function (
-      body?: Document | XMLHttpRequestBodyInit | null
-    ) {
-      const requestId = self.generateRequestId();
+      // Cholog 자체 로그 전송 요청은 인터셉트하지 않음
+      if ((this as any)._chologUrl.startsWith(Logger.getApiEndpoint())) {
+        (this as any)._chologSkip = true;
+      }
 
-      // send가 호출되기 전에 setRequestHeader 호출
-      // (주의: open이 먼저 호출되어 있어야 함)
-      try {
-        this.setRequestHeader("X-Request-ID", requestId);
-      } catch (e) {
-        console.error(
-          "Cholog SDK: Failed to set X-Request-ID header. Was XHR opened first?",
-          e
+      self.originalXhrOpen.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function (body?: Document | XMLHttpRequestBodyInit | null) {
+      if ((this as any)._chologSkip) {
+        return self.originalXhrSend.apply(this, arguments);
+      }
+
+      const xhr = this as XMLHttpRequest & {
+        _chologMethod?: string;
+        _chologUrl?: string;
+        _chologStartTime?: number;
+        _chologLogged?: boolean;
+      };
+      xhr._chologStartTime = Date.now();
+
+      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
+      // X-Request-ID 헤더 설정 (이미 설정되어 있지 않은 경우)
+      this.setRequestHeader("X-Request-ID", traceId);
+
+      const requestDetails: LogHttpRequest = {
+        method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
+        url: xhr._chologUrl || "UnknownURL",
+      };
+
+      // 요청 시작 로그 (선택적)
+      // Logger.logHttp(`XHR Request START: ${requestDetails.method} ${requestDetails.url}`, { request: requestDetails });
+
+      const onLoadEnd = () => {
+        if (xhr._chologLogged) return; // 이미 로깅된 경우 중복 방지
+        xhr._chologLogged = true;
+
+        const durationMs = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : undefined;
+        const responseDetails: LogHttpResponse = { statusCode: xhr.status };
+        let errorDetails: LogError | undefined = undefined;
+
+        if (xhr.status === 0 || xhr.status >= 400) {
+          // status 0은 네트워크 오류 등 다양한 원인
+          errorDetails = {
+            type: xhr.statusText || "XHRError",
+            message: `XHR request to ${requestDetails.url} failed with status ${xhr.status || "N/A"}. ReadyState: ${
+              xhr.readyState
+            }`,
+          };
+        }
+
+        Logger.logHttp(
+          `XHR Call: ${requestDetails.method} ${requestDetails.url} - Status ${xhr.status}`,
+          { request: requestDetails, response: responseDetails, durationMs },
+          undefined, // clientDetails
+          errorDetails
         );
-      }
 
-      // 원본 send 호출 (this 컨텍스트는 XHR 인스턴스, arguments 전달)
-      if (!self.originalXhrSend) {
-        console.error("Original XHR send function not found!");
-        // 에러 처리
-        return;
-      }
-      // arguments를 사용하여 원래 send에 모든 인자 전달
-      return self.originalXhrSend.apply(this, arguments as any);
+        // 이벤트 리스너 제거
+        xhr.removeEventListener("loadend", onLoadEnd);
+        // xhr.removeEventListener("error", onLoadEnd); // loadend가 error, abort, timeout도 커버
+        // xhr.removeEventListener("abort", onLoadEnd);
+        // xhr.removeEventListener("timeout", onLoadEnd);
+      };
+
+      // 'loadend'는 load, error, abort, timeout 이후에 발생하므로 대부분의 케이스를 커버.
+      xhr.addEventListener("loadend", onLoadEnd);
+
+      self.originalXhrSend.apply(this, arguments);
     };
   }
 
-  /**
-   * Network Interceptor를 초기화
-   * fetch와 XMLHttpRequest에 대한 패치를 적용
-   */
   public static init(): void {
-    if (this.isInitialized) {
-      console.warn("NetworkInterceptor is already initialized.");
-      return;
-    }
-    // 전역 객체가 존재하는지 확인 (브라우저 환경인지 체크)
-    if (
-      typeof window === "undefined" ||
-      typeof XMLHttpRequest === "undefined"
-    ) {
-      console.warn(
-        "NetworkInterceptor: Not running in a browser environment? Skipping patch."
-      );
-      return;
-    }
-
+    if (this.isInitialized) return;
     try {
       this.patchFetch();
       this.patchXMLHttpRequest();
       this.isInitialized = true;
-      console.log("Cholog NetworkInterceptor initialized successfully."); // 성공 로그 (선택 사항)
     } catch (error) {
-      console.error(
-        "Cholog SDK: Failed to initialize NetworkInterceptor.",
-        error
-      );
-      // 초기화 실패 시 패치 복원 시도
-      // this.restore();
+      console.error("Cholog SDK: Failed to initialize NetworkInterceptor.", error);
     }
   }
-
-  /**
-   * 패치된 함수들을 원래대로 복원
-   */
-  // public static restore(): void {
-  //   if (!this.isInitialized) return;
-
-  //   if (this.originalFetch) {
-  //     window.fetch = this.originalFetch;
-  //   }
-  //   if (this.originalXhrSend) {
-  //     XMLHttpRequest.prototype.send = this.originalXhrSend;
-  //   }
-  //   // if (this.originalXhrOpen) { XMLHttpRequest.prototype.open = this.originalXhrOpen; } // open도 복원
-
-  //   this.originalFetch = null;
-  //   this.originalXhrSend = null;
-  //   // this.originalXhrOpen = null;
-  //   this.isInitialized = false;
-  //   console.log("Cholog NetworkInterceptor restored original functions."); // 복원 로그 (선택 사항)
-  // }
 }

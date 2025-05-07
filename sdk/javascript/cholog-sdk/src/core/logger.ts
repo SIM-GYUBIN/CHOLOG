@@ -1,16 +1,13 @@
-interface LogEntry {
-  level: string;
-  message: string;
-  timestamp: string;
-  // tags?: string[];
-}
+// src/core/logger.ts
+import { TraceContext } from "./traceContext";
+import { LogEntry, LogPayload, LogError, LogHttp, LogClient, LogEvent, LogType, LogLevelType } from "../types"; // 타입 임포트
 
-type LogLevel = "log" | "info" | "warn" | "error" | "debug" | "trace";
+type InternalLogLevel = "info" | "warn" | "error" | "debug" | "trace";
 
 export class Logger {
-  private static appKey: string = "";
-  // private static apiEndpoint = "https://www.cholog-server.shop/log";
-  private static apiEndpoint = "http://localhost:8080/logs";
+  private static projectKey: string = "";
+  private static environment: string = ""; // environment 필드 추가
+  private static apiEndpoint = "http://localhost:8080/logs"; // 이전과 동일
   private static originalConsole: {
     log: Console["log"];
     info: Console["info"];
@@ -29,21 +26,27 @@ export class Logger {
    * SDK 초기화
    */
   public static init(config: {
-    appKey: string;
+    projectKey: string;
+    environment: string;
     batchInterval?: number;
     maxQueueSize?: number;
   }): void {
     // 중복 초기화 방지
     if (this.originalConsole !== null) {
-      console.warn("Logger already initialized.");
+      console.warn("Cholog: Logger already initialized.");
       return;
     }
 
-    this.appKey = config.appKey;
+    this.projectKey = config.projectKey;
+    this.environment = config.environment;
     if (config.batchInterval) this.batchInterval = config.batchInterval;
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
 
     this.overrideConsoleMethods();
+  }
+
+  public static getApiEndpoint(): string {
+    return this.apiEndpoint;
   }
 
   /** console 메서드 오버라이드 */
@@ -57,54 +60,160 @@ export class Logger {
       trace: console.trace.bind(console),
     };
 
-    console.log = (...args) => this.queueAndPrint("info", args);
-    console.info = (...args) => this.queueAndPrint("info", args);
-    console.warn = (...args) => this.queueAndPrint("warn", args);
-    console.error = (...args) => this.queueAndPrint("error", args);
-    console.debug = (...args) => this.queueAndPrint("debug", args);
-    console.trace = (...args) => this.queueAndPrint("trace", args);
+    console.log = (...args) => this.queueAndPrint("info", "console", ...args);
+    console.info = (...args) => this.queueAndPrint("info", "console", ...args);
+    console.warn = (...args) => this.queueAndPrint("warn", "console", ...args);
+    console.error = (...args) => this.queueAndPrint("error", "console", ...args);
+    console.debug = (...args) => this.queueAndPrint("debug", "console", ...args);
+    console.trace = (...args) => this.queueAndPrint("trace", "console", ...args);
   }
 
   /** 원본 콘솔 출력 + 큐잉 */
-  private static queueAndPrint(level: LogLevel, args: any[]): void {
+  private static queueAndPrint(
+    level: InternalLogLevel,
+    invokedBy: "console" | "cholog", // [수정] loggerName 대신 invokedBy
+    ...args: any[]
+  ): void {
     if (this.originalConsole) {
-      this.originalConsole[level](...args);
+      const originalMethod = this.originalConsole[level];
+      if (originalMethod) {
+        originalMethod(...args);
+      } else {
+        this.originalConsole.log(...args); // trace 같은 경우 대비
+      }
     }
-    this.queueLog(level, args);
+    this.prepareAndQueueLog(level, invokedBy, args);
   }
 
-  /** 로그를 큐에 쌓고, 배치 전송 스케줄링 */
-  private static queueLog(level: LogLevel, args: any[]): void {
-    const message = args
-      .map((arg) =>
-        typeof arg === "object" ? JSON.stringify(arg) : String(arg)
-      )
-      .join(" ");
+  // 로그를 최종 구조로 만들고 큐에 넣는 핵심 메서드
+  private static prepareAndQueueLog(
+    level: InternalLogLevel,
+    invokedBy: "console" | "cholog", // [수정] loggerName 대신 invokedBy 사용
+    args: any[],
+    // 다음 인자들은 특정 모듈에서 직접 구조화해서 넘겨줄 때 사용
+    directError?: LogError,
+    directHttp?: LogHttp,
+    directClient?: LogClient,
+    directEvent?: LogEvent
+  ): void {
+    if (!this.projectKey || !this.environment) {
+      // 초기화되지 않았으면 원본 콘솔로 경고만 하고 로그 전송은 하지 않음 (무한 루프 방지)
+      if (this.originalConsole) {
+        this.originalConsole.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+      } else {
+        console.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+      }
+      return;
+    }
+
+    let message = "";
+    let payload: LogPayload = {};
+    const otherFields: Partial<Pick<LogEntry, "error" | "http" | "client" | "event">> = {};
+
+    if (args.length > 0) {
+      if (typeof args[0] === "string") {
+        message = args[0];
+        if (args.length > 1 && typeof args[1] === "object" && args[1] !== null) {
+          // 첫번째 인자가 문자열, 두번째 인자가 객체면 payload로 간주
+          // 단, ErrorCatcher 등에서 넘겨주는 구조화된 객체와 충돌하지 않도록 주의
+          // 여기서는 console.log("message", {detail: "data"}) 같은 경우를 위함
+          // ErrorCatcher 등에서는 args를 error 메시지 하나만 보내고, 나머지는 directXXX로 받음
+          if (!directError && !directHttp && !directEvent) {
+            payload = { ...args[1] }; // payload에 할당
+          }
+        } else if (args.length > 1) {
+          // 첫번째 인자 외 추가 문자열들은 메시지에 포함
+          message +=
+            " " +
+            args
+              .slice(1)
+              .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+              .join(" ");
+        }
+      } else {
+        // 첫번째 인자가 문자열이 아니면, 모든 인자를 문자열화하여 메시지로
+        message = args.map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))).join(" ");
+      }
+    }
+
+    // logType 결정 로직
+    let determinedLogType: LogType;
+    if (directError) {
+      determinedLogType = "error";
+    } else if (directHttp) {
+      determinedLogType = "network";
+    } else if (directEvent) {
+      determinedLogType = "event";
+    } else {
+      determinedLogType = "general";
+    }
+
+    // 직접 전달된 구조화된 데이터 할당
+    if (directError) otherFields.error = directError;
+    if (directHttp) otherFields.http = directHttp;
+    if (directClient) otherFields.client = directClient; // 여러곳에서 client 정보를 넘길 수 있으므로 병합 필요할 수 있음
+    if (directEvent) otherFields.event = directEvent;
+
     const entry: LogEntry = {
-      level,
-      message,
       timestamp: new Date().toISOString(),
+      level: level.toUpperCase() as LogLevelType, // LogLevelType으로 캐스팅
+      message,
+      source: "frontend",
+      projectKey: this.projectKey,
+      environment: this.environment,
+      traceId: TraceContext.getCurrentTraceId(),
+      loggerName: invokedBy,
+      logType: determinedLogType,
+      ...otherFields,
     };
 
-    // 대략적인 사이즈 계산
-    const size = new Blob([JSON.stringify(entry)]).size;
-    this.logQueue.push(entry);
-    this.currentQueueSize += size;
+    // payload가 비어있지 않다면 추가
+    if (Object.keys(payload).length > 0) {
+      entry.payload = payload;
+    }
 
-    if (this.currentQueueSize > this.maxQueueSize) {
-      // 큐가 너무 커지면 즉시 전송
-      this.sendBatch();
-    } else {
-      this.scheduleBatch();
+    // client 정보는 항상 포함 (브라우저 환경에서만)
+    if (typeof window !== "undefined" && typeof navigator !== "undefined" && typeof location !== "undefined") {
+      if (!entry.client) entry.client = {} as LogClient;
+      entry.client.url = entry.client.url || window.location.href;
+      entry.client.userAgent = entry.client.userAgent || navigator.userAgent;
+      if (document.referrer && !entry.client.referrer) {
+        entry.client.referrer = document.referrer;
+      }
+    }
+
+    try {
+      const size = new Blob([JSON.stringify(entry)]).size;
+      this.logQueue.push(entry);
+      this.currentQueueSize += size;
+
+      if (this.currentQueueSize >= this.maxQueueSize) {
+        this.sendBatch(); // 즉시 전송
+      } else {
+        this.scheduleBatch(); // 다음 배치 스케줄
+      }
+    } catch (e) {
+      // Blob 생성 실패 또는 기타 이유로 에러 발생 시 (예: Node.js 환경 테스트)
+      // 단순 푸시 및 개수 기반 관리로 fallback (선택적)
+      this.originalConsole?.error?.("Cholog: Error calculating log size, falling back to count-based queue.", e);
+      this.logQueue.push(entry);
+      if (this.logQueue.length > 20) {
+        // 예시: 개수 기반 fallback 최대치
+        this.sendBatch();
+      } else {
+        this.scheduleBatch();
+      }
     }
   }
 
   /** 일정 시간 후 배치 전송 예약 */
   private static scheduleBatch(): void {
-    if (this.batchTimeoutId === null) {
+    if (this.batchTimeoutId === null && this.logQueue.length > 0) {
+      // 큐에 내용이 있을 때만 스케줄
       this.batchTimeoutId = window.setTimeout(async () => {
+        this.batchTimeoutId = null; // 먼저 null로 만들어야 sendBatch 내부에서 다시 scheduleBatch 가능
         await this.sendBatch();
-        this.batchTimeoutId = null;
+        // sendBatch 후에도 큐에 남아있을 수 있는 로그들을 위해 다시 스케줄링 (재귀 호출 방지)
         if (this.logQueue.length > 0) {
           this.scheduleBatch();
         }
@@ -116,6 +225,12 @@ export class Logger {
   private static async sendBatch(): Promise<void> {
     if (this.logQueue.length === 0) return;
 
+    // 현재 타이머가 있다면 취소 (즉시 전송 시 중복 방지)
+    if (this.batchTimeoutId !== null) {
+      clearTimeout(this.batchTimeoutId);
+      this.batchTimeoutId = null;
+    }
+
     const batch = [...this.logQueue];
     this.logQueue = [];
     this.currentQueueSize = 0;
@@ -125,89 +240,72 @@ export class Logger {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "App-Key": this.appKey,
+          "App-Key": this.projectKey, // 필요시 서버와 협의된 인증 헤더 사용
         },
         body: JSON.stringify(batch),
       });
       if (!res.ok) {
-        throw new Error(`Log send failed: ${res.status}`);
+        // 전송 실패 시 로그를 다시 큐에 넣는 것을 고려할 수 있으나, 무한 루프 주의
+        // 여기서는 에러만 출력
+        const errorText = await res.text();
+        throw new Error(`Log send failed: ${res.status} - ${errorText}`);
       }
     } catch (err) {
-      // 전송 오류는 원본 콘솔로 출력
       if (this.originalConsole) {
-        this.originalConsole.error("Logger sendBatch error:", err);
+        this.originalConsole.error("Cholog: Logger sendBatch error:", err);
       } else {
-        console.error(
-          "Logger sendBatch error (original console unavailable):",
-          err
-        );
+        console.error("Cholog: Logger sendBatch error (original console unavailable):", err);
       }
+      // 전송 실패한 batch를 다시 큐에 넣는 로직 (선택적, 신중하게)
+      // this.logQueue.unshift(...batch);
+      // this.currentQueueSize = batch.reduce((sum, entry) => sum + new Blob([JSON.stringify(entry)]).size, 0);
     }
   }
 
-  /**
-   * 자체 로거 메서드 (콘솔 출력 X)
-   */
+  // --- Cholog 자체 로거 메서드들 ---
+  // Cholog.info("메시지", {부가정보객체}, {error객체}, {http객체} ...) 식으로 사용하지 않고,
+  // 각 모듈(ErrorCatcher, NetworkInterceptor)에서 특화된 정보를 포함하여 로깅하도록 유도
+  // 일반적인 사용: Cholog.info("단순 메시지") 또는 Cholog.info("메시지", {customPayload: "값"})
 
-  /**
-   * INFO 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  public static info(...args: any[]): void {
-    // init이 호출되었는지 (appKey가 설정되었는지 등) 확인하는 로직 추가 가능
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("info", args);
+  public static log(message: string, customPayload?: LogPayload): void {
+    this.prepareAndQueueLog("info", "cholog", [message, customPayload || {}]);
+  }
+  public static info(message: string, customPayload?: LogPayload): void {
+    this.prepareAndQueueLog("info", "cholog", [message, customPayload || {}]);
+  }
+  public static warn(message: string, customPayload?: LogPayload): void {
+    this.prepareAndQueueLog("warn", "cholog", [message, customPayload || {}]);
+  }
+  public static error(message: string, customPayload?: LogPayload): void {
+    // 일반 메시지용 에러
+    this.prepareAndQueueLog("error", "cholog", [message, customPayload || {}]);
+  }
+  public static debug(message: string, customPayload?: LogPayload): void {
+    this.prepareAndQueueLog("debug", "cholog", [message, customPayload || {}]);
+  }
+  public static trace(message: string, customPayload?: LogPayload): void {
+    this.prepareAndQueueLog("trace", "cholog", [message, customPayload || {}]);
   }
 
-  /**
-   * WARN 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  public static warn(...args: any[]): void {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("warn", args);
+  // 에러 로깅 (ErrorCatcher에서 사용, logType: "error")
+  public static logError(errorMessage: string, errorDetails: LogError, clientDetails?: LogClient): void {
+    this.prepareAndQueueLog("error", "cholog", [errorMessage], errorDetails, undefined, clientDetails);
   }
 
-  /**
-   * ERROR 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  public static error(...args: any[]): void {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    // 에러 객체가 인자로 들어올 경우 스택 트레이스를 포함하도록 처리 강화 가능
-    this.queueLog("error", args);
+  // 네트워크 로깅 (NetworkInterceptor에서 사용, logType: "network")
+  public static logHttp(
+    message: string,
+    httpDetails: LogHttp,
+    clientDetails?: LogClient, // Logger가 기본 수집하므로 선택적
+    errorDetails?: LogError // 네트워크 오류 시 함께 전달 가능
+  ): void {
+    const level: InternalLogLevel =
+      errorDetails || (httpDetails.response && httpDetails.response.statusCode >= 400) ? "error" : "info";
+    this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
 
-  /**
-   * DEBUG 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  public static debug(...args: any[]): void {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("debug", args);
-  }
-
-  /**
-   * TRACE 레벨 로그를 Cholog 서버로 전송합니다. (콘솔 출력 없음)
-   * @param args 로그 데이터
-   */
-  public static trace(...args: any[]): void {
-    if (!this.appKey) {
-      console.warn("Cholog SDK is not initialized. Call ChologSDK.init first.");
-      return;
-    }
-    this.queueLog("trace", args);
+  // 이벤트 로깅 (EventTracker에서 사용, logType: "event")
+  public static logEvent(message: string, eventDetails: LogEvent, clientDetails?: LogClient): void {
+    this.prepareAndQueueLog("info", "cholog", [message], undefined, undefined, clientDetails, eventDetails);
   }
 }
