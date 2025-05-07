@@ -1,12 +1,20 @@
 interface ProjectCardProps {
+  id: number;
   name: string;
   status: string;
   lastLog: string;
 }
 
-const ProjectCard = ({ name, status, lastLog }: ProjectCardProps) => {
+import { useNavigate } from 'react-router-dom';
+
+const ProjectCard = ({ id, name, status, lastLog }: ProjectCardProps) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+    <div 
+      className="p-4 border border-gray-200 rounded-2xl hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => navigate(`/project/${id}`)}
+    >
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-paperlogy5 text-18px">{name}</h3>
         <svg
@@ -23,7 +31,9 @@ const ProjectCard = ({ name, status, lastLog }: ProjectCardProps) => {
         <div className="flex items-center gap-2 text-gray-600 text-14px">
           <span>상태:</span>
           <div className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span className={`w-5 h-5 rounded-full ${
+              status === "정상" ? "bg-green-500" : "bg-red-500"
+            }`}></span>
             <span>{status}</span>
           </div>
         </div>
