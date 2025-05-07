@@ -72,17 +72,4 @@ public class LogController {
 
         return ResponseEntity.ok().build();
     }
-
-    /**
-     * 최근 수신된 로그 목록을 조회합니다.
-     * (GET /api/logs)
-     *
-     * @return 최근 로그 엔트리 리스트 (JSON 형식)
-     */
-    @GetMapping
-    public ResponseEntity<List<LogEntry>> getRecentLogs() {
-        // 현재 큐에 있는 로그를 리스트로 복사하여 반환 (순서는 들어온 순서)
-        List<LogEntry> logsToReturn = new LinkedList<>(recentLogs);
-        return ResponseEntity.ok(logsToReturn);
-    }
 }
