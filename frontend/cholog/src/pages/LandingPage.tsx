@@ -12,14 +12,14 @@ const LandingPage = () => {
         id="1"
         timestamp="2024-03-19T15:30:00Z"
         message="GET request to /api/users failed"
-        apiPath="/api/users"
+        // apiPath="/api/users"
         level="INFO"
-        traceId="trace-abc-123"
-        spanId="span-xyz-789"
-        details={{
-          errorCode: "404",
-          stackTrace: "Error: GET request to /api/users failed\n    at ApiClient.get (/src/api/client.ts:25:7)\n    at UserService.getUsers (/src/services/users.ts:12:29)"
-        }}
+        from="FE"
+        // details={{
+        //   errorCode: "404",
+        //   stackTrace:
+        //     "Error: GET request to /api/users failed\n    at ApiClient.get (/src/api/client.ts:25:7)\n    at UserService.getUsers (/src/services/users.ts:12:29)",
+        // }}
       />
     </div>
   );
