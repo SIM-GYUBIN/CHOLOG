@@ -3,4 +3,4 @@ spring:
     name: cholog
   profiles:
     include: secret
-    active: local
+    active: prod
