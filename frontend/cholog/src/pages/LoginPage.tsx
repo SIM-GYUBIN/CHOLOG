@@ -68,7 +68,7 @@ const LoginPage: React.FC = () => {
             />
             <input
               type="email"
-              placeholder="email"
+              placeholder="이메일"
               value={email}
               onChange={handleEmailChange}
               className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400"
@@ -83,7 +83,7 @@ const LoginPage: React.FC = () => {
             />
             <input
               type="password"
-              placeholder="password"
+              placeholder="비밀번호"
               value={password}
               onChange={handlePasswordChange}
               className="caret-lime-500 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
@@ -98,7 +98,7 @@ const LoginPage: React.FC = () => {
             />
             <input
               type="password"
-              placeholder="confirm password"
+              placeholder="비밀번호 확인"
               value={confirmPassword}
               onChange={handleConfirmChange}
               className="caret-lime-500 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
