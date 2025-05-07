@@ -94,11 +94,11 @@ export default function EachLog({
           {from}
         </div>
         {/* 메시지: 50% */}
-        <div className="font-medium basis-[50%] shrink-0 grow-0 min-w-0 truncate px-4">
+        <div className="text-start basis-[50%] shrink-0 grow-0 min-w-0 truncate px-4">
           {message}
         </div>
         {/* 타임스탬프: 25% */}
-        <div className="basis-[25%] shrink-0 grow-0 min-w-0 text-right">
+        <div className="basis-[25%] shrink-0 grow-0 min-w-0">
           {formattedTime}
         </div>
       </div>
