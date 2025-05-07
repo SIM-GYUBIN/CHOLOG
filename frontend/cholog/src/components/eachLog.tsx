@@ -11,6 +11,7 @@ type LogDetails = {
 };
 
 type LogProps = {
+  islevelBg?: boolean; // Added islevelBg prop for conditional styling
   id?: string;
   from?: string;
   timestamp: string;
@@ -47,52 +48,63 @@ export default function EachLog({
   from,
   apiPath,
   level,
-  traceId,
-  spanId,
-  details,
+  // traceId,
+  // spanId,
+  // details,
+  islevelBg = false,
 }: LogProps) {
-  const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : "";
+  const formattedTime = timestamp
+  ? new Date(timestamp).toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false, // 24시간 형식으로 표시
+    }).replace(/\/|, /g, '-').replace(' ', ' ') // 날짜 구분자를 변경하고, 공백으로 시간 구분
+  : "";
+  // const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : "";
+  const levelBg = {
+    FATAL: "bg-[rgba(128,0,128,0.06)]",   // purple-100 6%
+    ERROR: "bg-[rgba(248,113,113,0.06)]", // red-100 6%
+    WARN: "bg-[rgba(253,224,71,0.06)]",   // yellow-100 6%
+    INFO: "bg-[rgba(191,219,254,0.06)]",  // blue-100 6%
+    DEBUG: "bg-[rgba(134,239,172,0.06)]", // g100 6%
+    TRACE: "bg-[rgba(243,244,246,0.06)]", // gray-100 6%
+  }[level] || "bg-[rgba(255,255,255,0.06)]";
+
+  // islevelBg가 true면 levelBg 적용, 아니면 배경색 없음
+  const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-2 hover:shadow-lg transition-shadow ${islevelBg ? levelBg : ""}`;
 
   return (
-    <div className="px-4 py-2 hover:shadow-lg transition-shadow">
-      <div className="flex justify-start gap-10 items-center text-[14px] text-slate-600">
-        <div className="flex flex-row items-center min-w-15">
+    <div className={containerClass}>
+      <div className="flex items-center text-[12px] text-slate-600 w-full">
+        {/* 로그레벨아이콘+로그레벨: 15% */}
+        <div className="flex flex-row items-center basis-[15%] shrink-0 grow-0 min-w-0 gap-2">
           <img
             src={getLevelIcon(level)}
             alt={`${level.toLowerCase()} 아이콘`}
-            className="w-8 h-8"
+            className="w-5 h-5"
           />
-          <div className="font-semibold">{level}</div>
+          <div className="font-semibold truncate">{level}</div>
         </div>
-        <div>{from}</div>
-        <div className="font-medium">{message}</div>
-        <div className="">{formattedTime}</div>
+        {/* from: 10% */}
+        <div className="basis-[10%] shrink-0 grow-0 min-w-0 truncate">
+          {from}
+        </div>
+        {/* 메시지: 50% */}
+        <div className="font-medium basis-[50%] shrink-0 grow-0 min-w-0 truncate px-4">
+          {message}
+        </div>
+        {/* 타임스탬프: 25% */}
+        <div className="basis-[25%] shrink-0 grow-0 min-w-0 text-right">
+          {formattedTime}
+        </div>
       </div>
-
-      {/* <div className="mb-2">
+      <div className="mb-2">
         <div className="text-sm text-gray-600">{apiPath}</div>
       </div>
-      {(traceId || spanId) && (
-        <div className="text-xs text-gray-500">
-          <div>Trace ID: {traceId}</div>
-          <div>Span ID: {spanId}</div>
-        </div>
-      )}
-
-      {(details?.errorCode || details?.stackTrace) && (
-        <div className="mt-2 p-2 bg-gray-50 rounded">
-          {details.errorCode && (
-            <div className="text-sm text-red-600">
-              Error Code: {details.errorCode}
-            </div>
-          )}
-          {details.stackTrace && (
-            <div className="mt-1 text-xs text-gray-700 overflow-x-auto whitespace-pre-wrap">
-              {details.stackTrace}
-            </div>
-          )}
-        </div>
-      )} */}
     </div>
   );
 }

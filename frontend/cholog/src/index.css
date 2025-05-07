@@ -6,6 +6,75 @@
   src: url("@/assets/fonts/Paperlogy-5Medium.ttf") format("truetype");
 }
 
+@font-face {
+  font-family: paperlogy7;
+  font-style: normal;
+  font-weight: 700;
+  src: url("@/assets/fonts/Paperlogy-7Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: paperlogy1;
+  font-style: normal;
+  font-weight: 100;
+  src: url("@/assets/fonts/Paperlogy-1Thin.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: paperlogy2;
+  font-style: normal;
+  font-weight: 200;
+  src: url("@/assets/fonts/Paperlogy-2ExtraLight.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: paperlogy3;
+  font-style: normal;
+  font-weight: 300;
+  src: url("@/assets/fonts/Paperlogy-3Light.ttf") format("truetype");
+}
+
+@font-face { 
+  font-family: paperlogy4;
+  font-style: normal;
+  font-weight: 400;
+  src: url("@/assets/fonts/Paperlogy-4Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: paperlogy6;
+  font-style: normal;
+  font-weight: 600;
+  src: url("@/assets/fonts/Paperlogy-6SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: paperlogy8;
+  font-style: normal;
+  font-weight: 800;
+  src: url("@/assets/fonts/Paperlogy-8ExtraBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: paperlogy9;
+  font-style: normal;
+  font-weight: 900;
+  src: url("@/assets/fonts/Paperlogy-9Black.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: consola;
+  font-style: normal;
+  font-weight: 100;
+  src: url("@/assets/fonts/consola.ttf") format("truetype");
+} 
+@font-face {
+  font-family: consolb;
+  font-style: normal;
+  font-weight: 200;
+  src: url("@/assets/fonts/consolb.ttf") format("truetype");
+}
+
 body {
   font-family: "paperlogy5", sans-serif;
 }
