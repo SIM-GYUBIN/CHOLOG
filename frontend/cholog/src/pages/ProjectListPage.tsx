@@ -1,6 +1,11 @@
-import ProjectCard from '../components/projectCard';
+import { useState } from "react";
+import ProjectCard from "../components/projectCard";
 
 const ProjectListPage = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"add" | "join" | null>(null);
+  const [inputValue, setInputValue] = useState("");
+
   // 임시 프로젝트 데이터
   const recentProjects = [
     { name: "Project name", status: "정상", lastLog: "2025.04.28" },
@@ -19,6 +24,26 @@ const ProjectListPage = () => {
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const openModal = (type: "add" | "join") => {
+    setModalType(type);
+    setShowModal(true);
+    setInputValue("");
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalType(null);
+  };
+
+  const handleSubmit = () => {
+    if (modalType === "add") {
+      console.log("프로젝트 생성:", inputValue);
+    } else if (modalType === "join") {
+      console.log("프로젝트 참가:", inputValue);
+    }
+    closeModal();
   };
 
   return (
@@ -45,10 +70,16 @@ const ProjectListPage = () => {
 
       {/* ADD, JOIN 버튼 섹션 */}
       <div className="flex justify-start gap-4 mb-8">
-        <button className="px-6 py-2 bg-white text-black border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-paperlogy5">
+        <button
+          onClick={() => openModal("add")}
+          className="px-6 py-2 bg-white text-black border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-paperlogy5"
+        >
           ADD
         </button>
-        <button className="px-6 py-2 bg-white text-black border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-paperlogy5">
+        <button
+          onClick={() => openModal("join")}
+          className="px-6 py-2 bg-white text-black border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-paperlogy5"
+        >
           JOIN
         </button>
       </div>
@@ -109,6 +140,37 @@ const ProjectListPage = () => {
           </tbody>
         </table>
       </section>
+      {/* 모달 */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-7 w-[90%] max-w-md shadow-lg">
+            <h2 className="text-xl font-semibold mb-6">
+              {modalType === "add" ? "새 프로젝트 생성" : "프로젝트 참가"}
+            </h2>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder={modalType === "add" ? "프로젝트명" : "프로젝트 ID"}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-6"
+            />
+            <div className="flex justify-between">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+              >
+                {modalType === "add" ? "생성" : "참가"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
