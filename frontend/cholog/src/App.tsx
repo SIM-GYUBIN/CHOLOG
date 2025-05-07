@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
+import NavigationBar from './components/NavigationBar';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import ProjectListPage from './pages/ProjectListPage';
@@ -12,20 +13,21 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app">
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element = {<LoginPage/>}></Route>
-          <Route path="/projectList" element={<ProjectListPage/>}></Route>
-          <Route path="/project/:projectId" element={<ProjectPage/>}></Route>
-          <Route path="/log/:logId" element={<LogPage/>}></Route>
-          <Route path="/report/:reportId" element={<ReportPage/>}></Route>
-          <Route path="/archive/:archiveId" element={<ArchivePage/>}></Route>
-        </Routes>
+        <NavigationBar />
+        <div className="pt-16"> {/* Add padding to account for fixed navbar */}
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/projectList" element={<ProjectListPage />} />
+            <Route path="/project/:projectId" element={<ProjectPage />} />
+            <Route path="/log/:logId" element={<LogPage />} />
+            <Route path="/report/:reportId" element={<ReportPage />} />
+            <Route path="/archive/:archiveId" element={<ArchivePage />} />
+          </Routes>
+        </div>
       </div>
     </BrowserRouter>
-  )
+  );
 }
 
-
-
-export default App
+export default App;

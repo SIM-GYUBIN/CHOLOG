@@ -12,6 +12,7 @@ import infoIcon from '@/assets/levelicon/info.png';
 import debugIcon from '@/assets/levelicon/debug.png';
 import fatalIcon from '@/assets/levelicon/fatal.png';
 import traceIcon from '@/assets/levelicon/trace.png';
+import logo from '@/assets/logo.svg';
 
 const getLevelIcon = (level: string) => {
   switch (level.toUpperCase()) {
@@ -37,6 +38,8 @@ const getLevelIcon = (level: string) => {
 const LogPage = () => {
   const { id } = useParams();
 
+  console.log(id);
+
   // 임시 데이터
   const logData = {
     type: "ERROR",
@@ -54,22 +57,33 @@ const LogPage = () => {
   ];
 
   return (
-    <div className="flex gap-6 p-8 max-w-7xl mx-auto">
+    <div className="flex gap-6 max-w-7xl mx-auto">
       {/* 메인 로그 섹션 */}
-      <div className="flex-1 bg-white rounded-lg p-6 shadow-sm">
+      <div className="flex-1 bg-white rounded-lg p-6 border border-[#E5E5E5]">
         <div className="flex items-center gap-2 mb-4">
           <img
             src="/src/assets/levelicon/error.png"
             alt="error icon"
-            className="w-6 h-6"
+            className="w-10 h-10"
           />
-          <h1 className="text-24px font-paperlogy7">{logData.type}</h1>
+          <h1 className="text-[28px] font-paperlogy7">{logData.type}</h1>
         </div>
         <div className="text-left text-gray-500 mb-6">{logData.timestamp}</div>
 
+       {/* 로그 메세지 섹션 */}
         <div className="mb-8">
-          <h2 className="text-left text-18px font-paperlogy6 mb-4">MESSAGE</h2>
-          <div className="bg-gray-50 p-4 rounded-lg font-mono text-14px">
+          <h2 className="text-left p-4 text-18px font-paperlogy6 text-[#475569]">MESSAGE</h2>
+          <div className="text-left bg-[#F8FAFC] p-4 rounded-lg font-mono text-14px shadow-sm">
+            {logData.message}
+          </div>
+        </div>
+
+        {/* 초록 LLM 섹션 */}
+        <div className="mb-8">
+          <div className="flex p-4 items-center gap-2 text-[#475569]">
+            <p>CHO:LOG EXPLANE</p>
+          </div>
+          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg font-mono text-14px shadow-sm">
             {logData.message}
           </div>
         </div>
