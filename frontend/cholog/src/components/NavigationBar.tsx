@@ -13,7 +13,7 @@ const NavigationBar = () => {
           <div className="flex-shrink-0">
             <button 
               onClick={() => navigate('/')}
-              className="focus:outline-none"
+              className="focus:outline-none cursor-pointer"
             >
               <img src={logo} alt="Cholog logo" className="h-8 mt-2" />
             </button>
