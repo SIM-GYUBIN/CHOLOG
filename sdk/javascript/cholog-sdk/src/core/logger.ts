@@ -1,8 +1,8 @@
 // src/core/logger.ts
 import { TraceContext } from "./traceContext";
-import { LogEntry, LogPayload, LogError, LogHttp, LogClient, LogEvent } from "../types"; // 타입 임포트
+import { LogEntry, LogPayload, LogError, LogHttp, LogClient, LogEvent, LogType, LogLevelType } from "../types"; // 타입 임포트
 
-type LogLevel = "info" | "warn" | "error" | "debug" | "trace"; // "log"는 info로 매핑됨
+type InternalLogLevel = "info" | "warn" | "error" | "debug" | "trace";
 
 export class Logger {
   private static projectKey: string = "";
@@ -70,8 +70,8 @@ export class Logger {
 
   /** 원본 콘솔 출력 + 큐잉 */
   private static queueAndPrint(
-    level: LogLevel, // 이제 "log"는 포함하지 않음
-    loggerName: string,
+    level: InternalLogLevel,
+    invokedBy: "console" | "cholog", // [수정] loggerName 대신 invokedBy
     ...args: any[]
   ): void {
     if (this.originalConsole) {
@@ -79,16 +79,16 @@ export class Logger {
       if (originalMethod) {
         originalMethod(...args);
       } else {
-        this.originalConsole.log(...args);
+        this.originalConsole.log(...args); // trace 같은 경우 대비
       }
     }
-    this.prepareAndQueueLog(level, loggerName, args);
+    this.prepareAndQueueLog(level, invokedBy, args);
   }
 
   // 로그를 최종 구조로 만들고 큐에 넣는 핵심 메서드
   private static prepareAndQueueLog(
-    level: LogLevel,
-    loggerName: string,
+    level: InternalLogLevel,
+    invokedBy: "console" | "cholog", // [수정] loggerName 대신 invokedBy 사용
     args: any[],
     // 다음 인자들은 특정 모듈에서 직접 구조화해서 넘겨줄 때 사용
     directError?: LogError,
@@ -136,6 +136,18 @@ export class Logger {
       }
     }
 
+    // logType 결정 로직
+    let determinedLogType: LogType;
+    if (directError) {
+      determinedLogType = "error";
+    } else if (directHttp) {
+      determinedLogType = "network";
+    } else if (directEvent) {
+      determinedLogType = "event";
+    } else {
+      determinedLogType = "general";
+    }
+
     // 직접 전달된 구조화된 데이터 할당
     if (directError) otherFields.error = directError;
     if (directHttp) otherFields.http = directHttp;
@@ -144,14 +156,15 @@ export class Logger {
 
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
-      level: level.toUpperCase(),
+      level: level.toUpperCase() as LogLevelType, // LogLevelType으로 캐스팅
       message,
       source: "frontend",
       projectKey: this.projectKey,
       environment: this.environment,
       traceId: TraceContext.getCurrentTraceId(),
-      loggerName,
-      ...otherFields, // error, http, client, event 객체 포함
+      loggerName: invokedBy,
+      logType: determinedLogType,
+      ...otherFields,
     };
 
     // payload가 비어있지 않다면 추가
@@ -161,31 +174,46 @@ export class Logger {
 
     // client 정보는 항상 포함 (브라우저 환경에서만)
     if (typeof window !== "undefined" && typeof navigator !== "undefined" && typeof location !== "undefined") {
-      if (!entry.client) entry.client = {} as LogClient; // 초기화
-      entry.client.url = window.location.href;
-      entry.client.userAgent = navigator.userAgent;
-      if (document.referrer) {
+      if (!entry.client) entry.client = {} as LogClient;
+      entry.client.url = entry.client.url || window.location.href;
+      entry.client.userAgent = entry.client.userAgent || navigator.userAgent;
+      if (document.referrer && !entry.client.referrer) {
         entry.client.referrer = document.referrer;
       }
     }
 
-    const size = new Blob([JSON.stringify(entry)]).size;
-    this.logQueue.push(entry);
-    this.currentQueueSize += size;
+    try {
+      const size = new Blob([JSON.stringify(entry)]).size;
+      this.logQueue.push(entry);
+      this.currentQueueSize += size;
 
-    if (this.currentQueueSize > this.maxQueueSize) {
-      this.sendBatch();
-    } else {
-      this.scheduleBatch();
+      if (this.currentQueueSize >= this.maxQueueSize) {
+        this.sendBatch(); // 즉시 전송
+      } else {
+        this.scheduleBatch(); // 다음 배치 스케줄
+      }
+    } catch (e) {
+      // Blob 생성 실패 또는 기타 이유로 에러 발생 시 (예: Node.js 환경 테스트)
+      // 단순 푸시 및 개수 기반 관리로 fallback (선택적)
+      this.originalConsole?.error?.("Cholog: Error calculating log size, falling back to count-based queue.", e);
+      this.logQueue.push(entry);
+      if (this.logQueue.length > 20) {
+        // 예시: 개수 기반 fallback 최대치
+        this.sendBatch();
+      } else {
+        this.scheduleBatch();
+      }
     }
   }
 
   /** 일정 시간 후 배치 전송 예약 */
   private static scheduleBatch(): void {
-    if (this.batchTimeoutId === null) {
+    if (this.batchTimeoutId === null && this.logQueue.length > 0) {
+      // 큐에 내용이 있을 때만 스케줄
       this.batchTimeoutId = window.setTimeout(async () => {
+        this.batchTimeoutId = null; // 먼저 null로 만들어야 sendBatch 내부에서 다시 scheduleBatch 가능
         await this.sendBatch();
-        this.batchTimeoutId = null;
+        // sendBatch 후에도 큐에 남아있을 수 있는 로그들을 위해 다시 스케줄링 (재귀 호출 방지)
         if (this.logQueue.length > 0) {
           this.scheduleBatch();
         }
@@ -197,6 +225,12 @@ export class Logger {
   private static async sendBatch(): Promise<void> {
     if (this.logQueue.length === 0) return;
 
+    // 현재 타이머가 있다면 취소 (즉시 전송 시 중복 방지)
+    if (this.batchTimeoutId !== null) {
+      clearTimeout(this.batchTimeoutId);
+      this.batchTimeoutId = null;
+    }
+
     const batch = [...this.logQueue];
     this.logQueue = [];
     this.currentQueueSize = 0;
@@ -206,20 +240,25 @@ export class Logger {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "App-Key": this.projectKey,
+          "App-Key": this.projectKey, // 필요시 서버와 협의된 인증 헤더 사용
         },
         body: JSON.stringify(batch),
       });
       if (!res.ok) {
-        throw new Error(`Log send failed: ${res.status}`);
+        // 전송 실패 시 로그를 다시 큐에 넣는 것을 고려할 수 있으나, 무한 루프 주의
+        // 여기서는 에러만 출력
+        const errorText = await res.text();
+        throw new Error(`Log send failed: ${res.status} - ${errorText}`);
       }
     } catch (err) {
-      // 전송 오류는 원본 콘솔로 출력
       if (this.originalConsole) {
-        this.originalConsole.error("Logger sendBatch error:", err);
+        this.originalConsole.error("Cholog: Logger sendBatch error:", err);
       } else {
-        console.error("Logger sendBatch error (original console unavailable):", err);
+        console.error("Cholog: Logger sendBatch error (original console unavailable):", err);
       }
+      // 전송 실패한 batch를 다시 큐에 넣는 로직 (선택적, 신중하게)
+      // this.logQueue.unshift(...batch);
+      // this.currentQueueSize = batch.reduce((sum, entry) => sum + new Blob([JSON.stringify(entry)]).size, 0);
     }
   }
 
@@ -238,6 +277,7 @@ export class Logger {
     this.prepareAndQueueLog("warn", "cholog", [message, customPayload || {}]);
   }
   public static error(message: string, customPayload?: LogPayload): void {
+    // 일반 메시지용 에러
     this.prepareAndQueueLog("error", "cholog", [message, customPayload || {}]);
   }
   public static debug(message: string, customPayload?: LogPayload): void {
@@ -247,24 +287,25 @@ export class Logger {
     this.prepareAndQueueLog("trace", "cholog", [message, customPayload || {}]);
   }
 
-  // 에러 로깅 (ErrorCatcher에서 주로 사용)
-  public static logError(errorMessage: string, errorDetails?: LogError, clientDetails?: LogClient): void {
-    this.prepareAndQueueLog("error", "cholog-error", [errorMessage], errorDetails, undefined, clientDetails);
+  // 에러 로깅 (ErrorCatcher에서 사용, logType: "error")
+  public static logError(errorMessage: string, errorDetails: LogError, clientDetails?: LogClient): void {
+    this.prepareAndQueueLog("error", "cholog", [errorMessage], errorDetails, undefined, clientDetails);
   }
 
-  // 네트워크 로깅 (NetworkInterceptor에서 주로 사용)
+  // 네트워크 로깅 (NetworkInterceptor에서 사용, logType: "network")
   public static logHttp(
     message: string,
     httpDetails: LogHttp,
-    clientDetails?: LogClient,
-    errorDetails?: LogError
+    clientDetails?: LogClient, // Logger가 기본 수집하므로 선택적
+    errorDetails?: LogError // 네트워크 오류 시 함께 전달 가능
   ): void {
-    const level = errorDetails || (httpDetails.response && httpDetails.response.statusCode >= 400) ? "error" : "info";
-    this.prepareAndQueueLog(level, "cholog-network", [message], errorDetails, httpDetails, clientDetails);
+    const level: InternalLogLevel =
+      errorDetails || (httpDetails.response && httpDetails.response.statusCode >= 400) ? "error" : "info";
+    this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
 
-  // 이벤트 로깅 (EventTracker에서 주로 사용)
+  // 이벤트 로깅 (EventTracker에서 사용, logType: "event")
   public static logEvent(message: string, eventDetails: LogEvent, clientDetails?: LogClient): void {
-    this.prepareAndQueueLog("info", "cholog-event", [message], undefined, undefined, clientDetails, eventDetails);
+    this.prepareAndQueueLog("info", "cholog", [message], undefined, undefined, clientDetails, eventDetails);
   }
 }

@@ -3,13 +3,9 @@ var TraceContext = class {
   static {
     this.currentTraceId = null;
   }
-  static {
-    this.currentSpanId = null;
-  }
-  // 선택적: 스팬 개념 도입 시
+  // private static currentSpanId: string | null = null; // 스팬 개념 도입 시
   static startNewTrace() {
     this.currentTraceId = this.generateId("trace");
-    this.currentSpanId = null;
     return this.currentTraceId;
   }
   // 필요시 Span ID도 유사하게 관리
@@ -24,11 +20,11 @@ var TraceContext = class {
   static setCurrentTraceId(traceId) {
     this.currentTraceId = traceId;
   }
-  static generateId(prefix) {
-    if (crypto && crypto.randomUUID) {
+  static generateId() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-    return `<span class="math-inline">{prefix}-</span>{Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    return `trace-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 };
 
@@ -100,7 +96,7 @@ var Logger = class {
     console.trace = (...args) => this.queueAndPrint("trace", "console", ...args);
   }
   /** 원본 콘솔 출력 + 큐잉 */
-  static queueAndPrint(level, loggerName, ...args) {
+  static queueAndPrint(level, invokedBy, ...args) {
     if (this.originalConsole) {
       const originalMethod = this.originalConsole[level];
       if (originalMethod) {
@@ -109,10 +105,10 @@ var Logger = class {
         this.originalConsole.log(...args);
       }
     }
-    this.prepareAndQueueLog(level, loggerName, args);
+    this.prepareAndQueueLog(level, invokedBy, args);
   }
   // 로그를 최종 구조로 만들고 큐에 넣는 핵심 메서드
-  static prepareAndQueueLog(level, loggerName, args, directError, directHttp, directClient, directEvent) {
+  static prepareAndQueueLog(level, invokedBy, args, directError, directHttp, directClient, directEvent) {
     if (!this.projectKey || !this.environment) {
       if (this.originalConsole) {
         this.originalConsole.warn("Cholog: SDK not initialized. Log not sent.", ...args);
@@ -138,6 +134,16 @@ var Logger = class {
         message = args.map((arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)).join(" ");
       }
     }
+    let determinedLogType;
+    if (directError) {
+      determinedLogType = "error";
+    } else if (directHttp) {
+      determinedLogType = "network";
+    } else if (directEvent) {
+      determinedLogType = "event";
+    } else {
+      determinedLogType = "general";
+    }
     if (directError) otherFields.error = directError;
     if (directHttp) otherFields.http = directHttp;
     if (directClient) otherFields.client = directClient;
@@ -145,41 +151,52 @@ var Logger = class {
     const entry = {
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
       level: level.toUpperCase(),
+      // LogLevelType으로 캐스팅
       message,
       source: "frontend",
       projectKey: this.projectKey,
       environment: this.environment,
       traceId: TraceContext.getCurrentTraceId(),
-      loggerName,
+      loggerName: invokedBy,
+      logType: determinedLogType,
       ...otherFields
-      // error, http, client, event 객체 포함
     };
     if (Object.keys(payload).length > 0) {
       entry.payload = payload;
     }
     if (typeof window !== "undefined" && typeof navigator !== "undefined" && typeof location !== "undefined") {
       if (!entry.client) entry.client = {};
-      entry.client.url = window.location.href;
-      entry.client.userAgent = navigator.userAgent;
-      if (document.referrer) {
+      entry.client.url = entry.client.url || window.location.href;
+      entry.client.userAgent = entry.client.userAgent || navigator.userAgent;
+      if (document.referrer && !entry.client.referrer) {
         entry.client.referrer = document.referrer;
       }
     }
-    const size = new Blob([JSON.stringify(entry)]).size;
-    this.logQueue.push(entry);
-    this.currentQueueSize += size;
-    if (this.currentQueueSize > this.maxQueueSize) {
-      this.sendBatch();
-    } else {
-      this.scheduleBatch();
+    try {
+      const size = new Blob([JSON.stringify(entry)]).size;
+      this.logQueue.push(entry);
+      this.currentQueueSize += size;
+      if (this.currentQueueSize >= this.maxQueueSize) {
+        this.sendBatch();
+      } else {
+        this.scheduleBatch();
+      }
+    } catch (e) {
+      this.originalConsole?.error?.("Cholog: Error calculating log size, falling back to count-based queue.", e);
+      this.logQueue.push(entry);
+      if (this.logQueue.length > 20) {
+        this.sendBatch();
+      } else {
+        this.scheduleBatch();
+      }
     }
   }
   /** 일정 시간 후 배치 전송 예약 */
   static scheduleBatch() {
-    if (this.batchTimeoutId === null) {
+    if (this.batchTimeoutId === null && this.logQueue.length > 0) {
       this.batchTimeoutId = window.setTimeout(async () => {
-        await this.sendBatch();
         this.batchTimeoutId = null;
+        await this.sendBatch();
         if (this.logQueue.length > 0) {
           this.scheduleBatch();
         }
@@ -189,6 +206,10 @@ var Logger = class {
   /** 큐에 쌓인 로그를 서버로 전송 */
   static async sendBatch() {
     if (this.logQueue.length === 0) return;
+    if (this.batchTimeoutId !== null) {
+      clearTimeout(this.batchTimeoutId);
+      this.batchTimeoutId = null;
+    }
     const batch = [...this.logQueue];
     this.logQueue = [];
     this.currentQueueSize = 0;
@@ -198,17 +219,19 @@ var Logger = class {
         headers: {
           "Content-Type": "application/json",
           "App-Key": this.projectKey
+          // 필요시 서버와 협의된 인증 헤더 사용
         },
         body: JSON.stringify(batch)
       });
       if (!res.ok) {
-        throw new Error(`Log send failed: ${res.status}`);
+        const errorText = await res.text();
+        throw new Error(`Log send failed: ${res.status} - ${errorText}`);
       }
     } catch (err) {
       if (this.originalConsole) {
-        this.originalConsole.error("Logger sendBatch error:", err);
+        this.originalConsole.error("Cholog: Logger sendBatch error:", err);
       } else {
-        console.error("Logger sendBatch error (original console unavailable):", err);
+        console.error("Cholog: Logger sendBatch error (original console unavailable):", err);
       }
     }
   }
@@ -234,18 +257,18 @@ var Logger = class {
   static trace(message, customPayload) {
     this.prepareAndQueueLog("trace", "cholog", [message, customPayload || {}]);
   }
-  // 에러 로깅 (ErrorCatcher에서 주로 사용)
+  // 에러 로깅 (ErrorCatcher에서 사용, logType: "error")
   static logError(errorMessage, errorDetails, clientDetails) {
-    this.prepareAndQueueLog("error", "cholog-error", [errorMessage], errorDetails, void 0, clientDetails);
+    this.prepareAndQueueLog("error", "cholog", [errorMessage], errorDetails, void 0, clientDetails);
   }
-  // 네트워크 로깅 (NetworkInterceptor에서 주로 사용)
+  // 네트워크 로깅 (NetworkInterceptor에서 사용, logType: "network")
   static logHttp(message, httpDetails, clientDetails, errorDetails) {
     const level = errorDetails || httpDetails.response && httpDetails.response.statusCode >= 400 ? "error" : "info";
-    this.prepareAndQueueLog(level, "cholog-network", [message], errorDetails, httpDetails, clientDetails);
+    this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
-  // 이벤트 로깅 (EventTracker에서 주로 사용)
+  // 이벤트 로깅 (EventTracker에서 사용, logType: "event")
   static logEvent(message, eventDetails, clientDetails) {
-    this.prepareAndQueueLog("info", "cholog-event", [message], void 0, void 0, clientDetails, eventDetails);
+    this.prepareAndQueueLog("info", "cholog", [message], void 0, void 0, clientDetails, eventDetails);
   }
 };
 
@@ -258,49 +281,54 @@ var NetworkInterceptor = class _NetworkInterceptor {
     this.originalFetch = null;
   }
   static {
+    // XMLHttpRequest 관련 타입은 any로 처리하거나, 더 상세한 타입 정의 필요 시 추가
+    this.originalXhrOpen = null;
+  }
+  static {
     this.originalXhrSend = null;
   }
   static patchFetch() {
+    if (typeof window === "undefined" || !window.fetch) return;
     this.originalFetch = window.fetch;
-    const self = this;
     window.fetch = async (input, init) => {
-      const requestUrlStr = typeof input === "string" ? input : input.toString();
-      if (requestUrlStr.startsWith(Logger.getApiEndpoint())) {
+      const requestUrl = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (requestUrl.startsWith(Logger.getApiEndpoint())) {
         return _NetworkInterceptor.originalFetch.call(window, input, init);
       }
-      let traceId = TraceContext.getCurrentTraceId();
-      if (!traceId) traceId = TraceContext.startNewTrace();
+      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
       const modifiedInit = { ...init || {} };
       modifiedInit.headers = new Headers(modifiedInit.headers);
-      modifiedInit.headers.set("X-Request-ID", traceId);
+      if (!modifiedInit.headers.has("X-Request-ID")) {
+        modifiedInit.headers.set("X-Request-ID", traceId);
+      }
       const startTime = Date.now();
       const requestDetails = {
-        method: (modifiedInit.method || "GET").toUpperCase(),
-        url: requestUrlStr
+        method: (modifiedInit.method || (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") || "GET").toUpperCase(),
+        url: requestUrl
       };
-      Logger.logHttp(`API Request START: ${requestDetails.method} ${requestDetails.url}`, { request: requestDetails });
       try {
-        const response = await self.originalFetch.call(window, input, modifiedInit);
-        const duration = Date.now() - startTime;
+        const response = await _NetworkInterceptor.originalFetch.call(window, input, modifiedInit);
+        const durationMs = Date.now() - startTime;
         const responseDetails = { statusCode: response.status };
-        Logger.logHttp(`API Request END: ${response.status} ${response.url}`, {
-          request: requestDetails,
-          response: responseDetails,
-          durationMs: duration
-        });
+        Logger.logHttp(
+          `API Call: ${requestDetails.method} ${requestDetails.url} - Status ${response.status}`,
+          { request: requestDetails, response: responseDetails, durationMs },
+          void 0
+          // clientDetails
+        );
         return response;
       } catch (error) {
-        const duration = Date.now() - startTime;
+        const durationMs = Date.now() - startTime;
         const errorDetails = {
           type: error?.name || "FetchError",
           message: error?.message || "Network request failed",
           stacktrace: error?.stack
         };
         Logger.logHttp(
-          `API Request FAILED: ${requestDetails.method} ${requestDetails.url}`,
-          { request: requestDetails, durationMs: duration },
+          `API Call FAILED: ${requestDetails.method} ${requestDetails.url}`,
+          { request: requestDetails, durationMs },
           void 0,
-          // clientDetails는 Logger가 채움
+          // clientDetails
           errorDetails
         );
         throw error;
@@ -308,66 +336,57 @@ var NetworkInterceptor = class _NetworkInterceptor {
     };
   }
   static patchXMLHttpRequest() {
+    if (typeof window === "undefined" || !window.XMLHttpRequest) return;
+    this.originalXhrOpen = XMLHttpRequest.prototype.open;
     this.originalXhrSend = XMLHttpRequest.prototype.send;
-    const originalXhrOpen = XMLHttpRequest.prototype.open;
+    const self = this;
     XMLHttpRequest.prototype.open = function(method, url) {
       this._chologMethod = method;
       this._chologUrl = typeof url === "string" ? url : url.toString();
-      originalXhrOpen.apply(this, arguments);
+      if (this._chologUrl.startsWith(Logger.getApiEndpoint())) {
+        this._chologSkip = true;
+      }
+      self.originalXhrOpen.apply(this, arguments);
     };
     XMLHttpRequest.prototype.send = function(body) {
-      const xhr = this;
-      const requestUrlStr = xhr._chologUrl;
-      if (requestUrlStr && requestUrlStr.startsWith(Logger.getApiEndpoint())) {
-        return _NetworkInterceptor.originalXhrSend.apply(this, arguments);
+      if (this._chologSkip) {
+        return self.originalXhrSend.apply(this, arguments);
       }
-      let traceId = TraceContext.getCurrentTraceId();
-      if (!traceId) traceId = TraceContext.startNewTrace();
-      xhr._chologTraceId = traceId;
+      const xhr = this;
+      xhr._chologStartTime = Date.now();
+      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
       this.setRequestHeader("X-Request-ID", traceId);
       const requestDetails = {
         method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
         url: xhr._chologUrl || "UnknownURL"
       };
-      const handleLoadEnd = () => {
-        if (!xhr._chologLogged) {
-          xhr._chologLogged = true;
-          const duration = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : void 0;
-          const responseDetails = { statusCode: xhr.status };
-          let errorDetails = void 0;
-          if (xhr.status === 0 || xhr.status >= 400) {
-            errorDetails = {
-              type: xhr.statusText || "XHRError",
-              message: `XHR request failed with status ${xhr.status}`
-            };
-          }
-          Logger.logHttp(
-            `API Request ${errorDetails ? "FAILED" : "END"}: ${xhr.status} ${xhr.responseURL || requestDetails.url}`,
-            { request: requestDetails, response: responseDetails, durationMs: duration },
-            void 0,
-            errorDetails
-          );
+      const onLoadEnd = () => {
+        if (xhr._chologLogged) return;
+        xhr._chologLogged = true;
+        const durationMs = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : void 0;
+        const responseDetails = { statusCode: xhr.status };
+        let errorDetails = void 0;
+        if (xhr.status === 0 || xhr.status >= 400) {
+          errorDetails = {
+            type: xhr.statusText || "XHRError",
+            message: `XHR request to ${requestDetails.url} failed with status ${xhr.status || "N/A"}. ReadyState: ${xhr.readyState}`
+          };
         }
-        xhr.removeEventListener("load", handleLoadEnd);
-        xhr.removeEventListener("error", handleLoadEnd);
-        xhr.removeEventListener("abort", handleLoadEnd);
-        xhr.removeEventListener("timeout", handleLoadEnd);
+        Logger.logHttp(
+          `XHR Call: ${requestDetails.method} ${requestDetails.url} - Status ${xhr.status}`,
+          { request: requestDetails, response: responseDetails, durationMs },
+          void 0,
+          // clientDetails
+          errorDetails
+        );
+        xhr.removeEventListener("loadend", onLoadEnd);
       };
-      xhr.addEventListener("loadstart", () => {
-        xhr._chologStartTime = Date.now();
-        Logger.logHttp(`API Request START: ${requestDetails.method} ${requestDetails.url}`, {
-          request: requestDetails
-        });
-      });
-      xhr.addEventListener("load", handleLoadEnd);
-      xhr.addEventListener("error", handleLoadEnd);
-      xhr.addEventListener("abort", handleLoadEnd);
-      xhr.addEventListener("timeout", handleLoadEnd);
-      return _NetworkInterceptor.originalXhrSend.apply(this, arguments);
+      xhr.addEventListener("loadend", onLoadEnd);
+      self.originalXhrSend.apply(this, arguments);
     };
   }
   static init() {
-    if (this.isInitialized || typeof window === "undefined") return;
+    if (this.isInitialized) return;
     try {
       this.patchFetch();
       this.patchXMLHttpRequest();
@@ -384,6 +403,8 @@ var ErrorCatcher = class {
     this.isInitialized = false;
   }
   static {
+    // handleGlobalError 및 handleUnhandledRejection 메서드는 거의 동일하게 유지 가능
+    // Logger.logError 호출 부분이 이미 새로운 시그니처와 잘 맞음
     this.handleGlobalError = (eventOrMessage, source, lineno, colno, errorObj) => {
       let logMessage = "Unhandled global error";
       const errorDetails = { type: "UnknownError", message: "" };
@@ -400,8 +421,10 @@ var ErrorCatcher = class {
         errorDetails.message = eventOrMessage;
         if (actualError) {
           errorDetails.type = actualError.name;
-          errorDetails.message = actualError.message;
           if (actualError.stack) errorDetails.stacktrace = actualError.stack;
+        } else {
+          errorDetails.type = "GenericError";
+          if (source) errorDetails.message += ` in ${source}`;
         }
       } else if (actualError) {
         logMessage = actualError.message;
@@ -410,10 +433,13 @@ var ErrorCatcher = class {
         if (actualError.stack) errorDetails.stacktrace = actualError.stack;
       }
       if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
-        Logger["originalConsole"]?.warn?.("Cholog SDK: Suppressed potential recursive error log.", logMessage);
+        console.warn("Cholog SDK: Suppressed potential recursive error log.", logMessage);
         return;
       }
-      Logger.logError(logMessage, errorDetails);
+      if (typeof window !== "undefined") {
+        clientDetails.url = window.location.href;
+      }
+      Logger.logError(logMessage, errorDetails, clientDetails);
     };
   }
   static {
@@ -421,6 +447,7 @@ var ErrorCatcher = class {
       let reason = event.reason;
       let logMessage = "Unhandled promise rejection";
       const errorDetails = { type: "UnhandledRejection", message: "" };
+      const clientDetails = {};
       if (reason instanceof Error) {
         logMessage = reason.message || "Promise rejected with an Error";
         errorDetails.type = reason.name || "UnhandledRejectionError";
@@ -435,10 +462,13 @@ var ErrorCatcher = class {
         logMessage = `Unhandled promise rejection: ${errorDetails.message}`;
       }
       if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
-        Logger["originalConsole"]?.warn?.("Cholog SDK: Suppressed potential recursive error log.", logMessage);
+        console.warn("Cholog SDK: Suppressed potential recursive error log.", logMessage);
         return;
       }
-      Logger.logError(logMessage, errorDetails);
+      if (typeof window !== "undefined") {
+        clientDetails.url = window.location.href;
+      }
+      Logger.logError(logMessage, errorDetails, clientDetails);
     };
   }
   static init() {
@@ -459,41 +489,52 @@ var ErrorCatcher = class {
 var EventTracker = class {
   static {
     this.config = {
-      // 클릭 시 새 트레이스 시작 및 로깅은 중요한 요소에만 한정
-      // 아래 선택자는 예시이며, 사용자가 커스터마이징 가능하도록 init 옵션으로 받는 것이 좋음
       significantElementSelector: 'button, a, [role="button"], input[type="submit"], [data-cholog-action]'
     };
   }
   static init(options) {
+    if (typeof window === "undefined") return;
     if (options?.significantElementSelector) {
       this.config.significantElementSelector = options.significantElementSelector;
     }
     this.logNavigation(window.location.href, "initial_load");
     window.addEventListener("hashchange", () => this.logNavigation(window.location.href, "hash_change"));
+    window.addEventListener("popstate", () => this.logNavigation(window.location.href, "popstate_navigation"));
     document.addEventListener(
       "click",
       (event) => {
         const targetElement = event.target;
-        if (targetElement.closest(this.config.significantElementSelector)) {
-          const newTraceId = TraceContext.startNewTrace();
+        const closestSignificantElement = targetElement.closest(this.config.significantElementSelector);
+        if (closestSignificantElement) {
+          TraceContext.startNewTrace();
           const eventDetails = {
-            type: "user_action_start",
+            type: "user_interaction_click",
             // 또는 "significant_click"
-            targetSelector: this.getElementPath(targetElement)
+            targetSelector: this.getElementPath(closestSignificantElement),
+            properties: {
+              // textContent는 개인정보 포함 가능성 있어 주의
+              // elementText: closestSignificantElement.textContent?.trim().substring(0, 50) || "",
+              elementType: closestSignificantElement.tagName.toLowerCase(),
+              elementId: closestSignificantElement.id || void 0,
+              elementClasses: closestSignificantElement.className || void 0
+            }
           };
-          Logger.logEvent(`User action started: Click on ${eventDetails.targetSelector}`, eventDetails);
+          Logger.logEvent(`User clicked on ${eventDetails.targetSelector}`, eventDetails);
         }
       },
       true
-      // 캡처 단계
+      // Use capture phase
     );
   }
   static logNavigation(url, navigationType) {
     TraceContext.startNewTrace();
-    const eventDetails = { type: navigationType };
-    Logger.logEvent(`Navigation to ${url}`, eventDetails);
+    const eventDetails = {
+      type: navigationType,
+      // 예: "initial_load", "spa_navigation"
+      properties: { currentUrl: url }
+    };
+    Logger.logEvent(`Navigation event: ${navigationType} to ${url}`, eventDetails);
   }
-  // getElementPath는 이전과 동일하게 유지
   static getElementPath(element) {
     const parts = [];
     let currentElement = element;
@@ -507,8 +548,8 @@ var EventTracker = class {
         selector += `.${Array.from(currentElement.classList).join(".")}`;
       }
       parts.unshift(selector);
+      if (currentElement === document.body || parts.length >= 7) break;
       currentElement = currentElement.parentElement;
-      if (parts.length > 5) break;
     }
     return parts.join(" > ");
   }

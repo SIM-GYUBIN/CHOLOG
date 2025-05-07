@@ -1,4 +1,8 @@
-// src/types.ts (신규 파일)
+// src/types.ts
+
+export type LogLevelType = "INFO" | "WARN" | "ERROR" | "DEBUG" | "TRACE";
+export type LogType = "general" | "error" | "network" | "event";
+
 export interface LogPayload {
   [key: string]: any;
 }
@@ -33,6 +37,7 @@ export interface LogClient {
 export interface LogEvent {
   type: string;
   targetSelector?: string;
+  properties?: Record<string, any>;
 }
 
 export interface LogEntry {
@@ -44,10 +49,12 @@ export interface LogEntry {
   environment: string;
   traceId: string | null;
 
+  loggerName: "console" | "cholog";
+  logType: LogType;
+
   payload?: LogPayload;
   error?: LogError;
   http?: LogHttp;
   client?: LogClient;
   event?: LogEvent;
-  loggerName?: string;
 }

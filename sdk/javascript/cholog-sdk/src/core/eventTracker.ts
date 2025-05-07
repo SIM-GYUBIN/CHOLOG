@@ -1,55 +1,66 @@
 // src/core/eventTracker.ts
 import { Logger } from "./logger";
 import { TraceContext } from "./traceContext";
-import { LogEvent, LogClient } from "../types";
+import {
+  LogEvent,
+  LogClient, // LogClient는 Logger가 자동 수집하므로 여기서 명시적 전달은 선택적
+} from "../types";
 
 export class EventTracker {
   private static config = {
-    // 클릭 시 새 트레이스 시작 및 로깅은 중요한 요소에만 한정
-    // 아래 선택자는 예시이며, 사용자가 커스터마이징 가능하도록 init 옵션으로 받는 것이 좋음
     significantElementSelector: 'button, a, [role="button"], input[type="submit"], [data-cholog-action]',
   };
 
   public static init(options?: { significantElementSelector?: string }): void {
+    if (typeof window === "undefined") return;
+
     if (options?.significantElementSelector) {
       this.config.significantElementSelector = options.significantElementSelector;
     }
 
-    // 페이지 로드/네비게이션 시 로깅
     this.logNavigation(window.location.href, "initial_load");
 
-    // SPA 네비게이션 감지 (hashchange, popstate 등)
-    // pushState/replaceState는 직접 감지 어려우므로, 라이브러리 사용 또는 애플리케이션에서 명시적 호출 필요
     window.addEventListener("hashchange", () => this.logNavigation(window.location.href, "hash_change"));
-    // window.addEventListener("popstate", () => this.logNavigation(window.location.href, "popstate"));
+    // SPA 라우터 변경 감지를 위해 popstate 외에도 pushState, replaceState 래핑 고려 (더 복잡)
+    window.addEventListener("popstate", () => this.logNavigation(window.location.href, "popstate_navigation"));
 
-    // 중요한 요소 클릭 시 로깅
     document.addEventListener(
       "click",
       (event) => {
         const targetElement = event.target as Element;
-        if (targetElement.closest(this.config.significantElementSelector)) {
-          // 중요한 요소 클릭 시 새로운 Trace 시작 및 이벤트 로깅
-          const newTraceId = TraceContext.startNewTrace(); // 새로운 액션 시작으로 간주
+        const closestSignificantElement = targetElement.closest(this.config.significantElementSelector);
+
+        if (closestSignificantElement) {
+          TraceContext.startNewTrace(); // 클릭 시 새 트레이스 시작은 너무 빈번할 수 있음. 필요시 정책 결정.
           const eventDetails: LogEvent = {
-            type: "user_action_start", // 또는 "significant_click"
-            targetSelector: this.getElementPath(targetElement),
+            type: "user_interaction_click", // 또는 "significant_click"
+            targetSelector: this.getElementPath(closestSignificantElement),
+            properties: {
+              // textContent는 개인정보 포함 가능성 있어 주의
+              // elementText: closestSignificantElement.textContent?.trim().substring(0, 50) || "",
+              elementType: closestSignificantElement.tagName.toLowerCase(),
+              elementId: closestSignificantElement.id || undefined,
+              elementClasses: closestSignificantElement.className || undefined,
+            },
           };
-          Logger.logEvent(`User action started: Click on ${eventDetails.targetSelector}`, eventDetails);
+          // Logger.logEvent 호출 시 clientDetails는 Logger가 자동 수집
+          Logger.logEvent(`User clicked on ${eventDetails.targetSelector}`, eventDetails);
         }
-        // "아무곳이나 클릭"하는 일반 클릭은 로깅하지 않음
       },
-      true // 캡처 단계
+      true // Use capture phase
     );
   }
 
   private static logNavigation(url: string, navigationType: string): void {
-    TraceContext.startNewTrace(); // 페이지 이동/로드는 새로운 Trace로 간주
-    const eventDetails: LogEvent = { type: navigationType }; // "initial_load", "hash_change" 등
-    Logger.logEvent(`Navigation to ${url}`, eventDetails);
+    // 페이지 로드/네비게이션은 새로운 컨텍스트로 간주하여 새 Trace ID 시작
+    TraceContext.startNewTrace();
+    const eventDetails: LogEvent = {
+      type: navigationType, // 예: "initial_load", "spa_navigation"
+      properties: { currentUrl: url },
+    };
+    Logger.logEvent(`Navigation event: ${navigationType} to ${url}`, eventDetails);
   }
 
-  // getElementPath는 이전과 동일하게 유지
   private static getElementPath(element: Element): string {
     const parts: string[] = [];
     let currentElement: Element | null = element;
@@ -58,14 +69,14 @@ export class EventTracker {
       if (currentElement.id) {
         selector += `#${currentElement.id}`;
         parts.unshift(selector);
-        break; // id가 있으면 그걸로 종료하는 것이 일반적
+        break;
       } else if (currentElement.classList && currentElement.classList.length > 0) {
         selector += `.${Array.from(currentElement.classList).join(".")}`;
       }
-      // 형제 요소 중 몇 번째인지 (nth-child) 추가하면 더 정확해지지만 복잡도 증가. 우선은 생략.
+      // nth-child 로직은 복잡성을 증가시키므로, 우선 단순 선택자로 유지
       parts.unshift(selector);
+      if (currentElement === document.body || parts.length >= 7) break; // 최대 깊이 제한
       currentElement = currentElement.parentElement;
-      if (parts.length > 5) break; // 너무 길어지는 것 방지 (선택)
     }
     return parts.join(" > ");
   }
