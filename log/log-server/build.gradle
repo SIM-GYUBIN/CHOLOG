@@ -34,3 +34,12 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// 왜인지 dockerfile에서 jar를 찾지 못해서 추가함 (jar가 2개 생김..)
+bootJar {
+    archiveFileName = 'log-server.jar' // 생성될 fat JAR 파일의 이름을 'log-server.jar'로 고정합니다.
+}
+
+jar {
+    enabled = false // 기본 'jar' 태스크를 비활성화하여 '-plain.jar' 파일이 생성되지 않도록 합니다.
+}
