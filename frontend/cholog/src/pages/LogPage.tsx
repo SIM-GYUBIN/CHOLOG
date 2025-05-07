@@ -12,7 +12,6 @@ import infoIcon from '@/assets/levelicon/info.png';
 import debugIcon from '@/assets/levelicon/debug.png';
 import fatalIcon from '@/assets/levelicon/fatal.png';
 import traceIcon from '@/assets/levelicon/trace.png';
-import logo from '@/assets/logo.svg';
 
 const getLevelIcon = (level: string) => {
   switch (level.toUpperCase()) {
