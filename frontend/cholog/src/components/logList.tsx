@@ -77,9 +77,9 @@ const mockLogs = [
 
 const LogList = () => {
   return (
-    <div className='max-w-[60vw] mx-auto rounded-[24px] p-4'>
+    <div className='rounded-[24px] p-4'>
         <div className='font-[paperlogy6] text-start mx-3 text-[24px] text-slate-600 mb-2'>Log</div>
-    <div className="max-w-[60vw] mx-auto border border-slate-200 rounded-[24px] shadow p-4 h-[50vh] overflow-y-auto">
+    <div className="border border-slate-200 rounded-[24px] shadow p-4 h-[50vh] overflow-y-auto">
               <div className="flex text-start items-center gap-10 border-b-2 border-slate-300 px-3 py-4 w-full text-slate-600 font-[paperlogy7] text-[16px]">
                 <div className="basis-[15%]">Level</div>
                 <div className="basis-[10%]">Part</div>
