@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import exitIcon from '@/assets/exit.svg';
+import deleteIcon from '@/assets/delete.svg';
 
 interface Project {
   id: number;
@@ -53,8 +55,15 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
               {project.date}
             </td>
             <td className="w-12 p-4">
-              <button className="text-gray-400 hover:text-gray-600">
-                →
+              <button
+                className="focus:outline-none cursor-pointer"
+              >
+                <img src={exitIcon} alt="Cholog logo" className="h-5 mt-2 mx-1" />
+              </button>
+              <button
+                className="focus:outline-none cursor-pointer"
+              >
+                <img src={deleteIcon} alt="Cholog logo" className="h-5 mt-2 mx-1" />
               </button>
             </td>
           </tr>

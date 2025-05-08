@@ -31,7 +31,7 @@ const ProjectListPage = () => {
 
   const openModal = (type: "add" | "join") => {
     setModalType(type);
-    setShowModal(true);
+    setShowModal(true);  
     setInputValue("");
   };
 

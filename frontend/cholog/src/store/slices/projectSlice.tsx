@@ -1,9 +1,8 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api/axios';
 import {
   ProjectListResponse,
   ProjectState,
-  Project,
   CreateProjectRequest,
   CreateProjectResponse,
   UpdateProjectRequest,
@@ -18,12 +17,14 @@ import {
 } from '../../types/project.types';
 
 /**
- * ================================
- * Project 관련 비동기 Thunk 정의
- * ================================
+ * ============================================
+ * [GET] /project
+ * 전체 프로젝트 목록을 조회합니다.
+ * --------------------------------------------
+ * @returns ProjectListResponse
+ * - 프로젝트 배열 data 포함
+ * ============================================
  */
-
-// 프로젝트 목록 조회
 export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
   'project/fetchProjects',
   async (_, { rejectWithValue }) => {
@@ -54,7 +55,16 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
   }
 );
 
-// 프로젝트 생성
+/**
+ * ============================================
+ * [POST] /project
+ * 새로운 프로젝트를 생성합니다.
+ * --------------------------------------------
+ * @param projectData - 생성할 프로젝트 정보
+ * @returns CreateProjectResponse
+ * - 생성된 프로젝트 ID 포함
+ * ============================================
+ */
 export const createProject = createAsyncThunk<CreateProjectResponse, CreateProjectRequest>(
   'project/createProject',
   async (projectData, { rejectWithValue }) => {
@@ -85,7 +95,15 @@ export const createProject = createAsyncThunk<CreateProjectResponse, CreateProje
   }
 );
 
-// 프로젝트 수정
+/**
+ * ============================================
+ * [PUT] /project/:projectId
+ * 특정 프로젝트의 이름을 수정합니다.
+ * --------------------------------------------
+ * @param updateData - projectId와 새 이름
+ * @returns UpdateProjectResponse
+ * ============================================
+ */
 export const updateProject = createAsyncThunk<UpdateProjectResponse, UpdateProjectRequest>(
   'project/updateProject',
   async (updateData, { rejectWithValue }) => {
@@ -121,7 +139,15 @@ export const updateProject = createAsyncThunk<UpdateProjectResponse, UpdateProje
   }
 );
 
-// 프로젝트 삭제
+/**
+ * ============================================
+ * [DELETE] /project/:projectId
+ * 프로젝트를 삭제합니다.
+ * --------------------------------------------
+ * @param projectId - 삭제할 프로젝트 ID
+ * @returns DeleteProjectResponse
+ * ============================================
+ */
 export const deleteProject = createAsyncThunk<DeleteProjectResponse, DeleteProjectRequest>(
   'project/deleteProject',
   async ({ projectId }, { rejectWithValue }) => {
@@ -152,7 +178,15 @@ export const deleteProject = createAsyncThunk<DeleteProjectResponse, DeleteProje
   }
 );
 
-// 프로젝트 토큰 생성
+/**
+ * ============================================
+ * [POST] /project/uuid
+ * 프로젝트 초대 토큰을 생성합니다.
+ * --------------------------------------------
+ * @returns GenerateTokenResponse
+ * - 토큰 문자열 포함
+ * ============================================
+ */
 export const generateProjectToken = createAsyncThunk<GenerateTokenResponse, void>(
   'project/generateToken',
   async (_, { rejectWithValue }) => {
@@ -183,7 +217,15 @@ export const generateProjectToken = createAsyncThunk<GenerateTokenResponse, void
   }
 );
 
-// 프로젝트 참여
+/**
+ * ============================================
+ * [POST] /api/project/join
+ * 초대 토큰을 이용해 프로젝트에 참여합니다.
+ * --------------------------------------------
+ * @param requestData - 참여용 토큰 정보
+ * @returns JoinProjectResponse
+ * ============================================
+ */
 export const joinProject = createAsyncThunk<JoinProjectResponse, JoinProjectRequest>(
   'project/joinProject',
   async (requestData, { rejectWithValue }) => {
@@ -215,7 +257,15 @@ export const joinProject = createAsyncThunk<JoinProjectResponse, JoinProjectRequ
   }
 );
 
-// 프로젝트 탈퇴
+/**
+ * ============================================
+ * [DELETE] /project/me
+ * 현재 사용자가 프로젝트에서 탈퇴합니다.
+ * --------------------------------------------
+ * @param requestData - 탈퇴 대상 프로젝트 ID 등
+ * @returns LeaveProjectResponse
+ * ============================================
+ */
 export const leaveProject = createAsyncThunk<LeaveProjectResponse, LeaveProjectRequest>(
   'project/leaveProject',
   async (requestData, { rejectWithValue }) => {
@@ -277,7 +327,6 @@ const projectSlice = createSlice({
       .addCase(fetchProjects.fulfilled, (state, action) => {
         state.isLoading = false;
         state.projects = action.payload.data;
-        state.error = null;
       })
       .addCase(fetchProjects.rejected, (state, action) => {
         state.isLoading = false;
