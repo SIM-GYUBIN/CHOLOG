@@ -77,27 +77,27 @@ const mockLogs = [
 
 const LogList = () => {
   return (
-    <div className='rounded-[24px] p-4'>
-        <div className='font-[paperlogy6] text-start mx-3 text-[24px] text-slate-600 mb-2'>Log</div>
-    <div className="border border-slate-200 rounded-[24px] shadow p-4 h-[50vh] overflow-y-auto">
-              <div className="flex text-start items-center gap-10 border-b-2 border-slate-300 px-3 py-4 w-full text-slate-600 font-[paperlogy7] text-[16px]">
-                <div className="basis-[15%]">Level</div>
-                <div className="basis-[10%]">Part</div>
-                <div className="basis-[50%]">Message</div>
-                <div className="basis-[25%]">Date</div>
-              </div>
+    <div className='rounded-[24px]'>
+      <div className='font-[paperlogy6] text-start mx-3 text-[24px] text-slate-600 mb-2'>Log</div>
+      <div className="border border-slate-200 rounded-[24px] shadow p-4 h-[50vh] overflow-y-auto">
+        <div className="flex text-start items-center gap-10 border-b-2 border-slate-300 px-3 py-4 w-full text-slate-600 font-[paperlogy7] text-[16px]">
+          <div className="basis-[15%]">Level</div>
+          <div className="basis-[10%]">Part</div>
+          <div className="basis-[50%]">Message</div>
+          <div className="basis-[25%]">Date</div>
+        </div>
         {mockLogs.map(log => (
-            <EachLog
-              key={log._id}
-              islevelBg={true}
-              id={log._id}
-              from={log.from}
-              timestamp={log.timestamp}
-              message={log.message}
-              level={log.level as "ERROR" | "INFO" | "WARN" | "DEBUG" | "FATAL" | "TRACE"}
-            />
-          ))}
-    </div>
+          <EachLog
+            key={log._id}
+            islevelBg={true}
+            id={log._id}
+            from={log.from}
+            timestamp={log.timestamp}
+            message={log.message}
+            level={log.level as "ERROR" | "INFO" | "WARN" | "DEBUG" | "FATAL" | "TRACE"}
+          />
+        ))}
+      </div>
     </div>
   )
 }

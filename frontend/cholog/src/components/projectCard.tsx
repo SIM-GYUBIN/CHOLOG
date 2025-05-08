@@ -11,7 +11,7 @@ const ProjectCard = ({ id, name, status, lastLog }: ProjectCardProps) => {
   const navigate = useNavigate();
 
   return (
-    <div 
+    <div
       className="p-4 border border-gray-200 rounded-2xl hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => navigate(`/project/${id}`)}
     >
@@ -29,12 +29,9 @@ const ProjectCard = ({ id, name, status, lastLog }: ProjectCardProps) => {
       </div>
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-gray-600 text-14px">
-          <span>상태:</span>
+          <span>프로젝트 ID:</span>
           <div className="flex items-center gap-1">
-            <span className={`w-5 h-5 rounded-full ${
-              status === "정상" ? "bg-green-500" : "bg-red-500"
-            }`}></span>
-            <span>{status}</span>
+            <span>{id}</span>
           </div>
         </div>
         <div className="flex items-center gap-2 text-gray-600 text-14px">
