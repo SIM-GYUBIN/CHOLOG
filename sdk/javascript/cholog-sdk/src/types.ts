@@ -49,7 +49,7 @@ export interface LogEntry {
   environment: string;
   traceId: string | null;
 
-  loggerName: "console" | "cholog";
+  logger: "console" | "cholog";
   logType: LogType;
 
   payload?: LogPayload;

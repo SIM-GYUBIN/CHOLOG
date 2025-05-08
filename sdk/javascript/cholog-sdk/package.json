@@ -1,8 +1,11 @@
 {
   "name": "cholog-sdk",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "dist/cholog.mjs",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:npm": "esbuild src/index.ts --bundle --format=esm --outfile=dist/cholog.mjs",
@@ -17,10 +20,15 @@
     "로깅"
   ],
   "contributors": [
-    "simgyubin <skb0606@gmail.com> (https://github.com/SIM-GYUBIN)"
+    "simgyubin <skb0606@gmail.com> (https://github.com/SIM-GYUBIN)",
+    "dmswldk28 <dmswldk28@gmail.com> (https://github.com/dmswldk28)",
+    "2m7r <2m7r.sw@gmail.com> (https://github.com/2m7r)",
+    "ryoo918 <ryoo918@naver.com> (https://github.com/lv-applemango)",
+    "Daehyun <eddy152264@gmail.com> (https://github.com/MurHyun2)",
+    "sangholee228 <tkdgh6427@naver.com> (https://github.com/sangholee235)"
   ],
   "license": "MIT",
-  "description": "",
+  "description": "Log Manager for beginners",
   "devDependencies": {
     "typescript": "^5.8.3"
   }

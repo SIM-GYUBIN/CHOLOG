@@ -7,7 +7,7 @@ type InternalLogLevel = "info" | "warn" | "error" | "debug" | "trace";
 export class Logger {
   private static projectKey: string = "";
   private static environment: string = ""; // environment 필드 추가
-  private static apiEndpoint = "http://localhost:8080/logs"; // 이전과 동일
+  private static apiEndpoint = "https://cholog-server.shop/api/logs/js";
   private static originalConsole: {
     log: Console["log"];
     info: Console["info"];
@@ -162,7 +162,7 @@ export class Logger {
       projectKey: this.projectKey,
       environment: this.environment,
       traceId: TraceContext.getCurrentTraceId(),
-      loggerName: invokedBy,
+      logger: invokedBy,
       logType: determinedLogType,
       ...otherFields,
     };

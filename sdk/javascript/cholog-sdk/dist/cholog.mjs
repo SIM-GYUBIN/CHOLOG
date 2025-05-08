@@ -5,7 +5,7 @@ var TraceContext = class {
   }
   // private static currentSpanId: string | null = null; // 스팬 개념 도입 시
   static startNewTrace() {
-    this.currentTraceId = this.generateId("trace");
+    this.currentTraceId = this.generateId();
     return this.currentTraceId;
   }
   // 필요시 Span ID도 유사하게 관리
@@ -38,10 +38,9 @@ var Logger = class {
   }
   static {
     // environment 필드 추가
-    this.apiEndpoint = "http://localhost:8080/logs";
+    this.apiEndpoint = "https://cholog-server.shop/api/logs/js";
   }
   static {
-    // 이전과 동일
     this.originalConsole = null;
   }
   static {
@@ -157,7 +156,7 @@ var Logger = class {
       projectKey: this.projectKey,
       environment: this.environment,
       traceId: TraceContext.getCurrentTraceId(),
-      loggerName: invokedBy,
+      logger: invokedBy,
       logType: determinedLogType,
       ...otherFields
     };
