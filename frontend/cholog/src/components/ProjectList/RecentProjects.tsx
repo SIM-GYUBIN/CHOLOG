@@ -1,4 +1,4 @@
-import ProjectCard from "../ProjectCard";
+import ProjectCard from "../projectCard";
 
 interface Project {
   id: number;
