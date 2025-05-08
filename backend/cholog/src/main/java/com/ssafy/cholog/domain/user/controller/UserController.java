@@ -32,10 +32,10 @@ public class UserController {
         return CommonResponse.ok(userService.signup(signupRequest));
     }
 
-    @GetMapping("/login")
+    @PostMapping("/login")
     @Operation(summary = "로그인 처리", description = "로그인 호출 API")
-    @ApiErrorCodeExamples({ErrorCode.INTERNAL_SERVER_ERROR})
-    public ResponseEntity<CommonResponse<LoginResponse>> login(LoginRequest loginRequest) {
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INVALID_INPUT_VALUE})
+    public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         LoginResult loginResult = userService.login(loginRequest);
 
         ResponseCookie accessTokenCookie = CookieUtil.makeAccessTokenCookie(loginResult.getAccessToken());
