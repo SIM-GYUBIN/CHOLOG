@@ -100,7 +100,7 @@ export default function EachLog({
   }[level] || "bg-white";
 
   // islevelBg가 true면 levelBg 적용, 아니면 배경색 없음
-  const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-2 hover:shadow-lg transition-shadow ${islevelBg ? levelBg : ""}`;
+  const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-2 cursor-pointer hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1),0_-4px_12px_-2px_rgba(0,0,0,0.1)] transition-shadow ${islevelBg ? levelBg : ""}`;
   
   return (
     <div className={containerClass} onClick={handleclick}>
@@ -116,28 +116,26 @@ export default function EachLog({
         <div className="flex flex-row items-start col-span-5 gap-10">
           
           <div className="items-center grid grid-cols-10 gap-10">
-            <div className="flex justify-center col-span-0.5 shrink-0 min-w-0">
+            <div className="col-span-0.5 shrink-0 min-w-0">
               {from}
             </div>
-            <div className="flex justify-center col-span-1.5 shrink-0 min-w-0">
+            <div className="col-span-1.5 shrink-0 min-w-0">
               {type}
             </div>
-            <div className="flex justify-center col-span-1 shrink-0 min-w-0">
+            <div className="col-span-1 shrink-0 min-w-0">
               {status}
             </div>
-            <div className="col-span-5 text-start min-w-0 truncate px-4">
+            <div className="col-span-4 text-start min-w-0 truncate ">
               {message}
             </div>
-            <div className="col-span-2 min-w-0 shrink-0 ">
+            <div className="col-span-3 min-w-0 shrink-0 ">
               {formattedTime}
             </div>
             
           </div>
         </div>
       </div>
-      {/* <div className="mb-2">
-        <div className="text-sm text-gray-600">{apiPath}</div>
-      </div> */}
+
     </div>
   );
 }
