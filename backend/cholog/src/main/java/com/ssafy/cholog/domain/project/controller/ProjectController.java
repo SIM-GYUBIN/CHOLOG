@@ -11,6 +11,7 @@ import com.ssafy.cholog.global.security.auth.UserPrincipal;
 import com.ssafy.cholog.global.util.AuthenticationUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,7 +45,7 @@ public class ProjectController {
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<CommonResponse<Void>> createProject(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestBody CreateProjectRequest request) {
+            @Valid @RequestBody CreateProjectRequest request) {
 
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
