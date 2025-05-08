@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import exitIcon from '@/assets/exit.svg';
 import deleteIcon from '@/assets/delete.svg';
+import copyIcon from '@/assets/copy.svg';
+import modifyIcon from '@/assets/modify.svg';
+import ModifyProjectModal from './ModifyProjectModal';
 
 interface Project {
   id: number;
   name: string;
   projectId: string;
   date: string;
+  isCreator: boolean; // 생성자 여부 추가
 }
 
 interface ProjectTableProps {
@@ -16,60 +21,100 @@ interface ProjectTableProps {
 
 const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
   const navigate = useNavigate();
+  const [showModifyModal, setShowModifyModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [newProjectName, setNewProjectName] = useState('');
+
+  const handleCopy = (projectId: string) => {
+    onCopy(projectId);
+    alert('프로젝트 ID가 복사되었습니다.');
+  };
+
+  const handleModifyClick = (project: Project) => {
+    setSelectedProject(project);
+    setNewProjectName(project.name);
+    setShowModifyModal(true);
+  };
+
+  const handleModifySubmit = () => {
+    // TODO: API 호출하여 프로젝트명 수정
+    setShowModifyModal(false);
+    setSelectedProject(null);
+    setNewProjectName('');
+  };
 
   return (
-    <table className="w-full">
-      <thead>
-        <tr className="border-b border-gray-200">
-          <th className="w-1/3 p-4 font-paperlogy5 text-left">프로젝트명</th>
-          <th className="w-1/3 p-4 font-paperlogy5 text-left">프로젝트 ID</th>
-          <th className="w-1/4 p-4 font-paperlogy5 text-left">생성 시간</th>
-          <th className="w-12 p-4"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {projects.map((project) => (
-          <tr key={project.id} className="border-b border-gray-200">
-            <td className="w-1/3 p-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => navigate(`/project/${project.id}`)}
-                  className="text-left hover:text-gray-900 truncate cursor-pointer"
-                >
-                  {project.name}
-                </button>
-              </div>
-            </td>
-            <td className="w-1/3 p-4 text-gray-600 text-left">
-              <div className="flex items-center gap-2">
-                <span>{project.projectId}</span>
-                <button
-                  onClick={() => onCopy(project.projectId)}
-                  className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-                >
-                  {/* Copy SVG icon */}
-                </button>
-              </div>
-            </td>
-            <td className="w-1/4 p-4 text-gray-600 text-left">
-              {project.date}
-            </td>
-            <td className="w-12 p-4">
-              <button
-                className="focus:outline-none cursor-pointer"
-              >
-                <img src={exitIcon} alt="Cholog logo" className="h-5 mt-2 mx-1" />
-              </button>
-              <button
-                className="focus:outline-none cursor-pointer"
-              >
-                <img src={deleteIcon} alt="Cholog logo" className="h-5 mt-2 mx-1" />
-              </button>
-            </td>
+    <>
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="w-1/3 p-4 font-paperlogy5 text-left">프로젝트명</th>
+            <th className="w-1/3 p-4 font-paperlogy5 text-left">프로젝트 ID</th>
+            <th className="w-1/4 p-4 font-paperlogy5 text-left">생성 시간</th>
+            <th className="w-12 p-4"></th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {projects.map((project) => (
+            <tr key={project.id} className="border-b border-gray-200">
+              <td className="w-1/3 p-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigate(`/project/${project.id}`)}
+                    className="text-left text-[16px] hover:text-gray-900 truncate cursor-pointer"
+                  >
+                    {project.name}
+                  </button>
+                  {project.isCreator && (
+                    <button 
+                      className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                      onClick={() => handleModifyClick(project)}
+                    >
+                      <img src={modifyIcon} alt="Modify" className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </td>
+              <td className="w-1/3 p-4 text-gray-600 text-left text-[16px]">
+                <div className="flex items-center gap-2">
+                  <span>{project.projectId}</span>
+                  <button
+                    onClick={() => handleCopy(project.projectId)}
+                    className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                  >
+                    <img src={copyIcon} alt="Copy" className="h-4 w-4" />
+                  </button>
+                </div>
+              </td>
+              <td className="w-1/4 p-4 text-gray-600 text-left text-[16px]">
+                {project.date}
+              </td>
+              <td className="w-12 p-4">
+                <button className="focus:outline-none cursor-pointer">
+                  <img 
+                    src={project.isCreator ? deleteIcon : exitIcon} 
+                    alt={project.isCreator ? "Delete" : "Exit"} 
+                    className="h-5 mt-2 mx-1" 
+                  />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <ModifyProjectModal
+        showModal={showModifyModal}
+        projectName={newProjectName}
+        setProjectName={setNewProjectName}
+        onClose={() => {
+          setShowModifyModal(false);
+          setSelectedProject(null);
+          setNewProjectName('');
+        }}
+        onSubmit={handleModifySubmit}
+      />
+    </>
   );
 };
 

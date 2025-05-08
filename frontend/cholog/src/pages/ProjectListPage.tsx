@@ -18,11 +18,11 @@ const ProjectListPage = () => {
   ];
 
   const projectList = [
-    { id: 1, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28" },
-    { id: 2, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28" },
-    { id: 3, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28" },
-    { id: 4, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28" },
-    { id: 5, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28" },
+    { id: 1, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: true },
+    { id: 2, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: false },
+    { id: 3, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: true },
+    { id: 4, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: false },
+    { id: 5, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: true },
   ];
 
   const handleCopy = (text: string) => {
@@ -31,7 +31,7 @@ const ProjectListPage = () => {
 
   const openModal = (type: "add" | "join") => {
     setModalType(type);
-    setShowModal(true);  
+    setShowModal(true);
     setInputValue("");
   };
 
@@ -50,7 +50,7 @@ const ProjectListPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-[60vw] mx-auto">
       <div className="text-center">
         <img src={logo} alt="Cholog logo" className="h-36 mx-auto" />
       </div>
