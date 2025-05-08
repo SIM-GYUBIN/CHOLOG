@@ -2,11 +2,11 @@ package com.ssafy.lab.eddy1219.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.lab.eddy1219.server.Service.LogstashService;
+import com.ssafy.lab.eddy1219.server.model.JsLogEntry;
 import com.ssafy.lab.eddy1219.server.model.LogEntry;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -20,12 +20,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @RequestMapping("/api/logs")
 public class LogController {
 
-    private final ObjectMapper objectMapper;
     private final LogstashService logstashService;
 
     // 최근 로그를 저장할 메모리 내 큐 (동시성 지원)
     private static final int MAX_LOG_ENTRIES = 100; // 메모리에 보관할 최대 로그 수
     private final Queue<LogEntry> recentLogs = new ConcurrentLinkedQueue<>();
+    private final Queue<JsLogEntry> recentJsLogs = new ConcurrentLinkedQueue<>();
 
     /**
      * 생성자를 통해 ObjectMapper와 LogstashService를 주입받습니다.
@@ -34,7 +34,6 @@ public class LogController {
      * @param logstashService Logstash로 로그를 전송하는 서비스 빈
      */
     public LogController(ObjectMapper objectMapper, LogstashService logstashService) {
-        this.objectMapper = objectMapper;
         this.logstashService = logstashService;
     }
 
@@ -53,7 +52,7 @@ public class LogController {
             return ResponseEntity.ok().build(); // 빈 배치는 정상 처리
         }
 
-        System.out.println("Received log batch with " + logEntries.size() + " entries. Forwarding to Logstash...");
+//        System.out.println("Received log batch with " + logEntries.size() + " entries. Forwarding to Logstash...");
 
         // 새 로그 추가 및 오래된 로그 제거 (큐 크기 제한) - Logstash 전송과는 별개로 최근 로그를 메모리에 유지
         for (LogEntry entry : logEntries) {
@@ -69,6 +68,34 @@ public class LogController {
 
         // Logstash로 로그 전송
         logstashService.sendLogs(logEntries);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/js")
+    public ResponseEntity<Void> receiveJsLogBatch(@RequestBody List<JsLogEntry> logEntries) { // Jackson이 List<새로운 LogEntry>로 변환
+        if (logEntries == null || logEntries.isEmpty()) {
+            System.out.println("Received empty log batch.");
+            return ResponseEntity.ok().build();
+        }
+
+        // 여기서 logEntries의 내용을 디버깅하거나 로깅하여 올바르게 역직렬화되었는지 확인해보세요.
+        // 예: System.out.println("First log entry message: " + logEntries.get(0).getMessage());
+        // if (logEntries.get(0).getHttpInfo() != null) {
+        //     System.out.println("HTTP method: " + logEntries.get(0).getHttpInfo().getRequest().getMethod());
+        // }
+//        System.out.println("Received log batch with " + logEntries.size() + " entries. Forwarding to Logstash...");
+
+        for (JsLogEntry entry : logEntries) {
+            if (entry != null) {
+                while (recentJsLogs.size() >= MAX_LOG_ENTRIES) {
+                    recentJsLogs.poll();
+                }
+                recentJsLogs.offer(entry);
+            }
+        }
+
+        logstashService.sendJsLogs(logEntries); // LogstashService는 수정된 LogEntry 리스트를 받음
 
         return ResponseEntity.ok().build();
     }
