@@ -30,8 +30,8 @@ const LogSummary = () => {
   const LABELS = ["error", "debug", "warn", "trace", "info", "fatal"] as const;
 
   return (
-    <div className="rounded-2xl border border-gray-200 p-8 shadow-md w-fit bg-white">
-      <div className="text-left text-gray-800 mb-4 flex items-end gap-3">
+    <div className="rounded-2xl border border-[var(--line)] p-8 shadow-md w-fit bg-white/5">
+      <div className="text-left text-[var(--text)] mb-4 flex items-end gap-3">
         <span className="text-lg">Total</span>
         <span className="text-2xl font-bold">
           {logsMockData.total.toLocaleString()}
@@ -46,8 +46,8 @@ const LogSummary = () => {
               alt={`${label} icon`}
               className="w-10 h-10"
             />
-            <div className="flex flex-col text-left text-gray-800">
-              <span className="text-sm text-gray-800">{label}</span>
+            <div className="flex flex-col text-left text-[var(--text)]">
+              <span className="text-sm text-[var(--text)]">{label}</span>
               <span className="text-base font-medium">
                 {logsMockData.logs[label]}
               </span>
