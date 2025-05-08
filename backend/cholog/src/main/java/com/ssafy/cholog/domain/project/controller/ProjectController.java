@@ -28,7 +28,7 @@ public class ProjectController {
     private final AuthenticationUtil authenticationUtil;
 
     @GetMapping("")
-    @Operation(summary = "프로젝트 목록 조회", description = "프로젝트 목록 조회 API")
+    @Operation(summary = "프로젝트 목록 조회", description = "프로젝트 목록을 최신순으로 조회합니다.")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<CommonResponse<UserProjectListResponse>> getUserProjectList(

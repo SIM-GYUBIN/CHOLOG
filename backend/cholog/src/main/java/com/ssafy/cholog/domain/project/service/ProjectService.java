@@ -33,7 +33,7 @@ public class ProjectService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId", userId));
 
-        List<UserProjectItem> projectItemList = projectUserRepository.findByUser(user).stream()
+        List<UserProjectItem> projectItemList = projectUserRepository.findByUserOrderByProjectCreatedAtDesc(user).stream()
                 .map(UserProjectItem::of)
                 .collect(Collectors.toList());
 

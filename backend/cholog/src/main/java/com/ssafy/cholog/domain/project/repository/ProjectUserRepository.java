@@ -10,5 +10,5 @@ import java.util.List;
 @Repository
 public interface ProjectUserRepository extends JpaRepository<ProjectUser, Integer> {
 
-    List<ProjectUser> findByUser(User user);
+    List<ProjectUser> findByUserOrderByProjectCreatedAtDesc(User user);
 }
