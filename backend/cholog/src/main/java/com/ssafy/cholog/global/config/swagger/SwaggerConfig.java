@@ -62,7 +62,7 @@ public class SwaggerConfig {
         // 서버 URL 설정
 
         Server prodServer = new Server();
-        prodServer.setUrl("https://k12b207.p.ssafy.io");
+        prodServer.setUrl("https://cholog.com");
         prodServer.setDescription("실 운용 서버입니다.(개발자용 토큰 사용 불가)");
 
         Server localServer = new Server();

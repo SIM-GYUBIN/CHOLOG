@@ -24,5 +24,5 @@ logging.level:
 
 app:
   domain:
-    url: https://k12b207.p.ssafy.io
-    cors-origins: https://k12b207.p.ssafy.io, http://localhost:5173, http://localhost:5174
+    url: https://cholog.com
+    cors-origins: https://cholog.com, http://localhost:5173, http://localhost:5174
