@@ -34,7 +34,7 @@
   src: url("@/assets/fonts/Paperlogy-3Light.ttf") format("truetype");
 }
 
-@font-face { 
+@font-face {
   font-family: paperlogy4;
   font-style: normal;
   font-weight: 400;
@@ -67,7 +67,7 @@
   font-style: normal;
   font-weight: 100;
   src: url("@/assets/fonts/consola.ttf") format("truetype");
-} 
+}
 @font-face {
   font-family: consolb;
   font-style: normal;
@@ -77,6 +77,7 @@
 
 body {
   font-family: "paperlogy5", sans-serif;
+  background-color: var(--bg);
 }
 
 /* 스크롤 숨기기 */
@@ -87,4 +88,18 @@ body {
 
 .scroll-hidden::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+}
+
+:root {
+  --bg: #ffffff; /* light: white */
+  --text: #45556c; /* light: state-600 */
+  --line: #e5eaf1; /*state-200*/
+  /* --primary: #99a1af; light: gray-400 */
+}
+
+html.dark {
+  --bg: #0a0a0a; /* dark: state-800 */
+  --text: #f1f5f9; /* dark: state-100 */
+  --line: #ffffff1a; /*state-200*/
+  /* --primary: #99a1af; dark: gray-400 */
 }
