@@ -46,8 +46,8 @@ const LogSummary = () => {
               alt={`${label} icon`}
               className="w-10 h-10"
             />
-            <div className="flex flex-col text-left text-gray-800">
-              <span className="text-sm text-gray-800">{label}</span>
+            <div className="flex flex-col text-left text-[var(--text)]">
+              <span className="text-sm text-[var(--text)]">{label}</span>
               <span className="text-base font-medium">
                 {logsMockData.logs[label]}
               </span>
