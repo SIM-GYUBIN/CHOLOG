@@ -15,7 +15,9 @@ type LogProps = {
   islevelBg?: boolean; // Added islevelBg prop for conditional styling
   id?: string;
   from?: string;
-  timestamp: string;
+  type?: string;
+  status?:number; // http 상태코드
+  timestamp?: string;
   message?: string;
   apiPath?: string;
   level: "INFO" | "WARN" | "ERROR" | "DEBUG" | "FATAL" | "TRACE";
@@ -46,6 +48,8 @@ const getLevelIcon = (level: string) => {
 export default function EachLog({
   id,
   timestamp,
+  type,
+  status,
   message,
   from,
   apiPath,
@@ -86,37 +90,54 @@ export default function EachLog({
     TRACE: "bg-[rgba(243,244,246,0.06)]", // gray-100 6%
   }[level] || "bg-[rgba(255,255,255,0.06)]";
 
+  const levelCircle = {
+    FATAL: "bg-purple-500",
+    ERROR: "bg-red-500",
+    WARN: "bg-yellow-500",
+    INFO: "bg-blue-500",
+    DEBUG: "bg-green-500",
+    TRACE: "bg-teal-500",
+  }[level] || "bg-white";
+
   // islevelBg가 true면 levelBg 적용, 아니면 배경색 없음
   const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-2 hover:shadow-lg transition-shadow ${islevelBg ? levelBg : ""}`;
-
+  
   return (
     <div className={containerClass} onClick={handleclick}>
-      <div className="flex items-center text-[12px] text-slate-600 w-full">
-        {/* 로그레벨아이콘+로그레벨: 15% */}
-        <div className="flex flex-row items-center basis-[15%] shrink-0 grow-0 min-w-0 gap-2">
-          <img
-            src={getLevelIcon(level)}
-            alt={`${level.toLowerCase()} 아이콘`}
-            className="w-5 h-5"
-          />
+      <div className="grid grid-cols-6 text-[12px] text-slate-600 w-full">
+
+{/* 로그 레벨벨 */}
+        <div className="col-span-1 flex flex-row items-center shrink-0 min-w-0 gap-2">
+        <div className={`${levelCircle} w-4 h-4 rounded-full`}></div>
           <div className="font-semibold truncate">{level}</div>
         </div>
-        {/* from: 10% */}
-        <div className="basis-[10%] shrink-0 grow-0 min-w-0 truncate">
-          {from}
-        </div>
-        {/* 메시지: 50% */}
-        <div className="text-start basis-[50%] shrink-0 grow-0 min-w-0 truncate px-4">
-          {message}
-        </div>
-        {/* 타임스탬프: 25% */}
-        <div className="basis-[25%] shrink-0 grow-0 min-w-0">
-          {formattedTime}
+
+{/* 나머지지 */}
+        <div className="flex flex-row items-start col-span-5 gap-10">
+          
+          <div className="items-center grid grid-cols-10 gap-10">
+            <div className="flex justify-center col-span-0.5 shrink-0 min-w-0">
+              {from}
+            </div>
+            <div className="flex justify-center col-span-1.5 shrink-0 min-w-0">
+              {type}
+            </div>
+            <div className="flex justify-center col-span-1 shrink-0 min-w-0">
+              {status}
+            </div>
+            <div className="col-span-5 text-start min-w-0 truncate px-4">
+              {message}
+            </div>
+            <div className="col-span-2 min-w-0 shrink-0 ">
+              {formattedTime}
+            </div>
+            
+          </div>
         </div>
       </div>
-      <div className="mb-2">
+      {/* <div className="mb-2">
         <div className="text-sm text-gray-600">{apiPath}</div>
-      </div>
+      </div> */}
     </div>
   );
 }

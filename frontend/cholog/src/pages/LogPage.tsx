@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import EachLog from "../components/eachLog";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -39,21 +40,94 @@ const LogPage = () => {
 
   console.log(id);
 
+  
   // 임시 데이터
   const logData = {
+    _id: "13df",
     type: "ERROR",
     timestamp: "2025-04-23 16:32:12",
     message: "API 호출 실패: Error: 500 Internal Server Error",
   };
 
-  const relatedLogs: RelatedLog[] = [
-    { type: "BE", message: "12345 --- Info-8080...", level: "error" },
-    { type: "FE", message: "API 호출 실패: Error: 5...", level: "error" },
-    { type: "FE", message: "설정 파일이 없습니다. 기본...", level: "warning" },
-    { type: "BE", message: "로그인 성공: userId=1234...", level: "info" },
-    { type: "BE", message: "로그인 성공: userId=1234...", level: "success" },
-    { type: "FE", message: "로그인 성공: userId=1234...", level: "success" },
+
+  const mockLogs = [
+    {
+      _id: "trace-12345-span-67890",
+      from: "FE",
+      timestamp: "2025-04-28T12:00:00Z",
+      message: "java.lang.NullPointerException at ...",
+      level: "ERROR",
+    },
+    {
+      _id: "trace-54321-span-09876",
+      from: "BE",
+      timestamp: "2025-04-28T11:58:00Z",
+      message: "로그인 성공",
+      level: "INFO",
+    },
+    {
+      _id: "trace-98765-span-43210",
+      from: "BE",
+      timestamp: "2025-04-28T11:55:00Z",
+      message: "Database connection established",
+      level: "DEBUG",
+    },
+    {
+      _id: "trace-24680-span-13579",
+      from: "FE",
+      timestamp: "2025-04-28T11:52:00Z",
+      message: "Warning: Memory usage exceeds 80%",
+      level: "WARN",
+    },
+    {
+      _id: "trace-11111-span-22222",
+      from: "BE",
+      timestamp: "2025-04-28T11:50:00Z",
+      message: "System crash detected",
+      level: "FATAL",
+    },
+    {
+      _id: "trace-33333-span-44444",
+      from: "FE",
+      timestamp: "2025-04-28T11:48:00Z",
+      message: "API request completed",
+      level: "TRACE",
+    },
+    {
+      _id: "trace-55555-span-66666",
+      from: "BE",
+      timestamp: "2025-04-28T11:45:00Z",
+      message: "User authentication successful",
+      level: "INFO",
+    },
+    {
+      _id: "trace-77777-span-88888",
+      from: "FE",
+      timestamp: "2025-04-28T11:42:00Z",
+      message: "Component rendering error",
+      level: "ERROR",
+    },
+    {
+      _id: "trace-99999-span-00000",
+      from: "BE",
+      timestamp: "2025-04-28T11:40:00Z",
+      message: "Cache cleared successfully",
+      level: "DEBUG",
+    },
+    {
+      _id: "trace-12121-span-34343",
+      from: "FE",
+      timestamp: "2025-04-28T11:38:00Z",
+      message: "Network connection timeout",
+      level: "WARN",
+    }
   ];
+
+  const nav = useNavigate();
+  const handleclick = (_id: string) => {
+    nav(`/log/${_id}`);
+  };
+
 
   return (
     <div className="flex gap-6 max-w-7xl mx-auto">
@@ -89,23 +163,31 @@ const LogPage = () => {
       </div>
 
       {/* 관련 로그 섹션 */}
-      <div className="w-96 bg-white rounded-lg p-6 shadow-sm">
+      <div className="rounded-lg p-6 shadow-sm">
         <h2 className="text-left text-18px font-paperlogy6 mb-6">
           Related Log
         </h2>
         <div className="space-y-4">
-          {relatedLogs.map((log, index) => (
-            <div key={index} className="flex items-start gap-3">
-              <img 
-                src={getLevelIcon(log.level)} 
-                alt={`${log.level} icon`} 
-                className="w-4 h-4 mt-1"
-              />
-              <div className="text-gray-400 text-14px">{log.type}</div>
-              <div className="text-14px">{log.message}</div>
+          {mockLogs.map((log, index) => (
+            <div 
+              onClick={() => handleclick(log._id)} 
+              key={index} 
+              className="flex items-start gap-3 text-slate-600 cursor-pointer hover:bg-[#F7FEE7]"
+            >
+              <div className="relative flex items-center">
+                <img 
+                  src={getLevelIcon(log.level)} 
+                  alt={`${log.level} icon`} 
+                  className="w-4 h-4 mt-1"
+                />
+                <div className="absolute h-10 w-[2px] bg-slate-300" style={{ left: '50%', zIndex : -1 }}></div>
+              </div>
+              <div className=" text-[14px]">{log.from}</div>
+              <div className="text-[14px]">{log.message}</div>
             </div>
           ))}
         </div>
+      
       </div>
     </div>
   );

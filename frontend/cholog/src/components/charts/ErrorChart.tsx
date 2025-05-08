@@ -67,8 +67,8 @@ const ErrorCountChart = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-md border border-[var(--line)] p-8 bg-white/5 rounded-2xl shadow-md">
-      <h2 className="text-left text-2xl font-semibold text-[var(--text)] mb-2">
+    <div className="w-full border border-gray-200 p-8 bg-white rounded-2xl shadow-md">
+      <h2 className="text-left text-2xl font-semibold text-gray-800 mb-2">
         Hourly Log Count
       </h2>
       <div

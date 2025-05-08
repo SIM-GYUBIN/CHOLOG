@@ -3,6 +3,8 @@ import LogList from '../components/logList';
 import copy from '@/assets/copy.svg';
 import report from '@/assets/report.svg';
 import setting from '@/assets/setting.svg';
+import ErrorChart from '../components/charts/ErrorChart';
+import LogSummary from '../components/LogSummary';
 
 const ProjectPage = () => {
   const { projectId } = useParams();
@@ -17,7 +19,7 @@ const ProjectPage = () => {
   };
 
   return (
-    <div className='flex flex-col max-w-[60vw] mx-auto '>
+    <div className='flex flex-col max-w-[70vw] mx-auto '>
       <div className='flex flex-row justify-between '>
 
         <div className='flex flex-row items-center gap-2 font-[paperlogy5]'>
@@ -39,7 +41,14 @@ const ProjectPage = () => {
         </div>
 
       </div>
-
+      <div className='grid grid-cols-7 py-5 gap-10'>
+        <div className='col-span-3'>
+        <LogSummary />
+        </div>
+        <div className='col-span-4'>
+        <ErrorChart />
+        </div>
+      </div>
       <LogList />
     </div>
   );

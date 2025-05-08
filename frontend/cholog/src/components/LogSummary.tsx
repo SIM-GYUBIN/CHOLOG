@@ -30,15 +30,15 @@ const LogSummary = () => {
   const LABELS = ["error", "debug", "warn", "trace", "info", "fatal"] as const;
 
   return (
-    <div className="rounded-2xl border border-[var(--line)] p-8 shadow-md w-fit bg-white/5">
-      <div className="text-left text-[var(--text)] mb-4 flex items-end gap-3">
+    <div className="rounded-2xl border border-gray-200 p-8 shadow-md w-full bg-white">
+      <div className="text-left text-gray-800 mb-4 flex items-end gap-3">
         <span className="text-lg">Total</span>
         <span className="text-2xl font-bold">
           {logsMockData.total.toLocaleString()}
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-18 gap-y-6">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-6">
         {LABELS.map((label) => (
           <div key={label} className="flex items-center gap-3">
             <img
