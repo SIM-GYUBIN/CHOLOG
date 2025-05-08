@@ -8,6 +8,8 @@ import com.ssafy.cholog.domain.user.service.UserService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.response.CommonResponse;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
+import com.ssafy.cholog.global.security.auth.UserPrincipal;
+import com.ssafy.cholog.global.util.AuthenticationUtil;
 import com.ssafy.cholog.global.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,7 +17,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/user")
@@ -24,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final AuthenticationUtil authenticationUtil;
 
     @PostMapping
     @Operation(summary = "회원가입 처리", description = "회원가입 호출 API")
@@ -42,5 +49,17 @@ public class UserController {
         ResponseCookie refreshTokenCookie = CookieUtil.makeRefreshTokenCookie(loginResult.getRefreshToken());
 
         return CommonResponse.okWithCookie(accessTokenCookie, refreshTokenCookie);
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃 처리", description = "로그아웃 호출 API")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<Void>> logout(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+
+        ResponseCookie deletedAccessTokenCookie = CookieUtil.deleteAccessTokenCookie();
+        ResponseCookie deletedRefreshTokenCookie = CookieUtil.deleteRefreshTokenCookie();
+
+        return CommonResponse.okWithCookie(deletedAccessTokenCookie, deletedRefreshTokenCookie);
     }
 }
