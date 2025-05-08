@@ -21,6 +21,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/projectList" element={<ProjectListPage />} />
             <Route path="/project/:projectId" element={<ProjectPage />} />
+            <Route path="/log/:logId" element={<LogPage />} />
             <Route path="/report/:projectId" element={<ReportPage />} />
             <Route path="/archive/:projectId" element={<ArchivePage />} />
             <Route path="/projectsetting/:projectId" element={<ProjectSettingPage />} />

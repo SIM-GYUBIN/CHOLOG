@@ -4,6 +4,7 @@ import infoIcon from "@/assets/levelicon/info.png";
 import debugIcon from "@/assets/levelicon/debug.png";
 import fatalIcon from "@/assets/levelicon/fatal.png";
 import traceIcon from "@/assets/levelicon/trace.png";
+import { useNavigate } from "react-router-dom";
 
 type LogDetails = {
   errorCode?: string;
@@ -43,6 +44,7 @@ const getLevelIcon = (level: string) => {
 };
 
 export default function EachLog({
+  id,
   timestamp,
   message,
   from,
@@ -64,6 +66,16 @@ export default function EachLog({
       hour12: false, // 24시간 형식으로 표시
     }).replace(/\/|, /g, '-').replace(' ', ' ') // 날짜 구분자를 변경하고, 공백으로 시간 구분
   : "";
+
+  const nav = useNavigate();
+
+  const handleclick = () => {
+    if (id) {
+      nav(`/log/${id}`);
+    }
+  };
+
+
   // const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : "";
   const levelBg = {
     FATAL: "bg-[rgba(128,0,128,0.06)]",   // purple-100 6%
@@ -78,7 +90,7 @@ export default function EachLog({
   const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-2 hover:shadow-lg transition-shadow ${islevelBg ? levelBg : ""}`;
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} onClick={handleclick}>
       <div className="flex items-center text-[12px] text-slate-600 w-full">
         {/* 로그레벨아이콘+로그레벨: 15% */}
         <div className="flex flex-row items-center basis-[15%] shrink-0 grow-0 min-w-0 gap-2">
