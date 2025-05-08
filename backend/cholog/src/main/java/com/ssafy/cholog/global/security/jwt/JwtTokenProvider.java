@@ -2,6 +2,7 @@ package com.ssafy.cholog.global.security.jwt;
 
 
 import com.ssafy.cholog.global.common.constants.SecurityConstants;
+import com.ssafy.cholog.global.common.constants.UserType;
 import com.ssafy.cholog.global.security.auth.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -33,12 +34,12 @@ public class JwtTokenProvider {
     }
 
     // 기존 토큰 생성 메소드 유지
-    public String createToken(String userId, String userType, long validityTime) {
+    public String createToken(String userId, UserType userType, long validityTime) {
         Date now = new Date();
 
         return Jwts.builder()
                 .subject(userId)
-                .claim(SecurityConstants.ROLE_NAME, userType)
+                .claim(SecurityConstants.ROLE_NAME, userType.name())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + validityTime))
                 .signWith(getSigningKey())
@@ -46,13 +47,13 @@ public class JwtTokenProvider {
     }
 
     // Refresh Token 생성
-    public String createAccessToken(String userId, String userType) {
+    public String createAccessToken(String userId, UserType userType) {
         long accessTokenValidTime = SecurityConstants.ACCESS_TOKEN_VALIDITY_SECONDS * 1000L;
         return createToken(userId, userType, accessTokenValidTime);
     }
 
     // Refresh Token 생성
-    public String createRefreshToken(String userId, String userType) {
+    public String createRefreshToken(String userId, UserType userType) {
         long refreshTokenValidTime = SecurityConstants.REFRESH_TOKEN_VALIDITY_SECONDS * 1000L;
         return createToken(userId, userType, refreshTokenValidTime);
     }
