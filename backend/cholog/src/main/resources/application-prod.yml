@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: prod
   jpa:
     hibernate:
       ddl-auto: validate
@@ -14,9 +16,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
-#  data:
-#    redis:
-#      host: ${REDIS_HOST}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      password: ${REDIS_PASSWORD}
 
 logging.level:
   org.hibernate.SQL: info
