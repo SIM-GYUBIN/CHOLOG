@@ -1,4 +1,3 @@
-
 import EachLog from '../components/eachLog';
 
 const mockLogs = [
