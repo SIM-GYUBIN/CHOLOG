@@ -14,9 +14,9 @@ spring:
     username: cholog
     password: cholog207
     driver-class-name: org.mariadb.jdbc.Driver
-#  data:
-#    redis:
-#      host: localhost
+  data:
+    redis:
+      host: localhost
 
 logging.level:
   org.hibernate.SQL: debug

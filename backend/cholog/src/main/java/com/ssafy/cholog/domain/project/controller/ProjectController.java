@@ -1,5 +1,7 @@
 package com.ssafy.cholog.domain.project.controller;
 
+import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
+import com.ssafy.cholog.domain.project.dto.response.CreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
 import com.ssafy.cholog.domain.project.service.ProjectService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
@@ -13,9 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/project")
@@ -36,5 +36,30 @@ public class ProjectController {
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
         return CommonResponse.ok(projectService.getUserProjectList(userId));
+    }
+
+    @PostMapping("")
+    @Operation(summary = "프로젝트 생성", description = "프로젝트 생성 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    public ResponseEntity<CommonResponse<Void>> createProject(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody CreateProjectRequest request) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.created(projectService.createProject(userId, request));
+    }
+
+    @PostMapping("/uuid")
+    @Operation(summary = "프로젝트 토큰 생성", description = "프로젝트 고유 토큰 생성 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    public ResponseEntity<CommonResponse<CreateTokenResponse>> createToken(
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.created(projectService.createToken(userId));
     }
 }
