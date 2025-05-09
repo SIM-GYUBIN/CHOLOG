@@ -29,7 +29,8 @@ import {
 
 /**
  * ============================================
- * [GET] /project/:projectId/logs/stats
+ * [#LOG-1]
+ * [GET] /log/:projectId/stats
  * 프로젝트의 로그 레벨별 통계를 조회합니다.
  * --------------------------------------------
  * @param projectId - 조회 대상 프로젝트 ID
@@ -41,7 +42,7 @@ export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
   'log/fetchStats',
   async (projectId, { rejectWithValue }) => {
     try {
-      const response = await api.get<LogStatsResponse>(`/project/${projectId}/logs/stats`, {
+      const response = await api.get<LogStatsResponse>(`/log/${projectId}/stats`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -71,8 +72,9 @@ export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
 
 /**
  * ============================================
- * [GET] /project/:projectId/errors/stats
- * 프로젝트의 에러 통계를 조회합니다.
+ * [#LOG-2]
+ * [GET] /log/:projectId/errors/top3
+ * 최근 에러 Top3를 조회합니다
  * --------------------------------------------
  * @param params - 프로젝트 ID, 조회 기간 (옵션)
  * @returns ErrorStatsResponse
@@ -88,7 +90,7 @@ export const fetchErrorStats = createAsyncThunk<ErrorStatsResponse, ErrorStatsRe
       if (params.endDate) queryParams.append('endDate', params.endDate);
 
       const response = await api.get<ErrorStatsResponse>(
-        `/project/${params.projectId}/errors/stats?${queryParams.toString()}`,
+        `/log/${params.projectId}/errors/top3?${queryParams.toString()}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -117,6 +119,7 @@ export const fetchErrorStats = createAsyncThunk<ErrorStatsResponse, ErrorStatsRe
 
 /**
  * ============================================
+ * [#LOG-3]
  * [GET] /log/:projectId/errors/timeline
  * 프로젝트의 시간대별 에러 발생 추이를 조회합니다.
  * --------------------------------------------
@@ -163,6 +166,7 @@ export const fetchErrorTimeline = createAsyncThunk<ErrorTimelineResponse, ErrorT
 
 /**
  * ============================================
+ * [#LOG-4]
  * [GET] /log/:projectId/errors/type-ratio
  * 프로젝트 에러의 유형별 비율 데이터를 조회합니다.
  * --------------------------------------------
@@ -209,6 +213,7 @@ export const fetchErrorTypeRatio = createAsyncThunk<ErrorTypeRatioResponse, Erro
 
 /**
  * ============================================
+ * [#LOG-5]
  * [GET] /log/:projectId/errors/trend
  * 프로젝트의 에러 발생 추세(일/주/월 단위)를 조회합니다.
  * --------------------------------------------
@@ -256,6 +261,7 @@ export const fetchErrorTrend = createAsyncThunk<ErrorTrendResponse, ErrorTrendRe
 
 /**
  * ============================================
+ * [#LOG-6]
  * [GET] /api/log/:projectId
  * 프로젝트의 로그 목록을 조회합니다.
  * --------------------------------------------
@@ -311,6 +317,7 @@ export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
 
 /**
  * ============================================
+ * [#LOG-7]
  * [GET] /api/log/:projectId/search
  * 프로젝트의 로그를 검색 조건에 따라 조회합니다.
  * --------------------------------------------
@@ -371,6 +378,7 @@ export const searchLogs = createAsyncThunk<LogSearchResponse, LogSearchRequest>(
 
 /**
  * ============================================
+ * [#LOG-8]
  * [GET] /api/log/:projectId/:apiPath
  * API 경로별 로그를 조회합니다.
  * --------------------------------------------
@@ -427,6 +435,7 @@ export const fetchLogsByApiPath = createAsyncThunk<LogByApiPathResponse, LogByAp
 
 /**
  * ============================================
+ * [#LOG-9]
  * [GET] /api/log/:projectId/trace/:traceId
  * Trace ID별 로그 흐름을 조회합니다.
  * --------------------------------------------
@@ -469,6 +478,7 @@ export const fetchTraceLog = createAsyncThunk<TraceLogResponse, TraceLogRequest>
 
 /**
  * ============================================
+ * [#LOG-10]
  * [GET] /api/log/:logId
  * 특정 로그 ID에 대한 상세 정보를 조회합니다.
  * --------------------------------------------
@@ -509,6 +519,7 @@ export const fetchLogDetail = createAsyncThunk<LogDetailResponse, string>(
 
 /**
  * ============================================
+ * [#LOG-11]
  * [POST] /api/log/:logId/archive
  * 로그를 아카이브 처리합니다.
  * --------------------------------------------
@@ -553,6 +564,7 @@ export const archiveLog = createAsyncThunk<ArchiveLogResponse, ArchiveLogRequest
 
 /**
  * ============================================
+ * [#LOG-12]
  * [GET] /api/log/:projectId/archive
  * 프로젝트의 아카이브된 로그 목록을 조회합니다.
  * --------------------------------------------
@@ -774,94 +786,94 @@ const logSlice = createSlice({
           };
         }
       })
-          .addCase(fetchLogStats.pending, (state) => {
-      state.isLoading = true;
-      state.error = null;
-    })
-    .addCase(fetchLogStats.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.projectId = action.payload.data.projectId;
-      state.stats = action.payload.data.stats;
-      state.error = null;
-    })
-    .addCase(fetchLogStats.rejected, (state, action) => {
-      state.isLoading = false;
-      const payloadError = (action.payload as LogStatsResponse)?.error;
-      state.error = payloadError ? {
-        code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-        message: payloadError.message
-      } : {
-        code: 'INTERNAL_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.'
-      };
-    })
-    .addCase(fetchErrorStats.rejected, (state, action) => {
-      state.isLoading = false;
-      const payloadError = (action.payload as ErrorStatsResponse)?.error;
-      state.error = payloadError ? {
-        code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-        message: payloadError.message
-      } : {
-        code: 'INTERNAL_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.'
-      };
-    })
-    .addCase(fetchErrorTimeline.rejected, (state, action) => {
-      state.isLoading = false;
-      const payloadError = (action.payload as ErrorTimelineResponse)?.error;
-      state.error = payloadError ? {
-        code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-        message: payloadError.message
-      } : {
-        code: 'INTERNAL_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.'
-      };
-    })
-    .addCase(fetchErrorTypeRatio.rejected, (state, action) => {
-      state.isLoading = false;
-      const payloadError = (action.payload as ErrorTypeRatioResponse)?.error;
-      state.error = payloadError ? {
-        code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-        message: payloadError.message
-      } : {
-        code: 'INTERNAL_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.'
-      };
-    })
-    .addCase(fetchErrorTrend.rejected, (state, action) => {
-      state.isLoading = false;
-      const payloadError = (action.payload as ErrorTrendResponse)?.error;
-      state.error = payloadError ? {
-        code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-        message: payloadError.message
-      } : {
-        code: 'INTERNAL_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.'
-      };
-    })
-    .addCase(searchLogs.rejected, (state, action) => {
-      state.isLoading = false;
-      const payloadError = (action.payload as LogSearchResponse)?.error;
-      state.error = payloadError ? {
-        code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-        message: payloadError.message
-      } : {
-        code: 'INTERNAL_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.'
-      };
-    })
-    .addCase(fetchLogDetail.rejected, (state, action) => {
-      state.isLoading = false;
-      state.logDetail = null;
-      const payloadError = (action.payload as LogDetailResponse)?.error;
-      state.error = payloadError ? {
-        code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-        message: payloadError.message
-      } : {
-        code: 'INTERNAL_ERROR',
-        message: '알 수 없는 오류가 발생했습니다.'
-      };
-    });
+      .addCase(fetchLogStats.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchLogStats.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.projectId = action.payload.data.projectId;
+        state.stats = action.payload.data.stats;
+        state.error = null;
+      })
+      .addCase(fetchLogStats.rejected, (state, action) => {
+        state.isLoading = false;
+        const payloadError = (action.payload as LogStatsResponse)?.error;
+        state.error = payloadError ? {
+          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
+          message: payloadError.message
+        } : {
+          code: 'INTERNAL_ERROR',
+          message: '알 수 없는 오류가 발생했습니다.'
+        };
+      })
+      .addCase(fetchErrorStats.rejected, (state, action) => {
+        state.isLoading = false;
+        const payloadError = (action.payload as ErrorStatsResponse)?.error;
+        state.error = payloadError ? {
+          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
+          message: payloadError.message
+        } : {
+          code: 'INTERNAL_ERROR',
+          message: '알 수 없는 오류가 발생했습니다.'
+        };
+      })
+      .addCase(fetchErrorTimeline.rejected, (state, action) => {
+        state.isLoading = false;
+        const payloadError = (action.payload as ErrorTimelineResponse)?.error;
+        state.error = payloadError ? {
+          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
+          message: payloadError.message
+        } : {
+          code: 'INTERNAL_ERROR',
+          message: '알 수 없는 오류가 발생했습니다.'
+        };
+      })
+      .addCase(fetchErrorTypeRatio.rejected, (state, action) => {
+        state.isLoading = false;
+        const payloadError = (action.payload as ErrorTypeRatioResponse)?.error;
+        state.error = payloadError ? {
+          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
+          message: payloadError.message
+        } : {
+          code: 'INTERNAL_ERROR',
+          message: '알 수 없는 오류가 발생했습니다.'
+        };
+      })
+      .addCase(fetchErrorTrend.rejected, (state, action) => {
+        state.isLoading = false;
+        const payloadError = (action.payload as ErrorTrendResponse)?.error;
+        state.error = payloadError ? {
+          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
+          message: payloadError.message
+        } : {
+          code: 'INTERNAL_ERROR',
+          message: '알 수 없는 오류가 발생했습니다.'
+        };
+      })
+      .addCase(searchLogs.rejected, (state, action) => {
+        state.isLoading = false;
+        const payloadError = (action.payload as LogSearchResponse)?.error;
+        state.error = payloadError ? {
+          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
+          message: payloadError.message
+        } : {
+          code: 'INTERNAL_ERROR',
+          message: '알 수 없는 오류가 발생했습니다.'
+        };
+      })
+      .addCase(fetchLogDetail.rejected, (state, action) => {
+        state.isLoading = false;
+        state.logDetail = null;
+        const payloadError = (action.payload as LogDetailResponse)?.error;
+        state.error = payloadError ? {
+          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
+          message: payloadError.message
+        } : {
+          code: 'INTERNAL_ERROR',
+          message: '알 수 없는 오류가 발생했습니다.'
+        };
+      });
 
   },
 });
