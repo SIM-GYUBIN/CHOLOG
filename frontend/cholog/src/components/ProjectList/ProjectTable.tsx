@@ -67,7 +67,7 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigate(`/project/${project.id}`)}
-                    className="text-left text-[16px] text-[var(--text)] hover:text-gray-900 truncate cursor-pointer"
+                    className="text-left text-[16px] text-[var(--text)] font-extralight hover:text-gray-900 truncate cursor-pointer"
                   >
                     {project.name}
                   </button>
