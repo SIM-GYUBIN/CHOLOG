@@ -1,7 +1,10 @@
 package com.ssafy.cholog.domain.project.controller;
 
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
-import com.ssafy.cholog.domain.project.dto.response.CreateTokenResponse;
+import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
+import com.ssafy.cholog.domain.project.dto.request.RecreateTokenRequest;
+import com.ssafy.cholog.domain.project.dto.response.CreateProjectResponse;
+import com.ssafy.cholog.domain.project.dto.response.RecreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
 import com.ssafy.cholog.domain.project.service.ProjectService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
@@ -43,7 +46,7 @@ public class ProjectController {
     @Operation(summary = "프로젝트 생성", description = "프로젝트 생성 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
-    public ResponseEntity<CommonResponse<Void>> createProject(
+    public ResponseEntity<CommonResponse<CreateProjectResponse>> createProject(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody CreateProjectRequest request) {
 
@@ -52,15 +55,33 @@ public class ProjectController {
         return CommonResponse.created(projectService.createProject(userId, request));
     }
 
-    @PostMapping("/uuid")
-    @Operation(summary = "프로젝트 토큰 생성", description = "프로젝트 고유 토큰 생성 API")
+    @PutMapping("/uuid")
+    @Operation(summary = "프로젝트 토큰 재발급", description = "프로젝트 고유 토큰 재발급 API")
     @PreAuthorize("isAuthenticated()")
-    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
-    public ResponseEntity<CommonResponse<CreateTokenResponse>> createToken(
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+                            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.FORBIDDEN_ACCESS})
+    public ResponseEntity<CommonResponse<RecreateTokenResponse>> createToken(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody RecreateTokenRequest reqeust) {
 
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
-        return CommonResponse.created(projectService.createToken(userId));
+        return CommonResponse.created(projectService.recreateToken(userId, reqeust));
+    }
+
+    @PostMapping("/join")
+    @Operation(summary = "프로젝트 참여", description = "고유 토큰으로 프로젝트 참여 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND,
+                            ErrorCode.INTERNAL_SERVER_ERROR,
+                            ErrorCode.PROJECT_NOT_FOUND,
+                            ErrorCode.PROJECT_ALREADY_JOINED})
+    public ResponseEntity<CommonResponse<Void>> joinProject(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody JoinProjectRequest request) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(projectService.joinProject(userId, request));
     }
 }

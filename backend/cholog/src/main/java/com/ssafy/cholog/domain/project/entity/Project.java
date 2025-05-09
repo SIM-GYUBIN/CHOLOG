@@ -9,7 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "project")
+@Table(name = "project",
+        indexes = {
+                @Index(name = "idx_project_token", columnList = "projectToken")
+        })
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -31,4 +34,8 @@ public class Project extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<ProjectUser> projectUsers = new ArrayList<>();
+
+    public void updateProjectToken(String token){
+        this.projectToken = token;
+    }
 }
