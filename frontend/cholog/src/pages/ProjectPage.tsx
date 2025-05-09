@@ -19,7 +19,7 @@ const ProjectPage = () => {
   };
 
   return (
-    <div className='flex flex-col max-w-[70vw] mx-auto '>
+    <div className='flex flex-col w-full lg:w-[70vw] mx-auto '>
       <div className='flex flex-row justify-between '>
 
         <div className='flex flex-row items-center gap-2 font-[paperlogy5]'>

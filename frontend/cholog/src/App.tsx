@@ -9,6 +9,7 @@ import LogPage from './pages/LogPage';
 import ReportPage from './pages/ReportPage';
 import ArchivePage from './pages/ArchivePage';
 import ProjectSettingPage from './pages/ProjectSettingPage';
+import ArchiveListPage from './pages/ArchiveListPage';
 
 function App() {
   return (
@@ -23,8 +24,8 @@ function App() {
             <Route path="/project/:projectId" element={<ProjectPage />} />
             <Route path="/log/:logId" element={<LogPage />} />
             <Route path="/report/:projectId" element={<ReportPage />} />
-            <Route path="/archive/:projectId" element={<ArchivePage />} />
             <Route path="/projectsetting/:projectId" element={<ProjectSettingPage />} />
+            <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
           </Routes>
         </div>
       </div>
