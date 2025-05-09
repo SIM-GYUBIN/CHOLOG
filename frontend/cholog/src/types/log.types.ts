@@ -51,20 +51,6 @@ export interface LogStatsResponse extends BaseResponse {
 }
 
 /**
- * @description 로그 상태 관리를 위한 Redux 상태 타입
- * @property {boolean} isLoading - 데이터 로딩 상태
- * @property {object | null} error - 에러 정보
- * @property {LogStats | null} stats - 로그 통계 정보
- * @property {number | null} projectId - 현재 선택된 프로젝트 ID
- */
-export interface LogState {
-  isLoading: boolean;
-  error: BaseResponse["error"] | null;
-  stats: LogStats | null;
-  projectId: number | null;
-}
-
-/**
  * [#LOG-2]
  * @description 에러 통계 항목 타입
  * @property {string} errorName - 에러 이름
@@ -206,27 +192,7 @@ export interface ErrorTrendResponse extends BaseResponse {
   data: ErrorTrendItem[];
 }
 
-// LogState 업데이트
-export interface LogState {
-  isLoading: boolean;
-  error: BaseResponse["error"] | null;
-  stats: LogStats | null;
-  projectId: number | null;
-  errorStats: ErrorStatItem[];
-  errorTimeline: ErrorTimelineItem[];
-  errorTypeRatios: ErrorTypeRatioItem[];
-  errorTrends: ErrorTrendItem[]; // 추가
-  logs: LogDetail[]; // 추가
-  traceLogs: LogDetail[]; // Add this line
-  pagination: {
-    pageNumber: number;
-    totalPages: number;
-    totalElements: number;
-    pageSize: number;
-    first: boolean;
-    last: boolean;
-  } | null; // 추가
-}
+
 
 /**
  * [#LOG-10]
@@ -312,27 +278,6 @@ export interface LogListResponse extends BaseResponse {
   };
 }
 
-// LogState에 logs 추가
-export interface LogState {
-  isLoading: boolean;
-  error: BaseResponse["error"] | null;
-  stats: LogStats | null;
-  projectId: number | null;
-  errorStats: ErrorStatItem[];
-  errorTimeline: ErrorTimelineItem[];
-  errorTypeRatios: ErrorTypeRatioItem[];
-  errorTrends: ErrorTrendItem[];
-  logs: LogDetail[]; // 추가
-  pagination: {
-    pageNumber: number;
-    totalPages: number;
-    totalElements: number;
-    pageSize: number;
-    first: boolean;
-    last: boolean;
-  } | null; // 추가
-  logDetail: LogDetail | null;
-}
 
 /**
  * [#LOG-7]
@@ -451,6 +396,58 @@ export interface TraceLogResponse extends BaseResponse {
 }
 
 /**
+ * [#LOG-10]
+ * @description 로그 상세 정보 타입
+ * @property {string} _id - 로그 고유 식별자
+ * @property {string} timestamp - 로그 발생 시간
+ * @property {string} message - 로그 메시지
+ * @property {string} apiPath - API 경로
+ * @property {string} level - 로그 레벨 (TRACE/DEBUG/INFO/WARN/ERROR/FATAL)
+ * @property {string} traceId - 추적 ID
+ * @property {string} spanId - 스팬 ID
+ * @property {object} details - 상세 정보
+ */
+export interface LogDetail {
+  _id: string;
+  timestamp: string;
+  message: string;
+  apiPath: string;
+  level: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
+  traceId: string;
+  spanId: string;
+  details: {
+    errorCode?: string;
+    stackTrace?: string;
+    error?: {
+      name: string;
+      message: string;
+      stackTrace: string;
+    };
+    userId?: string;
+    ip?: string;
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * [#LOG-10]
+ * @description 특정 로그 상세 정보 조회를 위한 요청 파라미터
+ * @property {success} success - API 호출 성공 여부
+ * @property {data} data - 로그 상세 정보 데이터
+ * @property {error} error - 에러 정보 (선택적)
+ * @property {timestamp} timestamp - API 응답 시간
+ */
+export interface LogDetailResponse {
+  success: boolean;
+  data: LogDetail | null;
+  error?: {
+    code: string;
+    message: string;
+  };
+  timestamp: string;
+}
+
+/**
  * [#LOG-11]
  * @description 로그 아카이브 요청 파라미터
  * @property {string} logId - 아카이브할 로그 ID
@@ -509,8 +506,6 @@ export interface LogDetail {
     [key: string]: unknown;
   };
 }
-
-// Add these types to your existing log.types.ts file
 
 /**
  * [#LOG-12]
@@ -571,7 +566,23 @@ export interface ArchivedLogsResponse extends BaseResponse {
   data: ArchivedLogsResponseData;
 }
 
-// Update LogState to include archived logs if needed
+/**
+ * @description 로그 상태 관리를 위한 Redux 상태 타입
+ * @property {boolean} isLoading - 데이터 로딩 상태
+ * @property {object | null} error - 에러 정보
+ * @property {LogStats | null} stats - 로그 통계 정보
+ * @property {number | null} projectId - 현재 선택된 프로젝트 ID
+ * @property {ErrorStatItem[]} errorStats - 에러 통계 항목 배열
+ * @property {ErrorTimelineItem[]} errorTimeline - 에러 타임라인 항목 배열
+ * @property {ErrorTypeRatioItem[]} errorTypeRatios - 에러 유형별 통계 항목 배열
+ * @property {ErrorTrendItem[]} errorTrends - 에러 추세 항목 배열
+ * @property {LogDetail[]} logs - 로그 상세 정보 배열
+ * @property {LogDetail[]} traceLogs - 추적 로그 배열
+ * @property {object | null} pagination - 페이지네이션 정보
+ * @property {LogDetail | null} logDetail - 현재 선택된 로그 상세 정보
+ * @property {ArchiveLogResponseData | null} archiveResult - 아카이브 결과 정보
+ * @property {ArchivedLogsResponseData | null} archivedLogs - 아카이브된 로그 목록
+ */
 export interface LogState {
   isLoading: boolean;
   error: BaseResponse["error"] | null;
@@ -581,7 +592,8 @@ export interface LogState {
   errorTimeline: ErrorTimelineItem[];
   errorTypeRatios: ErrorTypeRatioItem[];
   errorTrends: ErrorTrendItem[];
-  logs: LogDetail[]; // 추가
+  logs: LogDetail[];
+  traceLogs: LogDetail[];
   pagination: {
     pageNumber: number;
     totalPages: number;
@@ -589,7 +601,7 @@ export interface LogState {
     pageSize: number;
     first: boolean;
     last: boolean;
-  } | null; // 추가
+  } | null;
   logDetail: LogDetail | null;
   archiveResult: ArchiveLogResponseData | null;
   archivedLogs: ArchivedLogsResponseData | null;
