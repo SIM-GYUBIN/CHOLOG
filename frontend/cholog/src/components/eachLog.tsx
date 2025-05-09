@@ -82,13 +82,13 @@ export default function EachLog({
 
   // const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : "";
   const levelBg = {
-    FATAL: "bg-[rgba(128,0,128,0.06)]",   // purple-100 6%
-    ERROR: "bg-[rgba(248,113,113,0.06)]", // red-100 6%
-    WARN: "bg-[rgba(253,224,71,0.06)]",   // yellow-100 6%
-    INFO: "bg-[rgba(191,219,254,0.06)]",  // blue-100 6%
-    DEBUG: "bg-[rgba(134,239,172,0.06)]", // g100 6%
-    TRACE: "bg-[rgba(243,244,246,0.06)]", // gray-100 6%
-  }[level] || "bg-[rgba(255,255,255,0.06)]";
+    FATAL: "bg-[rgba(128,0,128,0.04)]",   // 보라색 6%
+    ERROR: "bg-[rgba(239,68,68,0.04)]",   // 빨간색 6%
+    WARN: "bg-[rgba(234,179,8,0.04)]",    // 노란색 6%
+    INFO: "bg-[rgba(59,130,246,0.04)]",   // 파란색 6%
+    DEBUG: "bg-[rgba(34,197,94,0.04)]",   // 연두색 6%
+    TRACE: "bg-[rgba(20,184,166,0.04)]",  // 에메랄드색 6%
+  }[level] || "bg-[rgba(255,255,255,0.04)]";
 
   const levelCircle = {
     FATAL: "bg-purple-500",
