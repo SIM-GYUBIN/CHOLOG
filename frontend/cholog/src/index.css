@@ -94,6 +94,7 @@ body {
   --bg: #ffffff; /* light: white */
   --text: #45556c; /* light: state-600 */
   --line: #e5eaf1; /*state-200*/
+  --nav: #ffffff;
   /* --primary: #99a1af; light: gray-400 */
 }
 
@@ -101,5 +102,6 @@ html.dark {
   --bg: #0a0a0a; /* dark: state-800 */
   --text: #f1f5f9; /* dark: state-100 */
   --line: #ffffff1a; /*state-200*/
+  --nav: #181818;
   /* --primary: #99a1af; dark: gray-400 */
 }
