@@ -11,6 +11,7 @@ import com.ssafy.cholog.global.security.auth.UserPrincipal;
 import com.ssafy.cholog.global.util.AuthenticationUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,7 +28,7 @@ public class ProjectController {
     private final AuthenticationUtil authenticationUtil;
 
     @GetMapping("")
-    @Operation(summary = "프로젝트 목록 조회", description = "프로젝트 목록 조회 API")
+    @Operation(summary = "프로젝트 목록 조회", description = "프로젝트 목록을 최신순으로 조회합니다.")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<CommonResponse<UserProjectListResponse>> getUserProjectList(
@@ -44,7 +45,7 @@ public class ProjectController {
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<CommonResponse<Void>> createProject(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestBody CreateProjectRequest request) {
+            @Valid @RequestBody CreateProjectRequest request) {
 
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 

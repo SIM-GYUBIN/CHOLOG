@@ -1,5 +1,6 @@
 package com.ssafy.cholog.domain.project.service;
 
+import com.ssafy.cholog.domain.project.dto.item.UserProjectItem;
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.response.CreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
@@ -15,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,17 +31,15 @@ public class ProjectService {
 
     public UserProjectListResponse getUserProjectList(Integer userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId", userId));
 
-        User user2 = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)
-                        .addParameter("userId", userId)
-                        .addParameter("userId", userId));
+        List<UserProjectItem> projectItemList = projectUserRepository.findByUserOrderByProjectCreatedAtDesc(user).stream()
+                .map(UserProjectItem::of)
+                .collect(Collectors.toList());
 
-        User user3 = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "user가 없어요"));
-
-        return null;
+        return UserProjectListResponse.builder()
+                .projects(projectItemList)
+                .build();
     }
 
     @Transactional
@@ -75,4 +76,12 @@ public class ProjectService {
                 .token(token)
                 .build();
     }
+
+//    User user2 = userRepository.findById(userId)
+//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)
+//                    .addParameter("userId", userId)
+//                    .addParameter("userId", userId));
+//    User user3 = userRepository.findById(userId)
+//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "user가 없어요"));
+
 }
