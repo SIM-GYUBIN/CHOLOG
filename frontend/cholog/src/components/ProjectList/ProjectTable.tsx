@@ -48,13 +48,13 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
       <table className="w-full">
         <thead>
           <tr className="border-b border-[var(--line)]">
-            <th className="w-1/3 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+            <th className="w-1/3 p-4 font-medium text-[var(--text)] text-left text-xl">
               프로젝트명
             </th>
-            <th className="w-1/3 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+            <th className="w-1/3 p-4 font-medium text-[var(--text)] text-left text-xl">
               프로젝트 ID
             </th>
-            <th className="w-1/4 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+            <th className="w-1/4 p-4 font-medium text-[var(--text)] text-left text-xl">
               생성 시간
             </th>
             <th className="w-12 p-4"></th>
