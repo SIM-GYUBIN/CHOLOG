@@ -1,6 +1,6 @@
 /**
  * @description 로그 관련 타입 정의 모음
- * @author Cholog Team
+ * @author Cholog FE Team
  */
 
 /**
