@@ -18,6 +18,7 @@ import {
 
 /**
  * ============================================
+ * [#PROJECT-1]
  * [GET] /project
  * 전체 프로젝트 목록을 조회합니다.
  * --------------------------------------------
@@ -57,6 +58,7 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
 
 /**
  * ============================================
+ * [#PROJECT-2]
  * [POST] /project
  * 새로운 프로젝트를 생성합니다.
  * --------------------------------------------
@@ -97,6 +99,7 @@ export const createProject = createAsyncThunk<CreateProjectResponse, CreateProje
 
 /**
  * ============================================
+ * [#PROJECT-3]
  * [PUT] /project/:projectId
  * 특정 프로젝트의 이름을 수정합니다.
  * --------------------------------------------
@@ -141,6 +144,7 @@ export const updateProject = createAsyncThunk<UpdateProjectResponse, UpdateProje
 
 /**
  * ============================================
+ * [#PROJECT-4]
  * [DELETE] /project/:projectId
  * 프로젝트를 삭제합니다.
  * --------------------------------------------
@@ -180,6 +184,7 @@ export const deleteProject = createAsyncThunk<DeleteProjectResponse, DeleteProje
 
 /**
  * ============================================
+ * [#PROJECT-5]
  * [POST] /project/uuid
  * 프로젝트 초대 토큰을 생성합니다.
  * --------------------------------------------
@@ -219,6 +224,7 @@ export const generateProjectToken = createAsyncThunk<GenerateTokenResponse, void
 
 /**
  * ============================================
+ * [#PROJECT-6]
  * [POST] /api/project/join
  * 초대 토큰을 이용해 프로젝트에 참여합니다.
  * --------------------------------------------
@@ -259,6 +265,7 @@ export const joinProject = createAsyncThunk<JoinProjectResponse, JoinProjectRequ
 
 /**
  * ============================================
+ * [#PROJECT-7]
  * [DELETE] /project/me
  * 현재 사용자가 프로젝트에서 탈퇴합니다.
  * --------------------------------------------
