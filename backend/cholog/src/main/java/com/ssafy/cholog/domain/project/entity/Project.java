@@ -38,4 +38,6 @@ public class Project extends BaseEntity {
     public void updateProjectToken(String token){
         this.projectToken = token;
     }
+
+    public void updateProjectName(String name) { this.name = name; }
 }
