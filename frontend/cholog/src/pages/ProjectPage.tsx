@@ -19,18 +19,14 @@ const ProjectPage = () => {
   };
 
   return (
-    <div className="flex flex-col max-w-[70vw] mx-auto ">
-      <div className="flex flex-row justify-between ">
-        <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
-          <div className=" text-[24px] text-[var(--text)]">{projectName}</div>
-          <div className="text-[20px] text-[var(--helpertext)]">
-            {projectId}
-          </div>
-          <div
-            className="rounded-sm p-1 cursor-pointer hover:bg-gray-200"
-            onClick={() => handleCopyClipBoard(projectId || "")}
-          >
-            <img src={copy} alt="복사" className="w-5 h-5" />
+    <div className='flex flex-col w-full lg:w-[70vw] mx-auto '>
+      <div className='flex flex-row justify-between '>
+
+        <div className='flex flex-row items-center gap-2 font-[paperlogy5]'>
+          <div className=' text-[24px] text-slate-500'>{projectName}</div>
+          <div className='text-[20px] text-slate-300'>{projectId}</div>
+          <div className='rounded-sm p-1 cursor-pointer hover:bg-gray-200' onClick={() => handleCopyClipBoard(projectId || '')}>
+            <img src={copy} alt="복사" className='w-5 h-5' />
           </div>
         </div>
 

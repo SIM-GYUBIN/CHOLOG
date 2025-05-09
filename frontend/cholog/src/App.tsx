@@ -9,6 +9,7 @@ import LogPage from './pages/LogPage';
 import ReportPage from './pages/ReportPage';
 import ArchivePage from './pages/ArchivePage';
 import ProjectSettingPage from './pages/ProjectSettingPage';
+import ArchiveListPage from './pages/ArchiveListPage';
 
 function AppContent() {
   const location = useLocation();
@@ -36,7 +37,21 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <div className="app">
+        <NavigationBar />
+        <div className="pt-16">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/projectList" element={<ProjectListPage />} />
+            <Route path="/project/:projectId" element={<ProjectPage />} />
+            <Route path="/log/:logId" element={<LogPage />} />
+            <Route path="/report/:projectId" element={<ReportPage />} />
+            <Route path="/projectsetting/:projectId" element={<ProjectSettingPage />} />
+            <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
+          </Routes>
+        </div>
+      </div>
     </BrowserRouter>
   );
 }
