@@ -3,7 +3,9 @@ package com.ssafy.cholog.domain.project.service;
 import com.ssafy.cholog.domain.project.dto.item.UserProjectItem;
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
-import com.ssafy.cholog.domain.project.dto.response.CreateTokenResponse;
+import com.ssafy.cholog.domain.project.dto.request.RecreateTokenRequest;
+import com.ssafy.cholog.domain.project.dto.response.CreateProjectResponse;
+import com.ssafy.cholog.domain.project.dto.response.RecreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
 import com.ssafy.cholog.domain.project.entity.Project;
 import com.ssafy.cholog.domain.project.entity.ProjectUser;
@@ -44,13 +46,15 @@ public class ProjectService {
     }
 
     @Transactional
-    public Void createProject(Integer userId, CreateProjectRequest request) {
+    public CreateProjectResponse createProject(Integer userId, CreateProjectRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
 
+        String token = createToken();
+
         Project project = Project.builder()
                 .name(request.getName())
-                .projectToken(request.getToken())
+                .projectToken(token)
                 .build();
         projectRepository.save(project);
 
@@ -61,30 +65,12 @@ public class ProjectService {
                 .build();
         projectUserRepository.save(projectUser);
 
-        return null;
+        return CreateProjectResponse.builder().token(token).build();
     }
 
-    @Transactional
-    public CreateTokenResponse createToken(Integer userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
-
-        // UUID 생성
-        String token = UUID.randomUUID().toString();
-
-        // 생성된 토큰을 응답 DTO에 담아 반환
-        return CreateTokenResponse.builder()
-                .token(token)
-                .build();
+    public String createToken() {
+        return UUID.randomUUID().toString();
     }
-
-//    User user2 = userRepository.findById(userId)
-//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)
-//                    .addParameter("userId", userId)
-//                    .addParameter("userId", userId));
-//    User user3 = userRepository.findById(userId)
-//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "user가 없어요"));
-
 
     @Transactional
     public Void joinProject(Integer userId, JoinProjectRequest request) {
@@ -110,4 +96,32 @@ public class ProjectService {
 
         return null;
     }
+
+    @Transactional
+    public RecreateTokenResponse recreateToken(Integer userId, RecreateTokenRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+
+        Project project = projectRepository.findById(request.getProjectId())
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId",request.getProjectId()));
+
+        // 해당 유저가 프로젝트 생성자인지 확인
+        if (!projectUserRepository.findByUserAndProject(user, project).getIsCreator()) {
+            throw new CustomException(ErrorCode.FORBIDDEN_ACCESS, "토큰 재발급 권한이 없습니다.");
+        }
+
+        String token = createToken();
+        project.updateProjectToken(token);
+
+        return RecreateTokenResponse.builder()
+                .token(token)
+                .build();
+    }
+
+//    User user2 = userRepository.findById(userId)
+//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)
+//                    .addParameter("userId", userId)
+//                    .addParameter("userId", userId));
+//    User user3 = userRepository.findById(userId)
+//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "user가 없어요"));
 }

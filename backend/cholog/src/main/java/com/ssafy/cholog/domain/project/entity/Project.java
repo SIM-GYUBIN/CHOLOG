@@ -34,4 +34,8 @@ public class Project extends BaseEntity {
     @Builder.Default
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<ProjectUser> projectUsers = new ArrayList<>();
+
+    public void updateProjectToken(String token){
+        this.projectToken = token;
+    }
 }

@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class CreateTokenResponse {
+public class CreateProjectResponse {
     private final String token;
 }
