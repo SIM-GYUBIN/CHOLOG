@@ -99,41 +99,31 @@ const LogList = () => {
     <div className='rounded-[24px]'>
       <div className='font-[paperlogy6] text-start mx-3 text-[24px] text-slate-600 mb-2'>Log</div>
       <div className="border border-slate-200 rounded-[24px] shadow p-4 h-[50vh] overflow-y-auto">
-        {/* <div className="flex text-start items-center gap-10 border-b-2 border-slate-300 px-3 py-4 w-full text-slate-600 font-[paperlogy7] text-[16px]">
-          <div className="basis-[15%]">Level</div>
-          <div className="basis-[10%]">Part</div>
-          <div className="basis-[50%]">Message</div>
-          <div className="basis-[25%]">Date</div>
-        </div> */}
-        <div className=" grid grid-cols-6 gap-10 border-b-2 border-slate-300 px-3 py-4 w-full text-slate-600 font-[paperlogy7] text-[14px]">
 
-          {/* 로그 레벨벨 */}
-          <div className="col-span-1 flex flex-row justify-center shrink-0 min-w-0 gap-2">
-            Level
-          </div>
 
-          {/* 나머지지 */}
-          <div className="col-span-5 gap-10">
+      <div className=" border-b-slate-200 px-4 py-2 border-b-2 border-slate-300 grid grid-cols-6 font-[paperlogy6] text-[18px] text-slate-600 w-full">
 
-            <div className="grid grid-cols-10 gap-10">
-              <div className="flex justify-center col-span-0.5 shrink-0 min-w-0">
-                Part
-              </div>
-              <div className="flex justify-center col-span-1.5 shrink-0 min-w-0">
-                Type
-              </div>
-              <div className="flex justify-center  col-span-1 shrink-0 min-w-0">
-                Status
-              </div>
-              <div className="flex justify-center col-span-5 text-start min-w-0 truncate px-4">
-                Message
-              </div>
-              <div className="flex justify-center col-span-2 min-w-0 shrink-0 ">
-                Date
-              </div>
-            </div>
+{/* 로그 레벨벨 */}
+        <div className="col-span-1 flex flex-row shrink-0 min-w-0 gap-2">
+        <div className={`bg-white w-4 h-4 rounded-full`}></div>
+          <div className="font-semibold truncate">Level</div>
+        </div>
+
+{/* 나머지지 */}
+        <div className="flex flex-row col-span-5 gap-10">
+          
+          <div className="grid grid-cols-10 gap-10">
+            <div className="col-span-0.5 shrink-0 min-w-0">Part</div>
+            <div className="col-span-1.5 shrink-0 min-w-0">Type</div>
+            <div className="col-span-1 shrink-0 min-w-0">Status</div>
+            <div className="col-span-4 min-w-0 truncate ">Message</div>
+            <div className="col-span-3 min-w-0 shrink-0 ">Date</div>
+            
           </div>
         </div>
+      </div>
+
+
         {mockLogs.map(log => (
           <EachLog
             key={log._id}

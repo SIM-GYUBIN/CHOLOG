@@ -14,7 +14,7 @@ interface RecentProjectsProps {
 const RecentProjects = ({ projects }: RecentProjectsProps) => {
   return (
     <section className="mb-12">
-      <p className="text-left text-[24px] leading-tight tracking-wide font-paperlogy7 mb-6">
+      <p className="text-[var(--text)] text-left text-[24px] leading-tight tracking-wide font-paperlogy7 mb-6">
         최근 프로젝트
       </p>
       <div className="grid grid-cols-4 gap-4">

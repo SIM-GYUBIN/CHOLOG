@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import exitIcon from '@/assets/exit.svg';
-import deleteIcon from '@/assets/delete.svg';
-import copyIcon from '@/assets/copy.svg';
-import modifyIcon from '@/assets/modify.svg';
-import ModifyProjectModal from './ModifyProjectModal';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import exitIcon from "@/assets/exit.svg";
+import deleteIcon from "@/assets/delete.svg";
+import copyIcon from "@/assets/copy.svg";
+import modifyIcon from "@/assets/modify.svg";
+import ModifyProjectModal from "./ModifyProjectModal";
 
 interface Project {
   id: number;
@@ -23,11 +23,11 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
   const navigate = useNavigate();
   const [showModifyModal, setShowModifyModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectName, setNewProjectName] = useState("");
 
   const handleCopy = (projectId: string) => {
     onCopy(projectId);
-    alert('프로젝트 ID가 복사되었습니다.');
+    alert("프로젝트 ID가 복사되었습니다.");
   };
 
   const handleModifyClick = (project: Project) => {
@@ -40,42 +40,52 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
     // TODO: API 호출하여 프로젝트명 수정
     setShowModifyModal(false);
     setSelectedProject(null);
-    setNewProjectName('');
+    setNewProjectName("");
   };
 
   return (
     <>
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-200">
-            <th className="w-1/3 p-4 font-paperlogy5 text-left">프로젝트명</th>
-            <th className="w-1/3 p-4 font-paperlogy5 text-left">프로젝트 ID</th>
-            <th className="w-1/4 p-4 font-paperlogy5 text-left">생성 시간</th>
+          <tr className="border-b border-[var(--line)]">
+            <th className="w-1/3 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+              프로젝트명
+            </th>
+            <th className="w-1/3 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+              프로젝트 ID
+            </th>
+            <th className="w-1/4 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+              생성 시간
+            </th>
             <th className="w-12 p-4"></th>
           </tr>
         </thead>
         <tbody>
           {projects.map((project) => (
-            <tr key={project.id} className="border-b border-gray-200">
+            <tr key={project.id} className="border-b border-[var(--line)]">
               <td className="w-1/3 p-4">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigate(`/project/${project.id}`)}
-                    className="text-left text-[16px] hover:text-gray-900 truncate cursor-pointer"
+                    className="text-left text-[16px] text-[var(--text)] hover:text-gray-900 truncate cursor-pointer"
                   >
                     {project.name}
                   </button>
                   {project.isCreator && (
-                    <button 
+                    <button
                       className="p-1 hover:bg-gray-100 rounded-md transition-colors"
                       onClick={() => handleModifyClick(project)}
                     >
-                      <img src={modifyIcon} alt="Modify" className="h-4 w-4" />
+                      <img
+                        src={modifyIcon}
+                        alt="Modify"
+                        className="h-3.5 w-3.5"
+                      />
                     </button>
                   )}
                 </div>
               </td>
-              <td className="w-1/3 p-4 text-gray-600 text-left text-[16px]">
+              <td className="w-1/3 p-4 text-[var(--helpertext)] text-left text-[16px]">
                 <div className="flex items-center gap-2">
                   <span>{project.projectId}</span>
                   <button
@@ -86,15 +96,15 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
                   </button>
                 </div>
               </td>
-              <td className="w-1/4 p-4 text-gray-600 text-left text-[16px]">
+              <td className="w-1/4 p-4 text-[var(--text)] text-left text-[16px]">
                 {project.date}
               </td>
               <td className="w-12 p-4">
                 <button className="focus:outline-none cursor-pointer">
-                  <img 
-                    src={project.isCreator ? deleteIcon : exitIcon} 
-                    alt={project.isCreator ? "Delete" : "Exit"} 
-                    className="h-5 mt-2 mx-1" 
+                  <img
+                    src={project.isCreator ? deleteIcon : exitIcon}
+                    alt={project.isCreator ? "Delete" : "Exit"}
+                    className={`mt-2 mx-1 ${project.isCreator ? "h-3" : "h-5"}`}
                   />
                 </button>
               </td>
@@ -110,7 +120,7 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
         onClose={() => {
           setShowModifyModal(false);
           setSelectedProject(null);
-          setNewProjectName('');
+          setNewProjectName("");
         }}
         onSubmit={handleModifySubmit}
       />

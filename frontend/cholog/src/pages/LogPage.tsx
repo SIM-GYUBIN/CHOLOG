@@ -1,5 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import EachLog from "../components/eachLog";
+import ArchiveModal from "../components/ArchiveModal";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -37,6 +39,7 @@ const getLevelIcon = (level: string) => {
 
 const LogPage = () => {
   const { id } = useParams();
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
   console.log(id);
 
@@ -124,47 +127,76 @@ const LogPage = () => {
   ];
 
   const nav = useNavigate();
-  const handleclick = (_id: string) => {
-    nav(`/log/${_id}`);
+  const handleclick = (id: string) => {
+    if (id) {
+      nav(`/log/${id}`);
+    }
+  }
+
+  
+
+  const handleArchive = (reason: string) => {
+    console.log('아카이브 완료:', reason);
+    setIsArchiveModalOpen(false);
+    // 필요한 후속 처리
   };
 
-
   return (
-    <div className="flex gap-6 max-w-7xl mx-auto">
+    <div className="flex gap-6 max-w-7xl mx-auto text-slate-600">
       {/* 메인 로그 섹션 */}
       <div className="flex-1 bg-white rounded-lg p-6 border border-[#E5E5E5]">
-        <div className="flex items-center gap-2 mb-4">
-          <img
-            src="/src/assets/levelicon/error.png"
-            alt="error icon"
-            className="w-10 h-10"
-          />
-          <h1 className="text-[28px] font-paperlogy7">{logData.type}</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <img
+              src="/src/assets/levelicon/error.png"
+              alt="error icon"
+              className="w-10 h-10"
+            />
+            <div className="text-[28px] font-[paperlogy6]">{logData.type}</div>
+          </div>
+          <button
+            onClick={() => setIsArchiveModalOpen(true)}
+            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
         </div>
-        <div className="text-left text-gray-500 mb-6">{logData.timestamp}</div>
+        <div className="text-left font-[paperlogy4] mb-6">{logData.timestamp}</div>
 
        {/* 로그 메세지 섹션 */}
         <div className="mb-8">
-          <h2 className="text-left p-4 text-18px font-paperlogy6 text-[#475569]">MESSAGE</h2>
-          <div className="text-left bg-[#F8FAFC] p-4 rounded-lg font-mono text-14px shadow-sm">
+          <div className="text-left p-4 text-[18px] font-[paperlogy6]">MESSAGE</div>
+          <div className="text-left bg-[#F8FAFC] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
             {logData.message}
           </div>
         </div>
 
         {/* 초록 LLM 섹션 */}
         <div className="mb-8">
-          <div className="flex p-4 items-center gap-2 text-[#475569]">
-            <p>CHO:LOG EXPLANE</p>
-          </div>
-          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg font-mono text-14px shadow-sm">
+          <div className="text-left p-4 text-[18px] font-[paperlogy6]">CHO:LOG EXPLANE</div>
+          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
             {logData.message}
           </div>
         </div>
+
       </div>
 
       {/* 관련 로그 섹션 */}
       <div className="rounded-lg p-6 shadow-sm">
-        <h2 className="text-left text-18px font-paperlogy6 mb-6">
+        <h2 className="text-left text-18px font-[paperlogy6] mb-6">
           Related Log
         </h2>
         <div className="space-y-4">
@@ -180,7 +212,7 @@ const LogPage = () => {
                   alt={`${log.level} icon`} 
                   className="w-4 h-4 mt-1"
                 />
-                <div className="absolute h-10 w-[2px] bg-slate-300" style={{ left: '50%', zIndex : -1 }}></div>
+                <div className="absolute h-10 w-[2px] bg-slate-200" style={{ left: '50%', zIndex : -1 }}></div>
               </div>
               <div className=" text-[14px]">{log.from}</div>
               <div className="text-[14px]">{log.message}</div>
@@ -189,6 +221,13 @@ const LogPage = () => {
         </div>
       
       </div>
+      {/* 아카이브 모달 */}
+      <ArchiveModal
+        logId={logData._id}  // id 파라미터 대신 현재 로그의 _id를 전달
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        onArchive={handleArchive}
+      />
     </div>
   );
 };

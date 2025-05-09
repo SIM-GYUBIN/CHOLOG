@@ -5,18 +5,18 @@ interface ProjectCardProps {
   lastLog: string;
 }
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 const ProjectCard = ({ id, name, status, lastLog }: ProjectCardProps) => {
   const navigate = useNavigate();
 
   return (
     <div
-      className="p-4 border border-gray-200 rounded-2xl hover:shadow-md transition-shadow cursor-pointer"
+      className="p-4 border border-[var(--line)] rounded-2xl hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => navigate(`/project/${id}`)}
     >
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-paperlogy5 text-18px">{name}</h3>
+        <h3 className="font-paperlogy5 text-[var(--text)] text-18px">{name}</h3>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-4 w-4 text-gray-400"
@@ -28,13 +28,13 @@ const ProjectCard = ({ id, name, status, lastLog }: ProjectCardProps) => {
         </svg>
       </div>
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-gray-600 text-14px">
+        <div className="flex items-center gap-2 text-[var(--helpertext)] text-14px">
           <span>프로젝트 ID:</span>
           <div className="flex items-center gap-1">
             <span>{id}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-gray-600 text-14px">
+        <div className="flex items-center gap-2 text-[var(--helpertext)] text-14px">
           <span>최근로그:</span>
           <div className="flex items-center gap-1">
             <span>{lastLog}</span>
