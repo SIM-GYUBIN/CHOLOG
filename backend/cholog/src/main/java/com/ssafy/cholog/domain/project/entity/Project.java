@@ -40,4 +40,6 @@ public class Project extends BaseEntity {
     }
 
     public void updateProjectName(String name) { this.name = name; }
+    public void updateMmURL(String url) { this.mmURL = url; }
+    public void updateJiraToken(String token) { this.jiraToken = token; }
 }

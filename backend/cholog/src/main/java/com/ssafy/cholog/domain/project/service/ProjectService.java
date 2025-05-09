@@ -144,6 +144,14 @@ public class ProjectService {
 
         project.updateProjectName(request.getName());
 
+        if(request.getMmURL() != null){
+            project.updateMmURL(request.getMmURL());
+        }
+
+        if(request.getJiraToken() != null){
+            project.updateJiraToken(request.getJiraToken());
+        }
+
         return null;
     }
 
