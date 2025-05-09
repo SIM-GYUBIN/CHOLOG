@@ -8,6 +8,7 @@ import {
 } from '../../types/extraFeatures.types';
 
 /**
+ * [#EXTRAFEATURES-1]
  * ============================================
  * [PUT] /project/:projectId/jira
  * JIRA 토큰을 등록/수정합니다.
@@ -54,6 +55,7 @@ export const updateJiraToken = createAsyncThunk<UpdateJiraTokenResponse, UpdateJ
 
 /**
  * ============================================
+ * [#EXTRAFEATURES-2]
  * [GET] /api/jira/{projectId}/token
  * JIRA 토큰을 조회합니다.
  * --------------------------------------------

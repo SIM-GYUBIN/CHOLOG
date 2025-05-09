@@ -10,12 +10,7 @@ import {
 } from '../../types/user.types';
 
 /**
- * ===============================
- * User Authentication API Thunks
- * ===============================
- */
-
-/**
+ * [#USER-1]
  * @description 사용자 회원가입 비동기 API 호출
  * @param userData - 사용자 회원가입 요청 데이터
  * @returns ApiResponse 형태의 응답 또는 에러 정보
@@ -45,6 +40,7 @@ export const userSignup = createAsyncThunk<ApiResponse, SignupRequest>(
 );
 
 /**
+ * [#USER-2]
  * @description 사용자 로그인 비동기 API 호출
  * @param credentials - 로그인 요청 데이터 (이메일, 비밀번호 등)
  * @returns LoginResponse 형태의 응답 또는 에러 정보
@@ -81,6 +77,7 @@ export const userLogin = createAsyncThunk<LoginResponse, LoginRequest>(
 );
 
 /**
+ * [#USER-3]
  * @description 사용자 로그아웃 비동기 API 호출
  * @returns LogoutResponse 형태의 응답 또는 에러 정보
  */
