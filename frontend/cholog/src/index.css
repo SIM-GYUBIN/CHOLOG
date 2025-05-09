@@ -93,6 +93,7 @@ body {
 :root {
   --bg: #ffffff; /* light: white */
   --text: #45556c; /* light: state-600 */
+  --helpertext: #94a3b8; /* state-400 */
   --line: #e5eaf1; /*state-200*/
   --nav: #ffffff;
   /* --primary: #99a1af; light: gray-400 */
@@ -101,7 +102,8 @@ body {
 html.dark {
   --bg: #0a0a0a; /* dark: state-800 */
   --text: #f1f5f9; /* dark: state-100 */
-  --line: #ffffff1a; /*state-200*/
+  --helpertext: #cbd5e1; /* dark: state-300 */
+  --line: #ffffff1f; /*불투명도 15%*/
   --nav: #181818;
   /* --primary: #99a1af; dark: gray-400 */
 }

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo2.svg";
+import ThemeToggle from "../components/ThemeToggle";
 
 const NavigationBar = () => {
   const navigate = useNavigate();
@@ -20,9 +21,10 @@ const NavigationBar = () => {
 
           {/* Buttons on the right */}
           <div className="flex space-x-4">
-            <button className="text-[#45556C] rounded-full text-[14px] bg-[#D1D5DB] font-medium w-12 h-12 flex items-center justify-center">
+            {/* <button className="text-[#45556C] rounded-full text-[14px] bg-[#D1D5DB] font-medium w-12 h-12 flex items-center justify-center">
               이름
-            </button>
+            </button> */}
+            <ThemeToggle />
           </div>
         </div>
       </div>
