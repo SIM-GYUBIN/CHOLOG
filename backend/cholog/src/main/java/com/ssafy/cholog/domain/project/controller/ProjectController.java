@@ -1,6 +1,7 @@
 package com.ssafy.cholog.domain.project.controller;
 
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
+import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
 import com.ssafy.cholog.domain.project.dto.response.CreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
 import com.ssafy.cholog.domain.project.service.ProjectService;
@@ -11,6 +12,7 @@ import com.ssafy.cholog.global.security.auth.UserPrincipal;
 import com.ssafy.cholog.global.util.AuthenticationUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -61,5 +63,21 @@ public class ProjectController {
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
         return CommonResponse.created(projectService.createToken(userId));
+    }
+
+    @PostMapping("/join")
+    @Operation(summary = "프로젝트 참여", description = "고유 토큰으로 프로젝트 참여 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND,
+                            ErrorCode.INTERNAL_SERVER_ERROR,
+                            ErrorCode.PROJECT_NOT_FOUND,
+                            ErrorCode.PROJECT_ALREADY_JOINED})
+    public ResponseEntity<CommonResponse<Void>> joinProject(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody JoinProjectRequest request) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(projectService.joinProject(userId, request));
     }
 }

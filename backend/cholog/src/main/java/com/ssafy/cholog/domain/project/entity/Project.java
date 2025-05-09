@@ -9,7 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "project")
+@Table(name = "project",
+        indexes = {
+                @Index(name = "idx_project_token", columnList = "projectToken")
+        })
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

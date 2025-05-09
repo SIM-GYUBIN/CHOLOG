@@ -1,6 +1,7 @@
 package com.ssafy.cholog.domain.project.service;
 
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
+import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
 import com.ssafy.cholog.domain.project.dto.response.CreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
 import com.ssafy.cholog.domain.project.entity.Project;
@@ -74,5 +75,30 @@ public class ProjectService {
         return CreateTokenResponse.builder()
                 .token(token)
                 .build();
+    }
+
+    @Transactional
+    public Void joinProject(Integer userId, JoinProjectRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+
+        Project project = projectRepository.findByProjectToken(request.getToken())
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "토큰이 맞는지 다시 확인해보세요."));
+
+        // 프로젝트 참여 여부 조회
+        if (projectUserRepository.existsByProjectAndUser(project, user)) {
+            throw new CustomException(ErrorCode.PROJECT_ALREADY_JOINED)
+                    .addParameter("userId", userId)
+                    .addParameter("projectId", project.getId());
+        }
+
+        ProjectUser projectUser = ProjectUser.builder()
+                .project(project)
+                .user(user)
+                .isCreator(false)
+                .build();
+        projectUserRepository.save(projectUser);
+
+        return null;
     }
 }
