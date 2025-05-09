@@ -67,16 +67,16 @@ const ErrorCountChart = () => {
   }, []);
 
   return (
-    <div className="w-full border border-[var(--line)] p-8 bg-white/5 rounded-2xl shadow-md">
-      <h2 className="text-left text-2xl font-semibold text-[var(--text)] mb-2">
+    <div className="w-full border border-[var(--line)] p-6 bg-white/5 rounded-2xl shadow-md h-full">
+      <h2 className="text-left text-xl font-semibold text-[var(--text)] mb-4">
         Hourly Log Count
       </h2>
       <div
         ref={scrollRef}
         className="scroll-hidden overflow-x-auto cursor-grab active:cursor-grabbing"
       >
-        <div style={{ width: `${mockData.length * 60}px`, height: "180px" }}>
-          <AreaChart data={mockData} width={mockData.length * 60} height={180}>
+        <div style={{ width: `${mockData.length * 60}px`, height: "160px" }}>
+          <AreaChart data={mockData} width={mockData.length * 60} height={160}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#9CA3AF" stopOpacity={0.4} />

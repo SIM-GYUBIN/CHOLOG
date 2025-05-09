@@ -109,27 +109,24 @@ export default function EachLog({
   return (
     <div className={containerClass} onClick={handleclick}>
       <div className="grid grid-cols-8 text-[14px] text-slate-600">
-
-{/* 로그 레벨벨 */}
+        {/* 로그 레벨 */}
         <div className="col-span-1 flex flex-row justify-start items-center shrink-0 w-20 gap-2">
-        <div className={`${levelCircle} w-4 h-4 rounded-full`}></div>
+          <div className={`${levelCircle} w-4 h-4 rounded-full`}></div>
           <div className="font-semibold truncate">{level}</div>
         </div>
 
-{/* 나머지지 */}
+        {/* 나머지 */}
         <div className="flex flex-row items-start col-span-7 gap-10">
-          
-          <div className="items-center grid grid-cols-10 gap-10">
+          <div className="items-center grid grid-cols-10 gap-10 w-full">
             <div className="col-span-0.5 shrink-0 min-w-0">{from}</div>
             <div className="col-span-1.5 shrink-0 min-w-0">{type}</div>
             <div className="col-span-1 shrink-0 min-w-0">{status}</div>
-            <div className="col-span-4 text-start min-w-0 truncate ">
+            <div className="col-span-4 text-start min-w-0 truncate">
               {message}
             </div>
-            <div className="col-span-3 min-w-0 shrink-0 text-start ">
+            <div className="col-span-3 min-w-0 shrink-0 text-start">
               {formattedTime}
             </div>
-            
           </div>
         </div>
       </div>

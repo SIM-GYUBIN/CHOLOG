@@ -13,7 +13,7 @@ import ArchiveListPage from './pages/ArchiveListPage';
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname === '/projectlist';
+  const hideNavbar = location.pathname.toLowerCase() === '/projectlist';
 
   return (
     <div className="app">
@@ -22,12 +22,13 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/projectList" element={<ProjectListPage />} />
+          <Route path="/projectlist" element={<ProjectListPage />} />
           <Route path="/project/:projectId" element={<ProjectPage />} />
           <Route path="/log/:logId" element={<LogPage />} />
           <Route path="/report/:projectId" element={<ReportPage />} />
           <Route path="/archive/:projectId" element={<ArchivePage />} />
           <Route path="/projectsetting/:projectId" element={<ProjectSettingPage />} />
+          <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
         </Routes>
       </div>
     </div>
@@ -37,21 +38,7 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <div className="app">
-        <NavigationBar />
-        <div className="pt-16">
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/projectList" element={<ProjectListPage />} />
-            <Route path="/project/:projectId" element={<ProjectPage />} />
-            <Route path="/log/:logId" element={<LogPage />} />
-            <Route path="/report/:projectId" element={<ReportPage />} />
-            <Route path="/projectsetting/:projectId" element={<ProjectSettingPage />} />
-            <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
-          </Routes>
-        </div>
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 }
