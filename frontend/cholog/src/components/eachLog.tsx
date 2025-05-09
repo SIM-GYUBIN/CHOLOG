@@ -16,7 +16,7 @@ type LogProps = {
   id?: string;
   from?: string;
   type?: string;
-  status?:number; // http 상태코드
+  status?: number; // http 상태코드
   timestamp?: string;
   message?: string;
   apiPath?: string;
@@ -60,16 +60,19 @@ export default function EachLog({
   islevelBg = false,
 }: LogProps) {
   const formattedTime = timestamp
-  ? new Date(timestamp).toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false, // 24시간 형식으로 표시
-    }).replace(/\/|, /g, '-').replace(' ', ' ') // 날짜 구분자를 변경하고, 공백으로 시간 구분
-  : "";
+    ? new Date(timestamp)
+        .toLocaleString("ko-KR", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false, // 24시간 형식으로 표시
+        })
+        .replace(/\/|, /g, "-")
+        .replace(" ", " ") // 날짜 구분자를 변경하고, 공백으로 시간 구분
+    : "";
 
   const nav = useNavigate();
 
@@ -79,63 +82,52 @@ export default function EachLog({
     }
   };
 
-
   // const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : "";
-  const levelBg = {
-    FATAL: "bg-[rgba(128,0,128,0.04)]",   // 보라색 6%
-    ERROR: "bg-[rgba(239,68,68,0.04)]",   // 빨간색 6%
-    WARN: "bg-[rgba(234,179,8,0.04)]",    // 노란색 6%
-    INFO: "bg-[rgba(59,130,246,0.04)]",   // 파란색 6%
-    DEBUG: "bg-[rgba(34,197,94,0.04)]",   // 연두색 6%
-    TRACE: "bg-[rgba(20,184,166,0.04)]",  // 에메랄드색 6%
-  }[level] || "bg-[rgba(255,255,255,0.04)]";
+  const levelBg =
+    {
+      FATAL: "bg-[rgba(128,0,128,0.04)]", // 보라색 6%
+      ERROR: "bg-[rgba(239,68,68,0.04)]", // 빨간색 6%
+      WARN: "bg-[rgba(234,179,8,0.04)]", // 노란색 6%
+      INFO: "bg-[rgba(59,130,246,0.04)]", // 파란색 6%
+      DEBUG: "bg-[rgba(34,197,94,0.04)]", // 연두색 6%
+      TRACE: "bg-[rgba(20,184,166,0.04)]", // 에메랄드색 6%
+    }[level] || "bg-[rgba(255,255,255,0.04)]";
 
-  const levelCircle = {
-    FATAL: "bg-purple-500",
-    ERROR: "bg-red-500",
-    WARN: "bg-yellow-500",
-    INFO: "bg-blue-500",
-    DEBUG: "bg-green-500",
-    TRACE: "bg-teal-500",
-  }[level] || "bg-white";
+  const levelCircle =
+    {
+      FATAL: "bg-purple-500",
+      ERROR: "bg-red-500",
+      WARN: "bg-yellow-500",
+      INFO: "bg-blue-500",
+      DEBUG: "bg-green-500",
+      TRACE: "bg-teal-500",
+    }[level] || "bg-white";
 
   // islevelBg가 true면 levelBg 적용, 아니면 배경색 없음
-  const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-2 cursor-pointer hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1),0_-4px_12px_-2px_rgba(0,0,0,0.1)] transition-shadow ${islevelBg ? levelBg : ""}`;
-  
+  const containerClass = `border-b border-b-[1.5px] border-b-[var(--line)] px-4 py-2 cursor-pointer hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1),0_-4px_12px_-2px_rgba(0,0,0,0.1)] transition-shadow ${islevelBg ? levelBg : ""}`;
+
   return (
     <div className={containerClass} onClick={handleclick}>
-      <div className="grid grid-cols-6 text-[12px] text-slate-600 w-full">
-
-{/* 로그 레벨벨 */}
+      <div className="grid grid-cols-6 text-[12px] text-[var(--text)] w-full">
+        {/* 로그 레벨 */}
         <div className="col-span-1 flex flex-row items-center shrink-0 min-w-0 gap-2">
-        <div className={`${levelCircle} w-4 h-4 rounded-full`}></div>
+          <div className={`${levelCircle} w-4 h-4 rounded-full`}></div>
           <div className="font-semibold truncate">{level}</div>
         </div>
 
-{/* 나머지지 */}
+        {/* 나머지 */}
         <div className="flex flex-row items-start col-span-5 gap-10">
-          
           <div className="items-center grid grid-cols-10 gap-10">
-            <div className="col-span-0.5 shrink-0 min-w-0">
-              {from}
-            </div>
-            <div className="col-span-1.5 shrink-0 min-w-0">
-              {type}
-            </div>
-            <div className="col-span-1 shrink-0 min-w-0">
-              {status}
-            </div>
+            <div className="col-span-0.5 shrink-0 min-w-0">{from}</div>
+            <div className="col-span-1.5 shrink-0 min-w-0">{type}</div>
+            <div className="col-span-1 shrink-0 min-w-0">{status}</div>
             <div className="col-span-4 text-start min-w-0 truncate ">
               {message}
             </div>
-            <div className="col-span-3 min-w-0 shrink-0 ">
-              {formattedTime}
-            </div>
-            
+            <div className="col-span-3 min-w-0 shrink-0 ">{formattedTime}</div>
           </div>
         </div>
       </div>
-
     </div>
   );
 }

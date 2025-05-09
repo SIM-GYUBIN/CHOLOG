@@ -1,4 +1,4 @@
-import EachLog from '../components/eachLog';
+import EachLog from "../components/eachLog";
 
 const mockLogs = [
   {
@@ -90,41 +90,36 @@ const mockLogs = [
     timestamp: "2025-04-28T11:38:00Z",
     message: "Network connection timeout",
     level: "WARN",
-  }
+  },
 ];
-
 
 const LogList = () => {
   return (
-    <div className='rounded-[24px]'>
-      <div className='font-[paperlogy6] text-start mx-3 text-[24px] text-slate-600 mb-2'>Log</div>
-      <div className="border border-slate-200 rounded-[24px] shadow p-4 h-[50vh] overflow-y-auto">
+    <div className="rounded-[24px]">
+      <div className="font-[paperlogy6] text-start mx-3 text-[24px] text-[var(--text)] mb-2">
+        Log
+      </div>
+      <div className="border border-[var(--line)] rounded-[24px] shadow p-4 h-[50vh] overflow-y-auto">
+        <div className=" border-b-[var(--helpertext)] px-4 py-2 border-b-2 border-[var(--line)] grid grid-cols-6 font-[paperlogy6] text-[18px] text-[var(--text)] w-full">
+          {/* 로그 레벨 */}
+          <div className="col-span-1 flex flex-row shrink-0 min-w-0 gap-2">
+            <div className={`bg-white w-4 h-4 rounded-full`}></div>
+            <div className="font-semibold truncate">Level</div>
+          </div>
 
-
-      <div className=" border-b-slate-200 px-4 py-2 border-b-2 border-slate-300 grid grid-cols-6 font-[paperlogy6] text-[18px] text-slate-600 w-full">
-
-{/* 로그 레벨벨 */}
-        <div className="col-span-1 flex flex-row shrink-0 min-w-0 gap-2">
-        <div className={`bg-white w-4 h-4 rounded-full`}></div>
-          <div className="font-semibold truncate">Level</div>
-        </div>
-
-{/* 나머지지 */}
-        <div className="flex flex-row col-span-5 gap-10">
-          
-          <div className="grid grid-cols-10 gap-10">
-            <div className="col-span-0.5 shrink-0 min-w-0">Part</div>
-            <div className="col-span-1.5 shrink-0 min-w-0">Type</div>
-            <div className="col-span-1 shrink-0 min-w-0">Status</div>
-            <div className="col-span-4 min-w-0 truncate ">Message</div>
-            <div className="col-span-3 min-w-0 shrink-0 ">Date</div>
-            
+          {/* 나머지 */}
+          <div className="flex flex-row col-span-5 gap-10">
+            <div className="grid grid-cols-10 gap-10">
+              <div className="col-span-0.5 shrink-0 min-w-0">Part</div>
+              <div className="col-span-1.5 shrink-0 min-w-0">Type</div>
+              <div className="col-span-1 shrink-0 min-w-0">Status</div>
+              <div className="col-span-4 min-w-0 truncate ">Message</div>
+              <div className="col-span-3 min-w-0 shrink-0 ">Date</div>
+            </div>
           </div>
         </div>
-      </div>
 
-
-        {mockLogs.map(log => (
+        {mockLogs.map((log) => (
           <EachLog
             key={log._id}
             islevelBg={true}
@@ -134,11 +129,19 @@ const LogList = () => {
             from={log.from}
             timestamp={log.timestamp}
             message={log.message}
-            level={log.level as "ERROR" | "INFO" | "WARN" | "DEBUG" | "FATAL" | "TRACE"}
+            level={
+              log.level as
+                | "ERROR"
+                | "INFO"
+                | "WARN"
+                | "DEBUG"
+                | "FATAL"
+                | "TRACE"
+            }
           />
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 export default LogList;
