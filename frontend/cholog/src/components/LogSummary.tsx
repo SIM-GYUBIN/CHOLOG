@@ -30,7 +30,7 @@ const LogSummary = () => {
   const LABELS = ["error", "debug", "warn", "trace", "info", "fatal"] as const;
 
   return (
-    <div className="rounded-2xl border border-[var(--line)] p-8 shadow-md w-full bg-white/5">
+    <div className="rounded-2xl border border-[var(--line)] p-6 shadow-md w-full bg-white/5 h-full">
       <div className="text-left text-[var(--text)] mb-4 flex items-end gap-3">
         <span className="text-lg">Total</span>
         <span className="text-2xl font-bold">
@@ -38,13 +38,13 @@ const LogSummary = () => {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-6">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-4">
         {LABELS.map((label) => (
-          <div key={label} className="flex items-center gap-3">
+          <div key={label} className="flex items-center gap-2">
             <img
               src={ICONS[label]}
               alt={`${label} icon`}
-              className="w-10 h-10"
+              className="w-8 h-8"
             />
             <div className="flex flex-col text-left text-[var(--text)]">
               <span className="text-sm text-[var(--text)]">{label}</span>
