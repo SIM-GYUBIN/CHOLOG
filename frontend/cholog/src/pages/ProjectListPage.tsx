@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logo from '@/assets/logo.svg';
+import logo from '@/assets/logo2.svg';
 import RecentProjects from "../components/ProjectList/RecentProjects";
 import ProjectActions from "../components/ProjectList/ProjectActions";
 import ProjectTable from "../components/ProjectList/ProjectTable";
@@ -51,11 +51,11 @@ const ProjectListPage = () => {
 
   return (
     <div className="max-w-[60vw] mx-auto">
-      <div className="text-center">
-        <img src={logo} alt="Cholog logo" className="h-36 mx-auto" />
+      <div className="text-center my-18">
+        <img src={logo} alt="Cholog logo" className="h-12 mx-auto" />
       </div>
 
-      <RecentProjects projects={recentProjects} />
+      {/* <RecentProjects projects={recentProjects} /> */}
       <ProjectActions onAdd={() => openModal("add")} onJoin={() => openModal("join")} />
       <section className="mt-8">
         <ProjectTable projects={projectList} onCopy={handleCopy} />

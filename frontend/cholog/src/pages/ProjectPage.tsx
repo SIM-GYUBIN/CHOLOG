@@ -1,10 +1,10 @@
-import { useParams } from 'react-router-dom';
-import LogList from '../components/logList';
-import copy from '@/assets/copy.svg';
-import report from '@/assets/report.svg';
-import setting from '@/assets/setting.svg';
-import ErrorChart from '../components/charts/ErrorChart';
-import LogSummary from '../components/LogSummary';
+import { useParams } from "react-router-dom";
+import LogList from "../components/logList";
+import copy from "@/assets/copy.svg";
+import report from "@/assets/report.svg";
+import setting from "@/assets/setting.svg";
+import ErrorChart from "../components/charts/ErrorChart";
+import LogSummary from "../components/LogSummary";
 
 const ProjectPage = () => {
   const { projectId } = useParams();
@@ -30,23 +30,21 @@ const ProjectPage = () => {
           </div>
         </div>
 
-        <div className='flex flex-row self-center'>
-          <div className='rounded-sm p-1 cursor-pointer hover:bg-gray-200'>
-            <img src={report} alt="리포트" className='w-5 h-5' />
+        <div className="flex flex-row self-center">
+          <div className="rounded-sm p-1 cursor-pointer hover:bg-gray-200">
+            <img src={report} alt="리포트" className="w-5 h-5" />
           </div>
-          <div className='rounded-sm p-1 cursor-pointer hover:bg-gray-200'>
-            <img src={setting} alt="세팅" className='w-5 h-5' />
+          <div className="rounded-sm p-1 cursor-pointer hover:bg-gray-200">
+            <img src={setting} alt="세팅" className="w-5 h-5" />
           </div>
-
         </div>
-
       </div>
-      <div className='grid grid-cols-7 py-5 gap-10'>
-        <div className='col-span-3'>
-        <LogSummary />
+      <div className="grid grid-cols-7 py-5 gap-10">
+        <div className="col-span-3">
+          <LogSummary />
         </div>
-        <div className='col-span-4'>
-        <ErrorChart />
+        <div className="col-span-4">
+          <ErrorChart />
         </div>
       </div>
       <LogList />

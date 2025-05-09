@@ -43,18 +43,31 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
     setNewProjectName("");
   };
 
+  if (!projects || projects.length === 0) {
+    return (
+      <div className="w-full min-h-[200px] flex flex-col items-center justify-center p-8 bg-white rounded-xl">
+        <div className="text-[#5EA500] font-paperlogy6 text-xl mb-2">
+          아직 프로젝트가 없습니다
+        </div>
+        <div className="text-gray-500 font-paperlogy4 text-base">
+          새로운 프로젝트를 생성하거나 가입하세요.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <table className="w-full">
         <thead>
-          <tr className="border-b border-[var(--line)]">
-            <th className="w-1/3 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+          <tr className="border-b-2 border-[#5EA500]">
+            <th className="w-1/3 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
               프로젝트명
             </th>
-            <th className="w-1/3 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+            <th className="w-1/3 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
               프로젝트 ID
             </th>
-            <th className="w-1/4 p-4 font-paperlogy5 text-[var(--text)] text-left text-lg">
+            <th className="w-1/4 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
               생성 시간
             </th>
             <th className="w-12 p-4"></th>
@@ -62,18 +75,21 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
         </thead>
         <tbody>
           {projects.map((project) => (
-            <tr key={project.id} className="border-b border-[var(--line)]">
+            <tr
+              key={project.id}
+              className="border-b border-[var(--line)] hover:bg-[#5EA50008] transition-colors"
+            >
               <td className="w-1/3 p-4">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigate(`/project/${project.id}`)}
-                    className="text-left text-[16px] text-[var(--text)] hover:text-gray-900 truncate cursor-pointer"
+                    className="text-left text-[16px] text-[var(--text)] font-paperlogy5 hover:text-[#5EA500] truncate cursor-pointer transition-colors"
                   >
                     {project.name}
                   </button>
                   {project.isCreator && (
                     <button
-                      className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                      className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors"
                       onClick={() => handleModifyClick(project)}
                     >
                       <img
@@ -85,26 +101,26 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
                   )}
                 </div>
               </td>
-              <td className="w-1/3 p-4 text-[var(--helpertext)] text-left text-[16px]">
+              <td className="w-1/3 p-4 font-paperlogy4 text-[var(--helpertext)] text-left text-[16px]">
                 <div className="flex items-center gap-2">
                   <span>{project.projectId}</span>
                   <button
                     onClick={() => handleCopy(project.projectId)}
-                    className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                    className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors"
                   >
                     <img src={copyIcon} alt="Copy" className="h-4 w-4" />
                   </button>
                 </div>
               </td>
-              <td className="w-1/4 p-4 text-[var(--text)] text-left text-[16px]">
+              <td className="w-1/4 p-4 font-paperlogy4 text-[var(--text)] text-left text-[16px]">
                 {project.date}
               </td>
               <td className="w-12 p-4">
-                <button className="focus:outline-none cursor-pointer">
+                <button className="p-1.5 hover:bg-[#5EA50015] rounded-md transition-colors focus:outline-none cursor-pointer">
                   <img
                     src={project.isCreator ? deleteIcon : exitIcon}
                     alt={project.isCreator ? "Delete" : "Exit"}
-                    className={`mt-2 mx-1 ${project.isCreator ? "h-3" : "h-5"}`}
+                    className={`${project.isCreator ? "h-3" : "h-5"}`}
                   />
                 </button>
               </td>

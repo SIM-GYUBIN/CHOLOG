@@ -72,7 +72,7 @@
   font-family: consolb;
   font-style: normal;
   font-weight: 200;
-  src: url("@/assets/fonts/consolb.ttf") format("truetype");
+  src: url("@/assets/fonts/consolab.ttf") format("truetype");
 }
 
 body {
@@ -101,8 +101,8 @@ body {
 
 html.dark {
   --bg: #0a0a0a; /* dark: state-800 */
-  --text: #f1f5f9; /* dark: state-100 */
-  --helpertext: #cbd5e1; /* dark: state-300 */
+  --text: #e2e8f0; /* dark: state-200 */
+  --helpertext: #9ca3af; /* dark: gray-400 */
   --line: #ffffff1f; /*불투명도 15%*/
   --nav: #181818;
   /* --primary: #99a1af; dark: gray-400 */
