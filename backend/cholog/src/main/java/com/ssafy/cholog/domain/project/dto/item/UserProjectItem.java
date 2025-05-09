@@ -14,6 +14,8 @@ public class UserProjectItem {
     private final Integer id;
     @Schema(example = "와인 한 사발 프로젝트")
     private final String name;
+    @Schema(example = "143258dkfjwoi100mfvl")
+    private final String projectToken;
     @Schema(example = "true")
     private final Boolean isCreator;
     @Schema(example = "2025-05-08 16:20:06.459154")
@@ -23,6 +25,7 @@ public class UserProjectItem {
         return UserProjectItem.builder()
                 .id(projectUser.getProject().getId())
                 .name(projectUser.getProject().getName())
+                .projectToken(projectUser.getProject().getProjectToken())
                 .isCreator(projectUser.getIsCreator())
                 .createdAt(projectUser.getProject().getCreatedAt())
                 .build();
