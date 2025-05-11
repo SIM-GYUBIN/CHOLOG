@@ -12,8 +12,6 @@ public class ProjectDetailResponse {
     private final String name;
     @Schema(example = "143258dkfjwoi100mfvl")
     private final String projectToken;
-    @Schema(example = "https://cholog.com")
-    private final String mmURL;
     @Schema(example = "sdfsfd-aswtgg300b-dfa")
     private final String jiraToken;
     @Schema(example = "false")
@@ -23,7 +21,6 @@ public class ProjectDetailResponse {
         return ProjectDetailResponse.builder()
                 .name(project.getName())
                 .projectToken(project.getProjectToken())
-                .mmURL(project.getMmURL())
                 .jiraToken(project.getJiraToken())
                 .isCreator(isCreator)
                 .build();
