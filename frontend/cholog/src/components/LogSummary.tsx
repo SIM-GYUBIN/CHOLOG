@@ -1,9 +1,9 @@
-import errorIcon from "@/assets/levelicon/error.png";
-import warnIcon from "@/assets/levelicon/warn.png";
-import infoIcon from "@/assets/levelicon/info.png";
-import debugIcon from "@/assets/levelicon/debug.png";
-import traceIcon from "@/assets/levelicon/trace.png";
-import fatalIcon from "@/assets/levelicon/fatal.png";
+import errorIcon from "@/assets/levelicon/error.svg";
+import warnIcon from "@/assets/levelicon/warn.svg";
+import infoIcon from "@/assets/levelicon/info.svg";
+import debugIcon from "@/assets/levelicon/debug.svg";
+import traceIcon from "@/assets/levelicon/trace.svg";
+import fatalIcon from "@/assets/levelicon/fatal.svg";
 
 const LogSummary = () => {
   const logsMockData = {
@@ -44,7 +44,7 @@ const LogSummary = () => {
             <img
               src={ICONS[label]}
               alt={`${label} icon`}
-              className="w-8 h-8"
+              className="w-11 h-11"
             />
             <div className="flex flex-col text-left text-[var(--text)]">
               <span className="text-sm text-[var(--text)]">{label}</span>
