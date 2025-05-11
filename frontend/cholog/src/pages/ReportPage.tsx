@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import DonutChart from '../components/charts/DonutChart';
 import ErrorCountChart from '../components/charts/ErrorChart';
 import RankingCardList from '../components/common/RankingCardList';
+import ProjectNavBar from '../components/projectNavbar';
 
 const ReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +22,13 @@ const ReportPage: React.FC = () => {
   ];
 
   return (
-    <div className='flex flex-col max-w-[70vw] mx-auto'>
+    <div className="w-full lg:w-[70vw] mx-auto">
+      
+    
+    <div className='flex flex-col mx-auto">'>
+
+          <ProjectNavBar />
+
       {/* 프로젝트이름 섹션 */}
       <div className='flex flex-row justify-between mb-8'>
         <div className='flex flex-row items-center gap-2 font-[paperlogy5]'>
@@ -64,6 +71,7 @@ const ReportPage: React.FC = () => {
           하이하이
         </div>
       </div>
+    </div>
     </div>
   );
 };

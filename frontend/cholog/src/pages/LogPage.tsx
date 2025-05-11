@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import EachLog from "../components/eachLog";
 import ArchiveModal from "../components/ArchiveModal";
+import ProjectNavBar from "../components/projectNavbar";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -9,28 +10,28 @@ interface RelatedLog {
   level: "error" | "warning" | "info" | "success";
 }
 
-import errorIcon from '@/assets/levelicon/error.png';
-import warnIcon from '@/assets/levelicon/warn.png';
-import infoIcon from '@/assets/levelicon/info.png';
-import debugIcon from '@/assets/levelicon/debug.png';
-import fatalIcon from '@/assets/levelicon/fatal.png';
-import traceIcon from '@/assets/levelicon/trace.png';
+import errorIcon from "@/assets/levelicon/error.svg";
+import warnIcon from "@/assets/levelicon/warn.svg";
+import infoIcon from "@/assets/levelicon/info.svg";
+import debugIcon from "@/assets/levelicon/debug.svg";
+import fatalIcon from "@/assets/levelicon/fatal.svg";
+import traceIcon from "@/assets/levelicon/trace.svg";
 
 const getLevelIcon = (level: string) => {
   switch (level.toUpperCase()) {
-    case 'ERROR':
+    case "ERROR":
       return errorIcon;
-    case 'WARNING':
+    case "WARNING":
       return warnIcon;
-    case 'INFO':
+    case "INFO":
       return infoIcon;
-    case 'DEBUG':
+    case "DEBUG":
       return debugIcon;
-    case 'FATAL':
+    case "FATAL":
       return fatalIcon;
-    case 'TRACE':
+    case "TRACE":
       return traceIcon;
-    case 'SUCCESS':
+    case "SUCCESS":
       return infoIcon;
     default:
       return infoIcon;
@@ -43,7 +44,6 @@ const LogPage = () => {
 
   console.log(id);
 
-  
   // 임시 데이터
   const logData = {
     _id: "13df",
@@ -51,7 +51,6 @@ const LogPage = () => {
     timestamp: "2025-04-23 16:32:12",
     message: "API 호출 실패: Error: 500 Internal Server Error",
   };
-
 
   const mockLogs = [
     {
@@ -123,7 +122,7 @@ const LogPage = () => {
       timestamp: "2025-04-28T11:38:00Z",
       message: "Network connection timeout",
       level: "WARN",
-    }
+    },
   ];
 
   const nav = useNavigate();
@@ -131,26 +130,28 @@ const LogPage = () => {
     if (id) {
       nav(`/log/${id}`);
     }
-  }
-
-  
+  };
 
   const handleArchive = (reason: string) => {
-    console.log('아카이브 완료:', reason);
+    console.log("아카이브 완료:", reason);
     setIsArchiveModalOpen(false);
     // 필요한 후속 처리
   };
 
   return (
+    <div className="w-full lg:w-[80vw] mx-auto">
+    <ProjectNavBar />
+
     <div className="flex gap-6 max-w-7xl mx-auto text-slate-600">
+
       {/* 메인 로그 섹션 */}
       <div className="flex-1 bg-white rounded-lg p-6 border border-[#E5E5E5]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <img
-              src="/src/assets/levelicon/error.png"
+              src="/src/assets/levelicon/error.svg"
               alt="error icon"
-              className="w-10 h-10"
+              className="w-11 h-11"
             />
             <div className="text-[28px] font-[paperlogy6]">{logData.type}</div>
           </div>
@@ -174,11 +175,15 @@ const LogPage = () => {
             </svg>
           </button>
         </div>
-        <div className="text-left font-[paperlogy4] mb-6">{logData.timestamp}</div>
+        <div className="text-left font-[paperlogy4] mb-6">
+          {logData.timestamp}
+        </div>
 
-       {/* 로그 메세지 섹션 */}
+        {/* 로그 메세지 섹션 */}
         <div className="mb-8">
-          <div className="text-left p-4 text-[18px] font-[paperlogy6]">MESSAGE</div>
+          <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+            MESSAGE
+          </div>
           <div className="text-left bg-[#F8FAFC] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
             {logData.message}
           </div>
@@ -186,12 +191,13 @@ const LogPage = () => {
 
         {/* 초록 LLM 섹션 */}
         <div className="mb-8">
-          <div className="text-left p-4 text-[18px] font-[paperlogy6]">CHO:LOG EXPLANE</div>
+          <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+            CHO:LOG EXPLANE
+          </div>
           <div className="text-left bg-[#F7FEE7] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
             {logData.message}
           </div>
         </div>
-
       </div>
 
       {/* 관련 로그 섹션 */}
@@ -201,33 +207,36 @@ const LogPage = () => {
         </h2>
         <div className="space-y-4">
           {mockLogs.map((log, index) => (
-            <div 
-              onClick={() => handleclick(log._id)} 
-              key={index} 
+            <div
+              onClick={() => handleclick(log._id)}
+              key={index}
               className="flex items-start gap-3 text-slate-600 cursor-pointer hover:bg-[#F7FEE7]"
             >
               <div className="relative flex items-center">
-                <img 
-                  src={getLevelIcon(log.level)} 
-                  alt={`${log.level} icon`} 
-                  className="w-4 h-4 mt-1"
+                <img
+                  src={getLevelIcon(log.level)}
+                  alt={`${log.level} icon`}
+                  className="w-5 h-5 mt-1 ml-0.5"
                 />
-                <div className="absolute h-10 w-[2px] bg-slate-200" style={{ left: '50%', zIndex : -1 }}></div>
+                <div
+                  className="absolute h-10 w-[2px] bg-slate-200"
+                  style={{ left: "50%", zIndex: -1 }}
+                ></div>
               </div>
               <div className=" text-[14px]">{log.from}</div>
               <div className="text-[14px]">{log.message}</div>
             </div>
           ))}
         </div>
-      
       </div>
       {/* 아카이브 모달 */}
       <ArchiveModal
-        logId={logData._id}  // id 파라미터 대신 현재 로그의 _id를 전달
+        logId={logData._id} // id 파라미터 대신 현재 로그의 _id를 전달
         isOpen={isArchiveModalOpen}
         onClose={() => setIsArchiveModalOpen(false)}
         onArchive={handleArchive}
       />
+    </div>
     </div>
   );
 };

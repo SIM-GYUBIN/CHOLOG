@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-
+import ProjectNavBar from "../components/projectNavbar";
 const ProjectSettingPage = () => {
   
   const { projectId } = useParams();
@@ -11,8 +11,12 @@ const ProjectSettingPage = () => {
   );
 
   return (
-    <div>
-      프로젝트 세팅 페이지
+    <div className="w-full lg:w-[70vw] mx-auto">
+          <div>
+
+          <ProjectNavBar />
+          </div>
+          <div className="text-[28px] font-[paperlogy6] my-6">Project Setting</div>
     </div>
   );
 };

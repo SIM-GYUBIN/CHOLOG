@@ -7,7 +7,6 @@ import ProjectListPage from './pages/ProjectListPage';
 import ProjectPage from './pages/ProjectPage';
 import LogPage from './pages/LogPage';
 import ReportPage from './pages/ReportPage';
-import ArchivePage from './pages/ArchivePage';
 import ProjectSettingPage from './pages/ProjectSettingPage';
 import ArchiveListPage from './pages/ArchiveListPage';
 
@@ -26,7 +25,7 @@ function AppContent() {
           <Route path="/project/:projectId" element={<ProjectPage />} />
           <Route path="/log/:logId" element={<LogPage />} />
           <Route path="/report/:projectId" element={<ReportPage />} />
-          <Route path="/archive/:projectId" element={<ArchivePage />} />
+          <Route path="/archive/:projectId" element={<ArchiveListPage />} />
           <Route path="/projectsetting/:projectId" element={<ProjectSettingPage />} />
           <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
         </Routes>
