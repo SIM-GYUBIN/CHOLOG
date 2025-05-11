@@ -5,6 +5,7 @@ import report from "@/assets/report.svg";
 import setting from "@/assets/setting.svg";
 import ErrorChart from "../components/charts/ErrorChart";
 import LogSummary from "../components/LogSummary";
+import ProjectNavBar from "../components/projectNavbar";
 
 const ProjectPage = () => {
   const { projectId } = useParams();
@@ -20,6 +21,7 @@ const ProjectPage = () => {
 
   return (
     <div className='flex flex-col w-full lg:w-[70vw] mx-auto '>
+      <ProjectNavBar />
       <div className='flex flex-row justify-between '>
 
         <div className='flex flex-row items-center gap-2 font-[paperlogy5]'>
@@ -30,14 +32,6 @@ const ProjectPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-row self-center">
-          <div className="rounded-sm p-1 cursor-pointer hover:bg-gray-200">
-            <img src={report} alt="리포트" className="w-5 h-5" />
-          </div>
-          <div className="rounded-sm p-1 cursor-pointer hover:bg-gray-200">
-            <img src={setting} alt="세팅" className="w-5 h-5" />
-          </div>
-        </div>
       </div>
       <div className="grid grid-cols-7 py-5 gap-10">
         <div className="col-span-3">

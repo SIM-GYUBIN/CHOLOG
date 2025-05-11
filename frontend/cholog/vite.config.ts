@@ -14,4 +14,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  server: {
+    open: true // 개발 서버 시작 시 브라우저 자동으로 열기
+  }
 });
