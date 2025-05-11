@@ -1,9 +1,3 @@
-import errorIcon from "@/assets/levelicon/error.png";
-import warnIcon from "@/assets/levelicon/warn.png";
-import infoIcon from "@/assets/levelicon/info.png";
-import debugIcon from "@/assets/levelicon/debug.png";
-import fatalIcon from "@/assets/levelicon/fatal.png";
-import traceIcon from "@/assets/levelicon/trace.png";
 import { useNavigate } from "react-router-dom";
 
 type LogDetails = {
@@ -24,25 +18,6 @@ type LogProps = {
   traceId?: string;
   spanId?: string;
   details?: LogDetails; // Changed from object to LogDetails for better type safety
-};
-
-const getLevelIcon = (level: string) => {
-  switch (level) {
-    case "ERROR":
-      return errorIcon;
-    case "WARN":
-      return warnIcon;
-    case "INFO":
-      return infoIcon;
-    case "DEBUG":
-      return debugIcon;
-    case "FATAL":
-      return fatalIcon;
-    case "TRACE":
-      return traceIcon;
-    default:
-      return infoIcon;
-  }
 };
 
 export default function EachLog({
@@ -105,7 +80,7 @@ export default function EachLog({
 
   // islevelBg가 true면 levelBg 적용, 아니면 배경색 없음
   const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-3 cursor-pointer hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1),0_-4px_12px_-2px_rgba(0,0,0,0.1)] transition-shadow ${islevelBg ? levelBg : ""}`;
-  
+
   return (
     <div className={containerClass} onClick={handleclick}>
       <div className="grid grid-cols-8 text-[14px] text-slate-600">
