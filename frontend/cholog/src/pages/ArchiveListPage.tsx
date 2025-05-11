@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import EachLog from '../components/eachLog';
+import ProjectNavBar from '../components/projectNavbar';
 
 interface ArchiveLog {
   logId: string;
@@ -204,8 +205,10 @@ export default function ArchiveListPage() {
   };
 
   return (
-    <div className="w-full lg:w-[70vw] mx-auto p-6">
-      <h1 className="text-[28px] font-[paperlogy6] mb-6">Log Archive</h1>
+    <div className="w-full lg:w-[70vw] mx-auto">
+          <ProjectNavBar />
+
+      <div className="text-[28px] font-[paperlogy6] my-6">Log Archive</div>
       
       {loading && (
         <div className="text-center py-8">로딩 중...</div>

@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import EachLog from "../components/eachLog";
 import ArchiveModal from "../components/ArchiveModal";
+import ProjectNavBar from "../components/projectNavbar";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -142,7 +143,11 @@ const LogPage = () => {
   };
 
   return (
+    <div className="w-full lg:w-[80vw] mx-auto">
+    <ProjectNavBar />
+
     <div className="flex gap-6 max-w-7xl mx-auto text-slate-600">
+
       {/* 메인 로그 섹션 */}
       <div className="flex-1 bg-white rounded-lg p-6 border border-[#E5E5E5]">
         <div className="flex items-center justify-between mb-4">
@@ -228,6 +233,7 @@ const LogPage = () => {
         onClose={() => setIsArchiveModalOpen(false)}
         onArchive={handleArchive}
       />
+    </div>
     </div>
   );
 };
