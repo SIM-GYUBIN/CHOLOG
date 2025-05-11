@@ -9,9 +9,9 @@ import ModifyProjectModal from "./ModifyProjectModal";
 interface Project {
   id: number;
   name: string;
-  projectId: string;
-  date: string;
-  isCreator: boolean; // 생성자 여부 추가
+  projectToken: string;
+  createdAt: string;
+  isCreator: boolean;
 }
 
 interface ProjectTableProps {
@@ -103,9 +103,9 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
               </td>
               <td className="w-1/3 p-4 font-paperlogy4 text-[var(--helpertext)] text-left text-[16px]">
                 <div className="flex items-center gap-2">
-                  <span>{project.projectId}</span>
+                  <span>{project.projectToken}</span>
                   <button
-                    onClick={() => handleCopy(project.projectId)}
+                    onClick={() => handleCopy(project.projectToken)}
                     className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors"
                   >
                     <img src={copyIcon} alt="Copy" className="h-4 w-4" />
@@ -113,7 +113,7 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
                 </div>
               </td>
               <td className="w-1/4 p-4 font-paperlogy4 text-[var(--text)] text-left text-[16px]">
-                {project.date}
+                {project.createdAt}
               </td>
               <td className="w-12 p-4">
                 <button className="p-1.5 hover:bg-[#5EA50015] rounded-md transition-colors focus:outline-none cursor-pointer">

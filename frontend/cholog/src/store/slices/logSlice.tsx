@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../api/axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../api/axios";
 import {
   LogStatsResponse,
   LogState,
@@ -25,7 +25,7 @@ import {
   ArchiveLogResponseData,
   ArchivedLogsRequest,
   ArchivedLogsResponse,
-} from '../../types/log.types';
+} from "../../types/log.types";
 
 /**
  * ============================================
@@ -39,21 +39,24 @@ import {
  * ============================================
  */
 export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
-  'log/fetchStats',
+  "log/fetchStats",
   async (projectId, { rejectWithValue }) => {
     try {
-      const response = await api.get<LogStatsResponse>(`/log/${projectId}/stats`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await api.get<LogStatsResponse>(
+        `/log/${projectId}/stats`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+      let errorCode = "INTERNAL_ERROR";
+      if (status === 400) errorCode = "INVALID_REQUEST";
+      else if (status === 401) errorCode = "UNAUTHORIZED";
       return rejectWithValue({
         success: false,
         data: {
@@ -62,7 +65,9 @@ export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
         },
         error: {
           code: errorCode,
-          message: error.response?.data?.error?.message || '로그 통계 조회 중 오류가 발생했습니다.',
+          message:
+            error.response?.data?.error?.message ||
+            "로그 통계 조회 중 오류가 발생했습니다.",
         },
         timestamp: new Date().toISOString(),
       } as LogStatsResponse);
@@ -81,41 +86,43 @@ export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
  * - errorCode, errorName 별 발생 건수 포함
  * ============================================
  */
-export const fetchErrorStats = createAsyncThunk<ErrorStatsResponse, ErrorStatsRequest>(
-  'log/fetchErrorStats',
-  async (params, { rejectWithValue }) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params.startDate) queryParams.append('startDate', params.startDate);
-      if (params.endDate) queryParams.append('endDate', params.endDate);
+export const fetchErrorStats = createAsyncThunk<
+  ErrorStatsResponse,
+  ErrorStatsRequest
+>("log/fetchErrorStats", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append("startDate", params.startDate);
+    if (params.endDate) queryParams.append("endDate", params.endDate);
 
-      const response = await api.get<ErrorStatsResponse>(
-        `/log/${params.projectId}/errors/top3?${queryParams.toString()}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      return rejectWithValue({
-        success: false,
-        data: [],
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '에러 통계 조회 중 오류가 발생했습니다.',
+    const response = await api.get<ErrorStatsResponse>(
+      `/log/${params.projectId}/errors/top3?${queryParams.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        timestamp: new Date().toISOString(),
-      } as ErrorStatsResponse);
-    }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    return rejectWithValue({
+      success: false,
+      data: [],
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "에러 통계 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as ErrorStatsResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -128,41 +135,43 @@ export const fetchErrorStats = createAsyncThunk<ErrorStatsResponse, ErrorStatsRe
  * - timestamp 기준 각 구간별 errorCount 배열 반환
  * ============================================
  */
-export const fetchErrorTimeline = createAsyncThunk<ErrorTimelineResponse, ErrorTimelineRequest>(
-  'log/fetchErrorTimeline',
-  async (params, { rejectWithValue }) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params.startDate) queryParams.append('startDate', params.startDate);
-      if (params.endDate) queryParams.append('endDate', params.endDate);
+export const fetchErrorTimeline = createAsyncThunk<
+  ErrorTimelineResponse,
+  ErrorTimelineRequest
+>("log/fetchErrorTimeline", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append("startDate", params.startDate);
+    if (params.endDate) queryParams.append("endDate", params.endDate);
 
-      const response = await api.get<ErrorTimelineResponse>(
-        `/log/${params.projectId}/errors/timeline?${queryParams.toString()}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      return rejectWithValue({
-        success: false,
-        data: [],
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '에러 타임라인 조회 중 오류가 발생했습니다.',
+    const response = await api.get<ErrorTimelineResponse>(
+      `/log/${params.projectId}/errors/timeline?${queryParams.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        timestamp: new Date().toISOString(),
-      } as ErrorTimelineResponse);
-    }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    return rejectWithValue({
+      success: false,
+      data: [],
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "에러 타임라인 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as ErrorTimelineResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -175,41 +184,43 @@ export const fetchErrorTimeline = createAsyncThunk<ErrorTimelineResponse, ErrorT
  * - errorType 기준 비율 및 건수 포함
  * ============================================
  */
-export const fetchErrorTypeRatio = createAsyncThunk<ErrorTypeRatioResponse, ErrorTypeRatioRequest>(
-  'log/fetchErrorTypeRatio',
-  async (params, { rejectWithValue }) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params.startDate) queryParams.append('startDate', params.startDate);
-      if (params.endDate) queryParams.append('endDate', params.endDate);
+export const fetchErrorTypeRatio = createAsyncThunk<
+  ErrorTypeRatioResponse,
+  ErrorTypeRatioRequest
+>("log/fetchErrorTypeRatio", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append("startDate", params.startDate);
+    if (params.endDate) queryParams.append("endDate", params.endDate);
 
-      const response = await api.get<ErrorTypeRatioResponse>(
-        `/log/${params.projectId}/errors/type-ratio?${queryParams.toString()}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      return rejectWithValue({
-        success: false,
-        data: [],
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '에러 유형별 통계 조회 중 오류가 발생했습니다.',
+    const response = await api.get<ErrorTypeRatioResponse>(
+      `/log/${params.projectId}/errors/type-ratio?${queryParams.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        timestamp: new Date().toISOString(),
-      } as ErrorTypeRatioResponse);
-    }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    return rejectWithValue({
+      success: false,
+      data: [],
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "에러 유형별 통계 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as ErrorTypeRatioResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -222,42 +233,44 @@ export const fetchErrorTypeRatio = createAsyncThunk<ErrorTypeRatioResponse, Erro
  * - 집계 단위(period)별 errorCount 수치를 반환
  * ============================================
  */
-export const fetchErrorTrend = createAsyncThunk<ErrorTrendResponse, ErrorTrendRequest>(
-  'log/fetchErrorTrend',
-  async (params, { rejectWithValue }) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params.startDate) queryParams.append('startDate', params.startDate);
-      if (params.endDate) queryParams.append('endDate', params.endDate);
-      if (params.interval) queryParams.append('interval', params.interval);
+export const fetchErrorTrend = createAsyncThunk<
+  ErrorTrendResponse,
+  ErrorTrendRequest
+>("log/fetchErrorTrend", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.startDate) queryParams.append("startDate", params.startDate);
+    if (params.endDate) queryParams.append("endDate", params.endDate);
+    if (params.interval) queryParams.append("interval", params.interval);
 
-      const response = await api.get<ErrorTrendResponse>(
-        `/log/${params.projectId}/errors/trend?${queryParams.toString()}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      return rejectWithValue({
-        success: false,
-        data: [],
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '에러 추세 조회 중 오류가 발생했습니다.',
+    const response = await api.get<ErrorTrendResponse>(
+      `/log/${params.projectId}/errors/trend?${queryParams.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        timestamp: new Date().toISOString(),
-      } as ErrorTrendResponse);
-    }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    return rejectWithValue({
+      success: false,
+      data: [],
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "에러 추세 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as ErrorTrendResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -270,29 +283,29 @@ export const fetchErrorTrend = createAsyncThunk<ErrorTrendResponse, ErrorTrendRe
  * ============================================
  */
 export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
-  'log/fetchLogs',
+  "log/fetchLogs",
   async (params, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams();
-      if (params.page) queryParams.append('page', params.page.toString());
-      if (params.size) queryParams.append('size', params.size.toString());
-      if (params.sort) queryParams.append('sort', params.sort);
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.size) queryParams.append("size", params.size.toString());
+      if (params.sort) queryParams.append("sort", params.sort);
 
       const response = await api.get<LogListResponse>(
         `/api/log/${params.projectId}?${queryParams.toString()}`,
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+      let errorCode = "INTERNAL_ERROR";
+      if (status === 400) errorCode = "INVALID_REQUEST";
+      else if (status === 401) errorCode = "UNAUTHORIZED";
 
       return rejectWithValue({
         success: false,
@@ -307,7 +320,9 @@ export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
         },
         error: {
           code: errorCode,
-          message: error.response?.data?.error?.message || '로그 목록 조회 중 오류가 발생했습니다.',
+          message:
+            error.response?.data?.error?.message ||
+            "로그 목록 조회 중 오류가 발생했습니다.",
         },
         timestamp: new Date().toISOString(),
       } as LogListResponse);
@@ -326,34 +341,35 @@ export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
  * ============================================
  */
 export const searchLogs = createAsyncThunk<LogSearchResponse, LogSearchRequest>(
-  'log/searchLogs',
+  "log/searchLogs",
   async (params, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams();
-      if (params.page !== undefined) queryParams.append('page', params.page.toString());
-      if (params.size) queryParams.append('size', params.size.toString());
-      if (params.sort) queryParams.append('sort', params.sort);
-      if (params.level) queryParams.append('level', params.level);
-      if (params.apiPath) queryParams.append('apiPath', params.apiPath);
-      if (params.message) queryParams.append('message', params.message);
-      if (params.traceId) queryParams.append('traceId', params.traceId);
-      if (params.spanId) queryParams.append('spanId', params.spanId);
+      if (params.page !== undefined)
+        queryParams.append("page", params.page.toString());
+      if (params.size) queryParams.append("size", params.size.toString());
+      if (params.sort) queryParams.append("sort", params.sort);
+      if (params.level) queryParams.append("level", params.level);
+      if (params.apiPath) queryParams.append("apiPath", params.apiPath);
+      if (params.message) queryParams.append("message", params.message);
+      if (params.traceId) queryParams.append("traceId", params.traceId);
+      if (params.spanId) queryParams.append("spanId", params.spanId);
 
       const response = await api.get<LogSearchResponse>(
         `/api/log/${params.projectId}/search?${queryParams.toString()}`,
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+      let errorCode = "INTERNAL_ERROR";
+      if (status === 400) errorCode = "INVALID_REQUEST";
+      else if (status === 401) errorCode = "UNAUTHORIZED";
 
       return rejectWithValue({
         success: false,
@@ -368,7 +384,9 @@ export const searchLogs = createAsyncThunk<LogSearchResponse, LogSearchRequest>(
         },
         error: {
           code: errorCode,
-          message: error.response?.data?.error?.message || '로그 검색 중 오류가 발생했습니다.',
+          message:
+            error.response?.data?.error?.message ||
+            "로그 검색 중 오류가 발생했습니다.",
         },
         timestamp: new Date().toISOString(),
       } as LogSearchResponse);
@@ -386,52 +404,55 @@ export const searchLogs = createAsyncThunk<LogSearchResponse, LogSearchRequest>(
  * @returns LogByApiPathResponse
  * ============================================
  */
-export const fetchLogsByApiPath = createAsyncThunk<LogByApiPathResponse, LogByApiPathRequest>(
-  'log/fetchLogsByApiPath',
-  async (params, { rejectWithValue }) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params.page !== undefined) queryParams.append('page', params.page.toString());
-      if (params.size) queryParams.append('size', params.size.toString());
-      if (params.sort) queryParams.append('sort', params.sort);
+export const fetchLogsByApiPath = createAsyncThunk<
+  LogByApiPathResponse,
+  LogByApiPathRequest
+>("log/fetchLogsByApiPath", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.page !== undefined)
+      queryParams.append("page", params.page.toString());
+    if (params.size) queryParams.append("size", params.size.toString());
+    if (params.sort) queryParams.append("sort", params.sort);
 
-      const encodedApiPath = encodeURIComponent(params.apiPath);
-      const response = await api.get<LogByApiPathResponse>(
-        `/api/log/${params.projectId}/${encodedApiPath}?${queryParams.toString()}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+    const encodedApiPath = encodeURIComponent(params.apiPath);
+    const response = await api.get<LogByApiPathResponse>(
+      `/api/log/${params.projectId}/${encodedApiPath}?${queryParams.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
 
-      return rejectWithValue({
-        success: false,
-        data: {
-          content: [],
-          pageNumber: 0,
-          totalPages: 0,
-          totalElements: 0,
-          pageSize: 20,
-          first: true,
-          last: true,
-        },
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || 'API 경로별 로그 조회 중 오류가 발생했습니다.',
-        },
-        timestamp: new Date().toISOString(),
-      } as LogByApiPathResponse);
-    }
+    return rejectWithValue({
+      success: false,
+      data: {
+        content: [],
+        pageNumber: 0,
+        totalPages: 0,
+        totalElements: 0,
+        pageSize: 20,
+        first: true,
+        last: true,
+      },
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "API 경로별 로그 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as LogByApiPathResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -443,38 +464,40 @@ export const fetchLogsByApiPath = createAsyncThunk<LogByApiPathResponse, LogByAp
  * @returns TraceLogResponse
  * ============================================
  */
-export const fetchTraceLog = createAsyncThunk<TraceLogResponse, TraceLogRequest>(
-  'log/fetchTraceLog',
-  async (params, { rejectWithValue }) => {
-    try {
-      const response = await api.get<TraceLogResponse>(
-        `/api/log/${params.projectId}/trace/${params.traceId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-
-      return rejectWithValue({
-        success: false,
-        data: [],
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || 'Trace 로그 조회 중 오류가 발생했습니다.',
+export const fetchTraceLog = createAsyncThunk<
+  TraceLogResponse,
+  TraceLogRequest
+>("log/fetchTraceLog", async (params, { rejectWithValue }) => {
+  try {
+    const response = await api.get<TraceLogResponse>(
+      `/api/log/${params.projectId}/trace/${params.traceId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        timestamp: new Date().toISOString(),
-      } as TraceLogResponse);
-    }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+
+    return rejectWithValue({
+      success: false,
+      data: [],
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "Trace 로그 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as TraceLogResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -487,29 +510,31 @@ export const fetchTraceLog = createAsyncThunk<TraceLogResponse, TraceLogRequest>
  * ============================================
  */
 export const fetchLogDetail = createAsyncThunk<LogDetailResponse, string>(
-  'log/fetchLogDetail',
+  "log/fetchLogDetail",
   async (logId, { rejectWithValue }) => {
     try {
       const response = await api.get<LogDetailResponse>(`/api/log/${logId}`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      else if (status === 404) errorCode = 'NOT_FOUND';
+      let errorCode = "INTERNAL_ERROR";
+      if (status === 400) errorCode = "INVALID_REQUEST";
+      else if (status === 401) errorCode = "UNAUTHORIZED";
+      else if (status === 404) errorCode = "NOT_FOUND";
 
       return rejectWithValue({
         success: false,
         data: null,
         error: {
           code: errorCode,
-          message: error.response?.data?.error?.message || '로그 상세 조회 중 오류가 발생했습니다.',
+          message:
+            error.response?.data?.error?.message ||
+            "로그 상세 조회 중 오류가 발생했습니다.",
         },
         timestamp: new Date().toISOString(),
       } as LogDetailResponse);
@@ -527,40 +552,42 @@ export const fetchLogDetail = createAsyncThunk<LogDetailResponse, string>(
  * @returns ArchiveLogResponse
  * ============================================
  */
-export const archiveLog = createAsyncThunk<ArchiveLogResponse, ArchiveLogRequest>(
-  'log/archiveLog',
-  async ({ logId, archiveReason }, { rejectWithValue }) => {
-    try {
-      const response = await api.post<ArchiveLogResponse>(
-        `/api/log/${logId}/archive`,
-        { archiveReason },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      else if (status === 404) errorCode = 'LOG_NOT_FOUND';
-
-      return rejectWithValue({
-        success: false,
-        data: {} as ArchiveLogResponseData,
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '로그 아카이브 중 오류가 발생했습니다.',
+export const archiveLog = createAsyncThunk<
+  ArchiveLogResponse,
+  ArchiveLogRequest
+>("log/archiveLog", async ({ logId, archiveReason }, { rejectWithValue }) => {
+  try {
+    const response = await api.post<ArchiveLogResponse>(
+      `/api/log/${logId}/archive`,
+      { archiveReason },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        timestamp: new Date().toISOString(),
-      } as ArchiveLogResponse);
-    }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    else if (status === 404) errorCode = "LOG_NOT_FOUND";
+
+    return rejectWithValue({
+      success: false,
+      data: {} as ArchiveLogResponseData,
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "로그 아카이브 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as ArchiveLogResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -572,52 +599,54 @@ export const archiveLog = createAsyncThunk<ArchiveLogResponse, ArchiveLogRequest
  * @returns ArchivedLogsResponse
  * ============================================
  */
-export const fetchArchivedLogs = createAsyncThunk<ArchivedLogsResponse, ArchivedLogsRequest>(
-  'log/fetchArchivedLogs',
-  async (params, { rejectWithValue }) => {
-    try {
-      const queryParams = new URLSearchParams();
-      if (params.page !== undefined) queryParams.append('page', params.page.toString());
-      if (params.size) queryParams.append('size', params.size.toString());
+export const fetchArchivedLogs = createAsyncThunk<
+  ArchivedLogsResponse,
+  ArchivedLogsRequest
+>("log/fetchArchivedLogs", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.page !== undefined)
+      queryParams.append("page", params.page.toString());
+    if (params.size) queryParams.append("size", params.size.toString());
 
-      const response = await api.get<ArchivedLogsResponse>(
-        `/api/log/${params.projectId}/archive?${queryParams.toString()}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      else if (status === 404) errorCode = 'PROJECT_NOT_FOUND';
+    const response = await api.get<ArchivedLogsResponse>(
+      `/api/log/${params.projectId}/archive?${queryParams.toString()}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    else if (status === 404) errorCode = "PROJECT_NOT_FOUND";
 
-      return rejectWithValue({
-        success: false,
-        data: {
-          content: [],
-          pageNumber: 0,
-          totalPages: 0,
-          totalElements: 0,
-          pageSize: 10,
-          first: true,
-          last: true,
-        },
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '아카이브된 로그 조회 중 오류가 발생했습니다.',
-        },
-        timestamp: new Date().toISOString(),
-      } as ArchivedLogsResponse);
-    }
+    return rejectWithValue({
+      success: false,
+      data: {
+        content: [],
+        pageNumber: 0,
+        totalPages: 0,
+        totalElements: 0,
+        pageSize: 10,
+        first: true,
+        last: true,
+      },
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "아카이브된 로그 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as ArchivedLogsResponse);
   }
-);
-
+});
 
 const initialState: LogState = {
   isLoading: false,
@@ -636,9 +665,8 @@ const initialState: LogState = {
   archivedLogs: null, // Add this line
 };
 
-
 const logSlice = createSlice({
-  name: 'log',
+  name: "log",
   initialState,
   reducers: {
     resetLogStats: (state) => {
@@ -670,87 +698,129 @@ const logSlice = createSlice({
       .addCase(fetchLogStats.rejected, (state, action) => {
         state.isLoading = false;
         const payloadError = (action.payload as LogStatsResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
+        state.error = payloadError
+          ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+          : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
       })
 
       // Update all rejected cases with consistent type casting
       .addCase(fetchErrorStats.rejected, (state, action) => {
         state.isLoading = false;
         const payloadError = (action.payload as ErrorStatsResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
+        state.error = payloadError
+          ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+          : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
       })
 
       .addCase(fetchErrorTimeline.rejected, (state, action) => {
         state.isLoading = false;
         const payloadError = (action.payload as ErrorTimelineResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
+        state.error = payloadError
+          ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+          : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
       })
 
       .addCase(fetchErrorTypeRatio.rejected, (state, action) => {
         state.isLoading = false;
         const payloadError = (action.payload as ErrorTypeRatioResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
+        state.error = payloadError
+          ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+          : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
       })
 
       .addCase(fetchErrorTrend.rejected, (state, action) => {
         state.isLoading = false;
         const payloadError = (action.payload as ErrorTrendResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
+        state.error = payloadError
+          ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+          : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
       })
 
       .addCase(searchLogs.rejected, (state, action) => {
         state.isLoading = false;
         const payloadError = (action.payload as LogSearchResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
+        state.error = payloadError
+          ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+          : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
       })
 
       .addCase(fetchLogDetail.rejected, (state, action) => {
         state.isLoading = false;
         state.logDetail = null;
         const payloadError = (action.payload as LogDetailResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
+        state.error = payloadError
+          ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+          : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
       })
       .addCase(archiveLog.pending, (state) => {
         state.isLoading = true;
@@ -768,119 +838,31 @@ const logSlice = createSlice({
 
         const payload = action.payload as ArchiveLogResponse | undefined;
 
-        if (payload?.error?.code && typeof payload.error.message === 'string') {
+        if (payload?.error?.code && typeof payload.error.message === "string") {
           // 안전하게 에러 코드 제한
-          const knownCodes = ['INVALID_REQUEST', 'UNAUTHORIZED', 'LOG_NOT_FOUND', 'INTERNAL_ERROR'] as const;
+          const knownCodes = [
+            "INVALID_REQUEST",
+            "UNAUTHORIZED",
+            "LOG_NOT_FOUND",
+            "INTERNAL_ERROR",
+          ] as const;
           const code = knownCodes.includes(payload.error.code as any)
-            ? (payload.error.code as typeof knownCodes[number])
-            : 'INTERNAL_ERROR';
+            ? (payload.error.code as (typeof knownCodes)[number])
+            : "INTERNAL_ERROR";
 
           state.error = {
-            code: 'INTERNAL_ERROR',
+            code: "INTERNAL_ERROR",
             message: payload.error.message,
           };
         } else {
           state.error = {
-            code: 'INTERNAL_ERROR',
-            message: '알 수 없는 오류가 발생했습니다.',
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
           };
         }
-      })
-      .addCase(fetchLogStats.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(fetchLogStats.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.projectId = action.payload.data.projectId;
-        state.stats = action.payload.data.stats;
-        state.error = null;
-      })
-      .addCase(fetchLogStats.rejected, (state, action) => {
-        state.isLoading = false;
-        const payloadError = (action.payload as LogStatsResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
-      })
-      .addCase(fetchErrorStats.rejected, (state, action) => {
-        state.isLoading = false;
-        const payloadError = (action.payload as ErrorStatsResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
-      })
-      .addCase(fetchErrorTimeline.rejected, (state, action) => {
-        state.isLoading = false;
-        const payloadError = (action.payload as ErrorTimelineResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
-      })
-      .addCase(fetchErrorTypeRatio.rejected, (state, action) => {
-        state.isLoading = false;
-        const payloadError = (action.payload as ErrorTypeRatioResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
-      })
-      .addCase(fetchErrorTrend.rejected, (state, action) => {
-        state.isLoading = false;
-        const payloadError = (action.payload as ErrorTrendResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
-      })
-      .addCase(searchLogs.rejected, (state, action) => {
-        state.isLoading = false;
-        const payloadError = (action.payload as LogSearchResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
-      })
-      .addCase(fetchLogDetail.rejected, (state, action) => {
-        state.isLoading = false;
-        state.logDetail = null;
-        const payloadError = (action.payload as LogDetailResponse)?.error;
-        state.error = payloadError ? {
-          code: payloadError.code as "INVALID_REQUEST" | "UNAUTHORIZED" | "NOT_FOUND" | "INTERNAL_ERROR",
-          message: payloadError.message
-        } : {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.'
-        };
       });
-
   },
 });
 
 export const { resetLogStats } = logSlice.actions;
 export default logSlice.reducer;
-
-
-
-

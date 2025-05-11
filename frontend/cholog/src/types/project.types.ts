@@ -5,6 +5,12 @@
 
 /**
  * @description API 응답에 사용되는 에러 코드
+ * @typedef {string} ErrorCode
+ * @enum {string}
+ * @property {"INVALID_REQUEST"} - 잘못된 요청
+ * @property {"UNAUTHORIZED"} - 인증되지 않은 사용자
+ * @property {"NOT_FOUND"} - 요청한 리소스를 찾을 수 없음
+ * @property {"INTERNAL_ERROR"} - 서버 내부 오류
  */
 type ErrorCode =
   | "INVALID_REQUEST"
@@ -29,12 +35,14 @@ interface BaseResponse {
  * 프로젝트의 기본 정보를 담는 인터페이스
  * @property {number} id - 프로젝트의 고유 식별자
  * @property {string} name - 프로젝트의 이름
+ * @property {string} projectToken - 프로젝트의 토큰 값
  * @property {boolean} isCreator - 현재 사용자가 프로젝트 생성자인지 여부
  * @property {string} createdAt - 프로젝트 생성 일시
  */
 export interface Project {
   id: number;
   name: string;
+  projectToken: string;
   isCreator: boolean;
   createdAt: string;
 }

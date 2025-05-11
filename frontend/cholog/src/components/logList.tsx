@@ -1,128 +1,22 @@
 import { useState } from "react";
 import EachLog from "../components/eachLog";
+import { LogDetail } from "../types/log.types";
 
-const mockLogs = [
-  {
-    _id: "trace-12345-span-67890",
-    from: "FE",
-    type: "System",
-    status: 404,
-    timestamp: "2025-04-28T12:00:00Z",
-    message: "java.lang.NullPointerException at ...",
-    level: "ERROR",
-  },
-  {
-    _id: "trace-54321-span-09876",
-    from: "BE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:58:00Z",
-    message: "로그인 성공",
-    level: "INFO",
-  },
-  {
-    _id: "trace-98765-span-43210",
-    from: "BE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:55:00Z",
-    message: "Database connection established",
-    level: "DEBUG",
-  },
-  {
-    _id: "trace-24680-span-13579",
-    from: "FE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:52:00Z",
-    message: "Warning: Memory usage exceeds 80%",
-    level: "WARN",
-  },
-  {
-    _id: "trace-11111-span-22222",
-    from: "BE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:50:00Z",
-    message: "System crash detected",
-    level: "FATAL",
-  },
-  {
-    _id: "trace-33333-span-44444",
-    from: "FE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:48:00Z",
-    message: "API request completed",
-    level: "TRACE",
-  },
-  {
-    _id: "trace-55555-span-66666",
-    from: "BE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:45:00Z",
-    message: "User authentication successful",
-    level: "INFO",
-  },
-  {
-    _id: "trace-77777-span-88888",
-    from: "FE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:42:00Z",
-    message: "Component rendering error",
-    level: "ERROR",
-  },
-  {
-    _id: "trace-99999-span-00000",
-    from: "BE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:40:00Z",
-    message: "Cache cleared successfully",
-    level: "DEBUG",
-  },
-  {
-    _id: "trace-12121-span-34343",
-    from: "FE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:38:00Z",
-    message: "Network connection timeout",
-    level: "WARN",
-  },
-  {
-    _id: "trace-12121-span-34343",
-    from: "FE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:38:00Z",
-    message: "Network connection timeout",
-    level: "WARN",
-  },
-  {
-    _id: "trace-12121-span-34343",
-    from: "FE",
-    type: "network",
-    status: 200,
-    timestamp: "2025-04-28T11:38:00Z",
-    message: "Network connection timeout",
-    level: "WARN",
-  },
-];
+interface LogListProps {
+  logs: LogDetail[];
+}
 
-const LogList = () => {
+const LogList = ({ logs }: LogListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const logsPerPage = 10;
 
   // 현재 페이지의 로그 계산
   const indexOfLastLog = currentPage * logsPerPage;
   const indexOfFirstLog = indexOfLastLog - logsPerPage;
-  const currentLogs = mockLogs.slice(indexOfFirstLog, indexOfLastLog);
+  const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
 
   // 전체 페이지 수 계산
-  const totalPages = Math.ceil(mockLogs.length / logsPerPage);
+  const totalPages = Math.ceil(logs.length / logsPerPage);
 
   // 페이지 변경 핸들러
   const handlePageChange = (pageNumber: number) => {
@@ -158,13 +52,13 @@ const LogList = () => {
           <EachLog
             key={log._id}
             islevelBg={true}
-            type={log.type}
-            status={log.status}
+            type={log.apiPath}
+            status={200}
             id={log._id}
             from={log.from}
             timestamp={log.timestamp}
             message={log.message}
-            level={log.level as "ERROR" | "INFO" | "WARN" | "DEBUG" | "FATAL" | "TRACE"}
+            level={log.level}
           />
         ))}
 

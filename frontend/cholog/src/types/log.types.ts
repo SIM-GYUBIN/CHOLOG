@@ -192,12 +192,11 @@ export interface ErrorTrendResponse extends BaseResponse {
   data: ErrorTrendItem[];
 }
 
-
-
 /**
  * [#LOG-10]
  * @description 로그 상세 정보 타입
  * @property {string} _id - 로그 고유 식별자
+ * @property {string} from - 로그가 발생한 프레임워크
  * @property {string} timestamp - 로그 발생 시간
  * @property {string} message - 로그 메시지
  * @property {string} apiPath - API 경로
@@ -208,6 +207,7 @@ export interface ErrorTrendResponse extends BaseResponse {
  */
 export interface LogDetail {
   _id: string;
+  from: string;
   timestamp: string;
   message: string;
   apiPath: string;
@@ -277,7 +277,6 @@ export interface LogListResponse extends BaseResponse {
     last: boolean;
   };
 }
-
 
 /**
  * [#LOG-7]
@@ -483,7 +482,6 @@ export interface ArchiveLogResponse extends BaseResponse {
   data: ArchiveLogResponseData;
 }
 
-
 // 로그 상세 정보 타입
 export interface LogDetail {
   _id: string;
@@ -608,8 +606,8 @@ export interface LogState {
 }
 
 // Error Codes for this endpoint
-export type ArchivedLogsErrorCode = 
-  | "INVALID_REQUEST" 
-  | "UNAUTHORIZED" 
-  | "PROJECT_NOT_FOUND" 
+export type ArchivedLogsErrorCode =
+  | "INVALID_REQUEST"
+  | "UNAUTHORIZED"
+  | "PROJECT_NOT_FOUND"
   | "INTERNAL_ERROR";
