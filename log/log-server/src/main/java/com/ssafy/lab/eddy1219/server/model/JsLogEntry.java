@@ -8,6 +8,7 @@ import java.util.Map;
 @Data
 public class JsLogEntry {
     private String timestamp;
+    private Long sequence;
     private String level; // 예: "INFO", "ERROR", "DEBUG", "TRACE", "WARN"
     private String message;
     private String source; // 예: "frontend"
@@ -16,7 +17,6 @@ public class JsLogEntry {
     private String traceId;
     private String logger; // 예: "cholog", "console"
     private String logType;    // 예: "general", "error", "network", "event"
-
 
     private Map<String, Object> payload;
 
