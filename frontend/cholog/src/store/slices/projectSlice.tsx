@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../api/axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../api/axios";
 import {
   ProjectListResponse,
   ProjectState,
@@ -14,7 +14,12 @@ import {
   JoinProjectResponse,
   LeaveProjectRequest,
   LeaveProjectResponse,
-} from '../../types/project.types';
+} from "../../types/project.types";
+
+/**
+ * api 배포 전 목데이터 활용을 위해.
+ */
+import { MOCK_PROJECTS } from "../../constants/mockData";
 
 /**
  * ============================================
@@ -27,31 +32,24 @@ import {
  * ============================================
  */
 export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
-  'project/fetchProjects',
+  "project/fetchProjects",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get<ProjectListResponse>('/project', {
+      const response = await api.get<ProjectListResponse>("/project", {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       return response.data;
     } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-
-      return rejectWithValue({
-        success: false,
-        data: [],
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '프로젝트 목록 조회 중 오류가 발생했습니다.',
-        },
+      // 서버 연결 실패 시 목데이터 반환
+      return {
+        success: true,
+        data: MOCK_PROJECTS,
+        error: null,
         timestamp: new Date().toISOString(),
-      } as ProjectListResponse);
+      } as ProjectListResponse;
     }
   }
 );
@@ -67,35 +65,41 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
  * - 생성된 프로젝트 ID 포함
  * ============================================
  */
-export const createProject = createAsyncThunk<CreateProjectResponse, CreateProjectRequest>(
-  'project/createProject',
-  async (projectData, { rejectWithValue }) => {
-    try {
-      const response = await api.post<CreateProjectResponse>('/project', projectData, {
+export const createProject = createAsyncThunk<
+  CreateProjectResponse,
+  CreateProjectRequest
+>("project/createProject", async (projectData, { rejectWithValue }) => {
+  try {
+    const response = await api.post<CreateProjectResponse>(
+      "/project",
+      projectData,
+      {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      });
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
 
-      return rejectWithValue({
-        success: false,
-        data: { id: 0 },
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '프로젝트 생성 중 오류가 발생했습니다.',
-        },
-        timestamp: new Date().toISOString(),
-      } as CreateProjectResponse);
-    }
+    return rejectWithValue({
+      success: false,
+      data: { id: 0 },
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "프로젝트 생성 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as CreateProjectResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -107,40 +111,42 @@ export const createProject = createAsyncThunk<CreateProjectResponse, CreateProje
  * @returns UpdateProjectResponse
  * ============================================
  */
-export const updateProject = createAsyncThunk<UpdateProjectResponse, UpdateProjectRequest>(
-  'project/updateProject',
-  async (updateData, { rejectWithValue }) => {
-    try {
-      const response = await api.put<UpdateProjectResponse>(
-        `/project/${updateData.projectId}`,
-        { name: updateData.name },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      else if (status === 404) errorCode = 'NOT_FOUND';
-
-      return rejectWithValue({
-        success: false,
-        data: { id: 0 },
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '프로젝트 수정 중 오류가 발생했습니다.',
+export const updateProject = createAsyncThunk<
+  UpdateProjectResponse,
+  UpdateProjectRequest
+>("project/updateProject", async (updateData, { rejectWithValue }) => {
+  try {
+    const response = await api.put<UpdateProjectResponse>(
+      `/project/${updateData.projectId}`,
+      { name: updateData.name },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        timestamp: new Date().toISOString(),
-      } as UpdateProjectResponse);
-    }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    else if (status === 404) errorCode = "NOT_FOUND";
+
+    return rejectWithValue({
+      success: false,
+      data: { id: 0 },
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "프로젝트 수정 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as UpdateProjectResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -152,35 +158,40 @@ export const updateProject = createAsyncThunk<UpdateProjectResponse, UpdateProje
  * @returns DeleteProjectResponse
  * ============================================
  */
-export const deleteProject = createAsyncThunk<DeleteProjectResponse, DeleteProjectRequest>(
-  'project/deleteProject',
-  async ({ projectId }, { rejectWithValue }) => {
-    try {
-      const response = await api.delete<DeleteProjectResponse>(`/project/${projectId}`, {
+export const deleteProject = createAsyncThunk<
+  DeleteProjectResponse,
+  DeleteProjectRequest
+>("project/deleteProject", async ({ projectId }, { rejectWithValue }) => {
+  try {
+    const response = await api.delete<DeleteProjectResponse>(
+      `/project/${projectId}`,
+      {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      });
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
 
-      return rejectWithValue({
-        success: false,
-        data: { id: 0 },
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '프로젝트 삭제 중 오류가 발생했습니다.',
-        },
-        timestamp: new Date().toISOString(),
-      } as DeleteProjectResponse);
-    }
+    return rejectWithValue({
+      success: false,
+      data: { id: 0 },
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "프로젝트 삭제 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as DeleteProjectResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -192,35 +203,41 @@ export const deleteProject = createAsyncThunk<DeleteProjectResponse, DeleteProje
  * - 토큰 문자열 포함
  * ============================================
  */
-export const generateProjectToken = createAsyncThunk<GenerateTokenResponse, void>(
-  'project/generateToken',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await api.post<GenerateTokenResponse>('/project/uuid', null, {
+export const generateProjectToken = createAsyncThunk<
+  GenerateTokenResponse,
+  void
+>("project/generateToken", async (_, { rejectWithValue }) => {
+  try {
+    const response = await api.post<GenerateTokenResponse>(
+      "/project/uuid",
+      null,
+      {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      });
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
 
-      return rejectWithValue({
-        success: false,
-        data: { token: '' },
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '토큰 생성 중 오류가 발생했습니다.',
-        },
-        timestamp: new Date().toISOString(),
-      } as GenerateTokenResponse);
-    }
+    return rejectWithValue({
+      success: false,
+      data: { token: "" },
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "토큰 생성 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as GenerateTokenResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -232,36 +249,42 @@ export const generateProjectToken = createAsyncThunk<GenerateTokenResponse, void
  * @returns JoinProjectResponse
  * ============================================
  */
-export const joinProject = createAsyncThunk<JoinProjectResponse, JoinProjectRequest>(
-  'project/joinProject',
-  async (requestData, { rejectWithValue }) => {
-    try {
-      const response = await api.post<JoinProjectResponse>('/api/project/join', requestData, {
+export const joinProject = createAsyncThunk<
+  JoinProjectResponse,
+  JoinProjectRequest
+>("project/joinProject", async (requestData, { rejectWithValue }) => {
+  try {
+    const response = await api.post<JoinProjectResponse>(
+      "/api/project/join",
+      requestData,
+      {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      });
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
-      else if (status === 404) errorCode = 'NOT_FOUND';
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    else if (status === 404) errorCode = "NOT_FOUND";
 
-      return rejectWithValue({
-        success: false,
-        data: {},
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '프로젝트 참여 중 오류가 발생했습니다.',
-        },
-        timestamp: new Date().toISOString(),
-      } as JoinProjectResponse);
-    }
+    return rejectWithValue({
+      success: false,
+      data: {},
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "프로젝트 참여 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as JoinProjectResponse);
   }
-);
+});
 
 /**
  * ============================================
@@ -273,36 +296,38 @@ export const joinProject = createAsyncThunk<JoinProjectResponse, JoinProjectRequ
  * @returns LeaveProjectResponse
  * ============================================
  */
-export const leaveProject = createAsyncThunk<LeaveProjectResponse, LeaveProjectRequest>(
-  'project/leaveProject',
-  async (requestData, { rejectWithValue }) => {
-    try {
-      const response = await api.delete<LeaveProjectResponse>('/project/me', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        data: requestData,
-      });
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'UNAUTHORIZED';
+export const leaveProject = createAsyncThunk<
+  LeaveProjectResponse,
+  LeaveProjectRequest
+>("project/leaveProject", async (requestData, { rejectWithValue }) => {
+  try {
+    const response = await api.delete<LeaveProjectResponse>("/project/me", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      data: requestData,
+    });
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
 
-      return rejectWithValue({
-        success: false,
-        data: {},
-        error: {
-          code: errorCode,
-          message: error.response?.data?.error?.message || '프로젝트 탈퇴 중 오류가 발생했습니다.',
-        },
-        timestamp: new Date().toISOString(),
-      } as LeaveProjectResponse);
-    }
+    return rejectWithValue({
+      success: false,
+      data: {},
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "프로젝트 탈퇴 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as LeaveProjectResponse);
   }
-);
+});
 
 /**
  * =========================
@@ -317,7 +342,7 @@ const initialState: ProjectState = {
 };
 
 const projectSlice = createSlice({
-  name: 'project',
+  name: "project",
   initialState,
   reducers: {
     resetProjects: (state) => {
@@ -338,8 +363,8 @@ const projectSlice = createSlice({
       .addCase(fetchProjects.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as ProjectListResponse)?.error ?? {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.',
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
         };
       })
       .addCase(createProject.pending, (state) => {
@@ -353,8 +378,8 @@ const projectSlice = createSlice({
       .addCase(createProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as CreateProjectResponse)?.error ?? {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.',
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
         };
       })
       .addCase(updateProject.pending, (state) => {
@@ -365,15 +390,16 @@ const projectSlice = createSlice({
         state.isLoading = false;
         state.error = null;
         const updatedId = action.payload.data.id;
-        const updatedName = (action.meta as { arg: UpdateProjectRequest }).arg.name;
+        const updatedName = (action.meta as { arg: UpdateProjectRequest }).arg
+          .name;
         const project = state.projects.find((p) => p.id === updatedId);
         if (project) project.name = updatedName;
       })
       .addCase(updateProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as UpdateProjectResponse)?.error ?? {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.',
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
         };
       })
       .addCase(deleteProject.pending, (state) => {
@@ -389,8 +415,8 @@ const projectSlice = createSlice({
       .addCase(deleteProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as DeleteProjectResponse)?.error ?? {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.',
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
         };
       })
       .addCase(generateProjectToken.pending, (state) => {
@@ -404,8 +430,8 @@ const projectSlice = createSlice({
       .addCase(generateProjectToken.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as GenerateTokenResponse)?.error ?? {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.',
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
         };
       })
       .addCase(joinProject.pending, (state) => {
@@ -419,8 +445,8 @@ const projectSlice = createSlice({
       .addCase(joinProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as JoinProjectResponse)?.error ?? {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.',
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
         };
       })
       .addCase(leaveProject.pending, (state) => {
@@ -434,8 +460,8 @@ const projectSlice = createSlice({
       .addCase(leaveProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as LeaveProjectResponse)?.error ?? {
-          code: 'INTERNAL_ERROR',
-          message: '알 수 없는 오류가 발생했습니다.',
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
         };
       });
   },

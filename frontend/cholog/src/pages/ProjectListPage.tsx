@@ -1,29 +1,22 @@
-import { useState } from "react";
-import logo from '@/assets/logo2.svg';
-import RecentProjects from "../components/ProjectList/RecentProjects";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../store/store";
+import { fetchProjects } from "../store/slices/projectSlice";
+import logo from "@/assets/logo2.svg";
 import ProjectActions from "../components/ProjectList/ProjectActions";
 import ProjectTable from "../components/ProjectList/ProjectTable";
 import ProjectModal from "../components/ProjectList/ProjectModal";
 
 const ProjectListPage = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { projects, isLoading, error } = useSelector((state: RootState) => state.project);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"add" | "join" | null>(null);
   const [inputValue, setInputValue] = useState("");
 
-  const recentProjects = [
-    { id: 1, name: "Project name", status: "정상", lastLog: "2025.04.28" },
-    { id: 2, name: "Project name", status: "비정상", lastLog: "2025.04.28" },
-    { id: 3, name: "Project name", status: "정상", lastLog: "2025.04.28" },
-    { id: 4, name: "Project name", status: "비정상", lastLog: "2025.04.28" },
-  ];
-
-  const projectList = [
-    { id: 1, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: true },
-    { id: 2, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: false },
-    { id: 3, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: true },
-    { id: 4, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: false },
-    { id: 5, name: "프로젝트명", projectId: "prj-5f3a8b7e", date: "2025.04.28", isCreator: true },
-  ];
+  useEffect(() => {
+    dispatch(fetchProjects());
+  }, [dispatch]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -49,16 +42,26 @@ const ProjectListPage = () => {
     closeModal();
   };
 
+  if (isLoading) {
+    return <div className="text-center">로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500">{error.message}</div>;
+  }
+
   return (
     <div className="max-w-[60vw] mx-auto">
       <div className="text-center my-18">
         <img src={logo} alt="Cholog logo" className="h-12 mx-auto" />
       </div>
 
-      {/* <RecentProjects projects={recentProjects} /> */}
-      <ProjectActions onAdd={() => openModal("add")} onJoin={() => openModal("join")} />
+      <ProjectActions
+        onAdd={() => openModal("add")}
+        onJoin={() => openModal("join")}
+      />
       <section className="mt-8">
-        <ProjectTable projects={projectList} onCopy={handleCopy} />
+        <ProjectTable projects={projects} onCopy={handleCopy} />
       </section>
       <ProjectModal
         showModal={showModal}
