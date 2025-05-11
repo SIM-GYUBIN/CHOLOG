@@ -194,6 +194,29 @@ public class ProjectService {
         return ProjectDetailResponse.of(project, projectUser.getIsCreator());
     }
 
+    @Transactional
+    public Void withdrawProject(Integer userId, Integer projectId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId",projectId));
+
+        ProjectUser projectUser = projectUserRepository.findByUserAndProject(user, project)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_PROJECT_USER)
+                        .addParameter("userId", userId)
+                        .addParameter("projectId", project.getId()));
+
+        // 해당 유저가 프로젝트 생성자인지 확인 -> 생성자는 탈퇴 불가능
+        if (projectUser.getIsCreator()) {
+            throw new CustomException(ErrorCode.CREATOR_CANNOT_WITHDRAW);
+        }
+
+        projectUserRepository.delete(projectUser);
+
+        return null;
+    }
+
 //    User user2 = userRepository.findById(userId)
 //            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)
 //                    .addParameter("userId", userId)

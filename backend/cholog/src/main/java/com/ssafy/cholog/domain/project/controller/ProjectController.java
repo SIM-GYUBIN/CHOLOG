@@ -102,6 +102,20 @@ public class ProjectController {
         return CommonResponse.ok(projectService.updateProject(userId, projectId, request));
     }
 
+    @DeleteMapping("/{projectId}/me")
+    @Operation(summary = "프로젝트 탈퇴", description = "프로젝트 탈퇴 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER})
+    public ResponseEntity<CommonResponse<Void>> withdrawProject(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable("projectId") Integer projectId) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(projectService.withdrawProject(userId, projectId));
+    }
+
     @DeleteMapping("/{projectId}")
     @Operation(summary = "프로젝트 삭제", description = "프로젝트 삭제 API")
     @PreAuthorize("isAuthenticated()")
