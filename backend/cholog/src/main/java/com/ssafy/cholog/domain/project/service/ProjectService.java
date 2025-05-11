@@ -6,6 +6,7 @@ import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.RecreateTokenRequest;
 import com.ssafy.cholog.domain.project.dto.request.UpdateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.response.CreateProjectResponse;
+import com.ssafy.cholog.domain.project.dto.response.ProjectDetailResponse;
 import com.ssafy.cholog.domain.project.dto.response.RecreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
 import com.ssafy.cholog.domain.project.entity.Project;
@@ -139,7 +140,7 @@ public class ProjectService {
 
         // 해당 유저가 프로젝트 생성자인지 확인
         if (!projectUser.getIsCreator()) {
-            throw new CustomException(ErrorCode.FORBIDDEN_ACCESS, "토큰 재발급 권한이 없습니다.");
+            throw new CustomException(ErrorCode.FORBIDDEN_ACCESS, "프로젝트 수정 권한이 없습니다.");
         }
 
         project.updateProjectName(request.getName());
@@ -153,6 +154,44 @@ public class ProjectService {
         }
 
         return null;
+    }
+
+    @Transactional
+    public Void deleteProject(Integer userId, Integer projectId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId",projectId));
+
+        ProjectUser projectUser = projectUserRepository.findByUserAndProject(user, project)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_PROJECT_USER)
+                        .addParameter("userId", userId)
+                        .addParameter("projectId", project.getId()));
+
+        // 해당 유저가 프로젝트 생성자인지 확인
+        if (!projectUser.getIsCreator()) {
+            throw new CustomException(ErrorCode.FORBIDDEN_ACCESS, "프로젝트 삭제 권한이 없습니다.");
+        }
+
+        projectRepository.delete(project);
+
+        return null;
+    }
+
+    public ProjectDetailResponse getProjectDetail(Integer userId, Integer projectId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId",projectId));
+
+        ProjectUser projectUser = projectUserRepository.findByUserAndProject(user, project)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_PROJECT_USER)
+                        .addParameter("userId", userId)
+                        .addParameter("projectId", project.getId()));
+
+        return ProjectDetailResponse.of(project, projectUser.getIsCreator());
     }
 
     @Transactional
