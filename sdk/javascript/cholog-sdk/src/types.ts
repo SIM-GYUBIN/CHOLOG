@@ -42,6 +42,7 @@ export interface LogEvent {
 
 export interface LogEntry {
   timestamp: string;
+  sequence: number;
   level: string;
   message: string;
   source: "frontend" | "backend";

@@ -60,6 +60,9 @@ var Logger = class {
     // 기본 100KB
     this.currentQueueSize = 0;
   }
+  static {
+    this.logSequenceCounter = 0;
+  }
   /**
    * SDK 초기화
    */
@@ -147,8 +150,10 @@ var Logger = class {
     if (directHttp) otherFields.http = directHttp;
     if (directClient) otherFields.client = directClient;
     if (directEvent) otherFields.event = directEvent;
+    const currentSequence = this.logSequenceCounter++;
     const entry = {
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      sequence: currentSequence,
       level: level.toUpperCase(),
       // LogLevelType으로 캐스팅
       message,

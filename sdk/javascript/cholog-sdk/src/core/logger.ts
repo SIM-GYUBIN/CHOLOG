@@ -21,6 +21,7 @@ export class Logger {
   private static batchTimeoutId: number | null = null;
   private static maxQueueSize = 100 * 1024; // 기본 100KB
   private static currentQueueSize = 0;
+  private static logSequenceCounter: number = 0;
 
   /**
    * SDK 초기화
@@ -154,8 +155,11 @@ export class Logger {
     if (directClient) otherFields.client = directClient; // 여러곳에서 client 정보를 넘길 수 있으므로 병합 필요할 수 있음
     if (directEvent) otherFields.event = directEvent;
 
+    const currentSequence = this.logSequenceCounter++;
+
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
+      sequence: currentSequence,
       level: level.toUpperCase() as LogLevelType, // LogLevelType으로 캐스팅
       message,
       source: "frontend",
