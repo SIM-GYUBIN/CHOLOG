@@ -158,7 +158,7 @@ export interface GenerateTokenResponse extends BaseResponse {
  * @property {string} token - 프로젝트 참여를 위한 인증 토큰
  */
 export interface JoinProjectRequest {
-  token: string;
+  projectToken: string;
 }
 
 /**
