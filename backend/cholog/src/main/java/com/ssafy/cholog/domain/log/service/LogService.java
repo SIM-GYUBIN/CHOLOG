@@ -40,16 +40,17 @@ public class LogService {
 
     public CustomPage<LogEntryResponse> getProjectAllLog(Integer userId, Integer projectId, Pageable pageable) {
 
-        projectUserRepository.findByUserIdAndProjectId(userId, projectId)
-                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
-                        .addParameter("userId", userId)
-                        .addParameter("projectId", projectId));
+        if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
+                    .addParameter("userId", userId)
+                    .addParameter("projectId", projectId);
+        }
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
                         .addParameter("projectId", projectId));
-        String projectToken = project.getProjectToken();
 
+        String projectToken = project.getProjectToken();
         String indexName = "pjt-" + projectToken;
 
         // 1. Elasticsearch Query 객체 생성 (새로운 방식)
@@ -103,15 +104,15 @@ public class LogService {
         return new CustomPage<>(page);
     }
 
-    public LogEntryResponse getLogDetail(String projectId, String logId) {
-        // projectId로 index를 조회하고
-        // index와 id로 조회하여 단건을 가져옴
-        Project project = projectRepository.findById(Integer.parseInt(projectId))
+    public LogEntryResponse getLogDetail(Integer projectId, String logId) {
+
+        Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
                         .addParameter("projectId", projectId));
+
         String projectToken = project.getProjectToken();
         String indexName = "pjt-" + projectToken;
-        // indexName과 logId로 단건 조회
+
         LogDocument logDocument = elasticsearchOperations.get(logId, LogDocument.class, IndexCoordinates.of(indexName));
         if (logDocument == null) {
             throw new CustomException(ErrorCode.LOG_NOT_FOUND)
