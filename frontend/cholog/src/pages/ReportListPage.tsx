@@ -5,6 +5,8 @@ import { AppDispatch, RootState } from '../store/store';
 import { fetchReportList } from '../store/slices/reportSlice';
 import { MOCK_REPORT_LIST } from '../constants/mockData';
 
+import ProjectNavBar from "../components/projectNavbar";
+
 const ReportListPage = () => {
     const { projectId } = useParams();
     const navigate = useNavigate();
@@ -31,6 +33,7 @@ const ReportListPage = () => {
 
     return (
         <div className="w-full lg:w-[70vw] mx-auto">
+            <ProjectNavBar />
             <div className="mt-8">
                 <h1 className="text-2xl font-bold mb-6 text-left">리포트 목록</h1>
 
