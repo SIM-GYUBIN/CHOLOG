@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/log")
 @RequiredArgsConstructor
@@ -49,16 +51,30 @@ public class LogController {
         return CommonResponse.ok(logs);
     }
 
-    // 로그 상세 조회
     @GetMapping("/{projectId}/detail/{logId}")
     @Operation(summary = "로그 상세 조회", description = "로그 상세 조회 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.LOG_NOT_FOUND})
     public ResponseEntity<CommonResponse<LogEntryResponse>> getLogDetail(
-            @PathVariable String projectId,
+            @PathVariable Integer projectId,
             @PathVariable String logId
     ) {
         LogEntryResponse logDetail = logService.getLogDetail(projectId, logId);
         return CommonResponse.ok(logDetail);
+    }
+
+    // traceId가 같은 로그목록 조회
+    @GetMapping("/{projectId}/trace/{traceId}")
+    @Operation(summary = "traceId로 로그 조회", description = "traceId로 로그 조회 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<List<LogEntryResponse>>> getLogByTraceId(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Integer projectId,
+            @PathVariable String traceId
+    ) {
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+        List<LogEntryResponse> logs = logService.getLogByTraceId(userId, projectId, traceId);
+        return CommonResponse.ok(logs);
     }
 }

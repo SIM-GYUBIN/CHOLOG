@@ -120,4 +120,55 @@ public class LogService {
         }
         return LogEntryResponse.fromLogDocument(logDocument);
     }
+
+    public List<LogEntryResponse> getLogByTraceId(Integer userId, Integer projectId, String traceId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId", projectId));
+
+        if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
+                    .addParameter("userId", userId)
+                    .addParameter("projectId", projectId);
+        }
+
+        String projectToken = project.getProjectToken();
+        String indexName = "pjt-" + projectToken;
+
+        List<SortOptions> sortOptionsList = new ArrayList<>();
+        SortOptions timestampSort = SortOptions.of(so -> so
+                .field(f -> f
+                        .field("timestamp")
+                        .order(SortOrder.Asc)
+                )
+        );
+
+        SortOptions sequenceSort = SortOptions.of(so -> so
+                .field(f -> f
+                        .field("sequence")
+                        .order(SortOrder.Asc)
+                        .missing("_first") // sequence 없는 옛날 로그 처리 (필요시)
+                )
+        );
+        sortOptionsList.add(timestampSort);
+        sortOptionsList.add(sequenceSort);
+
+        Query searchQuery = NativeQuery.builder()
+                .withQuery(QueryBuilders.term(t -> t
+                        .field("traceId.keyword")
+                        .value(traceId)
+                ))
+                .withSort(sortOptionsList)
+                .build();
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+                searchQuery,
+                LogDocument.class,
+                IndexCoordinates.of(indexName)
+        );
+
+        return searchHits.getSearchHits().stream()
+                .map(SearchHit::getContent)
+                .map(LogEntryResponse::fromLogDocument)
+                .collect(Collectors.toList());
+    }
 }
