@@ -58,14 +58,7 @@ const ProjectListPage = () => {
     closeModal();
   };
 
-  if (isLoading) {
-    return <div className="text-center">로딩 중...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center text-red-500">{error.message}</div>;
-  }
-
+  // 로딩과 에러 체크 제거
   return (
     <div className="max-w-[60vw] mx-auto">
       <div className="text-center my-18">
@@ -77,7 +70,12 @@ const ProjectListPage = () => {
         onJoin={() => openModal("join")}
       />
       <section className="mt-8">
-        <ProjectTable projects={projects} onCopy={handleCopy} />
+        <ProjectTable 
+          projects={projects} 
+          onCopy={handleCopy} 
+          isLoading={isLoading}
+          error={error}
+        />
       </section>
       <ProjectModal
         showModal={showModal}

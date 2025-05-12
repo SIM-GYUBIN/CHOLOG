@@ -60,7 +60,7 @@ const DonutChart: React.FC<DonutChartProps> = ({
     let currentAngle = -Math.PI / 2;
 
     return (
-        <div className="flex items-center justify-center gap-8 min-h-[400px]">
+        <div className="flex items-center justify-center gap-8">
             <div className="relative flex items-center">
                 <svg width={size} height={size}>
                     {data.map((item, idx) => {

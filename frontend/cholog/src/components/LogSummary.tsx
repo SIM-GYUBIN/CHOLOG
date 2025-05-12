@@ -30,7 +30,7 @@ const LogSummary = () => {
   const LABELS = ["error", "debug", "warn", "trace", "info", "fatal"] as const;
 
   return (
-    <div className="rounded-2xl border border-[var(--line)] p-6 shadow-md w-full bg-white/5 h-full">
+    <div className="rounded-2xl border border-[var(--line)] p-6 w-full bg-white/5 h-full">
       <div className="text-left text-[var(--text)] mb-4 flex items-end gap-3">
         <span className="text-lg">Total</span>
         <span className="text-2xl font-bold">
