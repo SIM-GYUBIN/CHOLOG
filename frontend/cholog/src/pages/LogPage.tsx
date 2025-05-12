@@ -5,6 +5,7 @@ import ArchiveModal from "../components/ArchiveModal";
 import ProjectNavBar from "../components/projectNavbar";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLogDetail } from "@/store/slices/logSlice";
+import frogimg from "@/assets/frog.png";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -161,6 +162,19 @@ const LogPage = () => {
     // 필요한 후속 처리
   };
 
+  const [isExplanationLoading, setIsExplanationLoading] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
+
+  const handleExplanationClick = () => {
+    setIsExplanationLoading(true);
+    setShowExplanation(false);
+    
+    setTimeout(() => {
+      setIsExplanationLoading(false);
+      setShowExplanation(true);
+    }, 1000);
+  };
+
   return (
     <div className="w-full lg:w-[80vw] mx-auto">
       <ProjectNavBar />
@@ -213,13 +227,34 @@ const LogPage = () => {
             </div>
           </div>
 
-          {/* 초록 LLM 섹션 */}
           <div className="mb-8">
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               CHO:LOG EXPLANE
             </div>
-            <div className="text-left bg-lime-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
-              {logData.message}
+            <div
+            className="cursor-pointer"
+              onClick={handleExplanationClick}
+            >
+              {isExplanationLoading ? (
+                <div className="flex gap-5 h-full px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-xl">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-5 border-lime-600"></div>
+                  <span>분석중...</span>
+                </div>
+              ) : showExplanation ? (
+                <div className="text-[14px] text-left font-[consolaNormal] px-6 py-3 shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-lg">
+                {logData.message}
+                </div>
+              ) : (
+                <div className="flex justify-end gap-5">
+                  <div className="h-full text-left px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-3xl">
+                    <div>도움이 필요하면</div>
+                    <div>나를 클릭하라굴~!</div>
+                  </div>
+                  <div className="w-20">
+                      <img src={frogimg} alt="개구리" />
+                    </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
