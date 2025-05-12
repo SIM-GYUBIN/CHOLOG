@@ -48,4 +48,17 @@ public class LogController {
         CustomPage<LogEntryResponse> logs = logService.getProjectAllLog(userId, projectId, pageable);
         return CommonResponse.ok(logs);
     }
+
+    // 로그 상세 조회
+    @GetMapping("/{projectId}/detail/{logId}")
+    @Operation(summary = "로그 상세 조회", description = "로그 상세 조회 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.LOG_NOT_FOUND})
+    public ResponseEntity<CommonResponse<LogEntryResponse>> getLogDetail(
+            @PathVariable String projectId,
+            @PathVariable String logId
+    ) {
+        LogEntryResponse logDetail = logService.getLogDetail(projectId, logId);
+        return CommonResponse.ok(logDetail);
+    }
 }

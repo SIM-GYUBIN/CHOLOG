@@ -30,7 +30,10 @@ public enum ErrorCode {
     PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P002", "프로젝트를 찾을 수 없습니다."),
     PROJECT_ALREADY_JOINED(HttpStatus.BAD_REQUEST, "P003", "이미 참여한 프로젝트입니다."),
     NOT_PROJECT_USER(HttpStatus.NOT_FOUND, "P004", "프로젝트에 참여한 유저가 아닙니다."),
-    CREATOR_CANNOT_WITHDRAW(HttpStatus.FORBIDDEN, "P005", "프로젝트 생성자는 탈퇴할 수 없습니다.");
+    CREATOR_CANNOT_WITHDRAW(HttpStatus.FORBIDDEN, "P005", "프로젝트 생성자는 탈퇴할 수 없습니다."),
+
+    // Log
+    LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "L001", "로그를 찾을 수 없습니다");
 
     private final HttpStatus status;
     private final String code;
