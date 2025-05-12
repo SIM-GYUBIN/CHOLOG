@@ -102,4 +102,22 @@ public class LogService {
         Page<LogEntryResponse> page = new PageImpl<>(logEntries, pageable, searchHits.getTotalHits());
         return new CustomPage<>(page);
     }
+
+    public LogEntryResponse getLogDetail(String projectId, String logId) {
+        // projectId로 index를 조회하고
+        // index와 id로 조회하여 단건을 가져옴
+        Project project = projectRepository.findById(Integer.parseInt(projectId))
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+                        .addParameter("projectId", projectId));
+        String projectToken = project.getProjectToken();
+        String indexName = "pjt-" + projectToken;
+        // indexName과 logId로 단건 조회
+        LogDocument logDocument = elasticsearchOperations.get(logId, LogDocument.class, IndexCoordinates.of(indexName));
+        if (logDocument == null) {
+            throw new CustomException(ErrorCode.LOG_NOT_FOUND)
+                    .addParameter("projectId", projectId)
+                    .addParameter("logId", logId);
+        }
+        return LogEntryResponse.fromLogDocument(logDocument);
+    }
 }
