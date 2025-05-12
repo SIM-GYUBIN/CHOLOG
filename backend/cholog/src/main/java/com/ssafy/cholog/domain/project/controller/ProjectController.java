@@ -3,7 +3,9 @@ package com.ssafy.cholog.domain.project.controller;
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.RecreateTokenRequest;
+import com.ssafy.cholog.domain.project.dto.request.UpdateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.response.CreateProjectResponse;
+import com.ssafy.cholog.domain.project.dto.response.ProjectDetailResponse;
 import com.ssafy.cholog.domain.project.dto.response.RecreateTokenResponse;
 import com.ssafy.cholog.domain.project.dto.response.UserProjectListResponse;
 import com.ssafy.cholog.domain.project.service.ProjectService;
@@ -59,7 +61,7 @@ public class ProjectController {
     @Operation(summary = "프로젝트 토큰 재발급", description = "프로젝트 고유 토큰 재발급 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
-                            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.FORBIDDEN_ACCESS})
+                            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.FORBIDDEN_ACCESS, ErrorCode.NOT_PROJECT_USER})
     public ResponseEntity<CommonResponse<RecreateTokenResponse>> createToken(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody RecreateTokenRequest reqeust) {
@@ -83,5 +85,62 @@ public class ProjectController {
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
         return CommonResponse.ok(projectService.joinProject(userId, request));
+    }
+
+    @PutMapping("/{projectId}")
+    @Operation(summary = "프로젝트 이름 수정", description = "프로젝트 이름 수정 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.FORBIDDEN_ACCESS, ErrorCode.NOT_PROJECT_USER})
+    public ResponseEntity<CommonResponse<Void>> updateProject(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable("projectId") Integer projectId,
+            @Valid @RequestBody UpdateProjectRequest request) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(projectService.updateProject(userId, projectId, request));
+    }
+
+    @DeleteMapping("/{projectId}/me")
+    @Operation(summary = "프로젝트 탈퇴", description = "프로젝트 탈퇴 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER})
+    public ResponseEntity<CommonResponse<Void>> withdrawProject(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable("projectId") Integer projectId) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(projectService.withdrawProject(userId, projectId));
+    }
+
+    @DeleteMapping("/{projectId}")
+    @Operation(summary = "프로젝트 삭제", description = "프로젝트 삭제 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.FORBIDDEN_ACCESS, ErrorCode.NOT_PROJECT_USER})
+    public ResponseEntity<CommonResponse<Void>> deleteProject(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable("projectId") Integer projectId) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(projectService.deleteProject(userId, projectId));
+    }
+
+    @GetMapping("/{projectId}")
+    @Operation(summary = "프로젝트 기타 정보 조회", description = "프로젝트 정보 조회 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER})
+    public ResponseEntity<CommonResponse<ProjectDetailResponse>> getProjectDetail(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable("projectId") Integer projectId) {
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(projectService.getProjectDetail(userId, projectId));
     }
 }
