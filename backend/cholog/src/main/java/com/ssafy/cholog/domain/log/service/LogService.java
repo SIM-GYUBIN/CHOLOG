@@ -58,32 +58,17 @@ public class LogService {
 
         // 2. SortOptions 리스트 생성 (새로운 방식)
         List<SortOptions> sortOptionsList = new ArrayList<>();
-//        if (pageable.getSort().isSorted()) {
-            pageable.getSort().forEach(order -> {
-                String property = order.getProperty();
-//                if ("createdAt".equals(property)) {
-//                    property = "timestamp";
-//                }
-                final String finalProperty = property; // for lambda
-                sortOptionsList.add(
-                        SortOptions.of(so -> so
-                                .field(f -> f
-                                        .field(finalProperty)
-                                        .order(order.getDirection() == Sort.Direction.ASC ? SortOrder.Asc : SortOrder.Desc)
-                                )
-                        )
-                );
-            });
-//        } else {
-//            sortOptionsList.add(
-//                    SortOptions.of(so -> so
-//                            .field(f -> f
-//                                    .field("timestamp")
-//                                    .order(SortOrder.Desc) // co.elastic.clients.elasticsearch._types.SortOrder.Desc
-//                            )
-//                    )
-//            );
-//        }
+        pageable.getSort().forEach(order -> {
+            final String finalProperty = order.getProperty(); // for lambda
+            sortOptionsList.add(
+                    SortOptions.of(so -> so
+                            .field(f -> f
+                                    .field(finalProperty)
+                                    .order(order.getDirection() == Sort.Direction.ASC ? SortOrder.Asc : SortOrder.Desc)
+                            )
+                    )
+            );
+        });
 
         sortOptionsList.add(
                 SortOptions.of(so -> so
