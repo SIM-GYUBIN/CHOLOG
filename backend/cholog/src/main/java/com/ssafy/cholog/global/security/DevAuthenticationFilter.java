@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,7 +23,7 @@ import java.util.Collections;
 
 @Slf4j
 @Component
-@Profile({"dev", "local"})
+//@Profile({"dev", "local"}) // 추후 실 운영에서 주석 해제
 @RequiredArgsConstructor
 public class DevAuthenticationFilter extends OncePerRequestFilter {
 

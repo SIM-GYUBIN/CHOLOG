@@ -62,7 +62,7 @@ public class SwaggerConfig {
         // 서버 URL 설정
 
         Server prodServer = new Server();
-        prodServer.setUrl("https://cholog.com");
+        prodServer.setUrl("https://www.cholog.com");
         prodServer.setDescription("실 운용 서버입니다.(개발자용 토큰 사용 불가)");
 
         Server localServer = new Server();
@@ -167,7 +167,7 @@ public class SwaggerConfig {
 
     private Info apiInfo() {
         return new Info()
-                .title("뚝딱뚝Doc")
+                .title("초록")
                 .description("Api 문서입니다. \n\n **Query Parameter** : Camel Case (ex. `userId`, `documentId`) \n\n **Request Body** : Camel Case (ex. `userId`, `documentId`) \n\n **Response Body** : Snake Case (ex. `user_id`, `document_id`)")
                 .version("1.0.0");
     }

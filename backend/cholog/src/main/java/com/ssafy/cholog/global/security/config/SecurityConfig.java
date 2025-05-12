@@ -71,10 +71,10 @@ public class SecurityConfig {
                 );
 
         // 개발 환경 필터는 조건부로 추가
-        if (isDevOrLocalProfile() && devAuthenticationFilter != null) {
+//        if (isDevOrLocalProfile() && devAuthenticationFilter != null) {
             log.info("개발 환경 인증 필터를 추가합니다.");
             http.addFilterBefore(devAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        }
+//        }
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

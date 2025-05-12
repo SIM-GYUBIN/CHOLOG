@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/log")
 @RequiredArgsConstructor
-@Tag(name = "로그", description = "로그 관련 API")
+@Tag(name = "로그", description = "로그 관련 API \n\n 각 logtype에 따라 event, error, http 필드의 존재 유무 달라짐 \n\n source에 따라 client 필드 존재 유무 달라짐")
 public class LogController {
 
     private final LogService logService;

@@ -2,6 +2,7 @@ package com.ssafy.cholog.domain.log.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -83,10 +84,13 @@ public class LogDocument {
     public static class ClientInfo {
         // 로그 예시에서는 client.url이 배열. 단일 값으로 저장되었다고 가정. 아니면 List<String> url;
         @Field(name = "url", type = FieldType.Text)
+        @Schema(example = "https://example.com")
         private String url;
         @Field(name = "userAgent", type = FieldType.Text)
+        @Schema(example = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
         private String userAgent;
         @Field(name = "referrer", type = FieldType.Text)
+        @Schema(example = "null")
         private String referrer;
     }
 
@@ -105,8 +109,10 @@ public class LogDocument {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class HttpRequestInfo {
         @Field(name = "method", type = FieldType.Keyword)
+        @Schema(example = "POST")
         private String method;
         @Field(name = "url", type = FieldType.Text)
+        @Schema(example = "https://example.com/api/v1/resource")
         private String url;
     }
 
@@ -114,6 +120,7 @@ public class LogDocument {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class HttpResponseInfo {
         @Field(name = "statusCode", type = FieldType.Integer)
+        @Schema(example = "200")
         private Integer statusCode;
     }
 
@@ -121,10 +128,13 @@ public class LogDocument {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ErrorInfo {
         @Field(name = "type", type = FieldType.Keyword)
+        @Schema(example = "TypeError")
         private String type;
         @Field(name = "message", type = FieldType.Text)
+        @Schema(example = "Failed to fetch")
         private String message;
         @Field(name = "stacktrace", type = FieldType.Text)
+        @Schema(example = "TypeError: Failed to fetch\n    at window.fetch.window.fetch (https://sim-gyubin.github.io/temp-log-sdk/cholog.min.js:1:6231)\n    at HTMLButtonElement.<anonymous> (http://127.0.0.1:5500/logger-test.html:260:13)")
         private String stacktrace;
     }
 
@@ -132,10 +142,13 @@ public class LogDocument {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class EventInfo {
         @Field(name = "type", type = FieldType.Keyword)
+        @Schema(example = "user_interaction_click")
         private String type;
         @Field(name = "targetSelector", type = FieldType.Text)
+        @Schema(example = "button#sendFetch")
         private String targetSelector;
         @Field(name = "properties", type = FieldType.Object)
+        @Schema(example = "{ \"key\": \"value\" }")
         private Map<String, Object> properties;
     }
 }
