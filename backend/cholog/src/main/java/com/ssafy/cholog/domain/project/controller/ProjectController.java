@@ -88,7 +88,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{projectId}")
-    @Operation(summary = "프로젝트 이름 수정", description = "프로젝트 이름 수정 API")
+    @Operation(summary = "프로젝트 기타 정보 수정", description = "프로젝트 기타 정보 수정 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
             ErrorCode.PROJECT_NOT_FOUND, ErrorCode.FORBIDDEN_ACCESS, ErrorCode.NOT_PROJECT_USER})

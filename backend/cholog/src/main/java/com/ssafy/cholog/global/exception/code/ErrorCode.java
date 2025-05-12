@@ -33,7 +33,11 @@ public enum ErrorCode {
     CREATOR_CANNOT_WITHDRAW(HttpStatus.FORBIDDEN, "P005", "프로젝트 생성자는 탈퇴할 수 없습니다."),
 
     // Log
-    LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "L001", "로그를 찾을 수 없습니다");
+    LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "L001", "로그를 찾을 수 없습니다"),
+
+    // Webhook
+    WEBHOOK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "W001", "이미 웹훅 설정이 존재합니다."),
+    WEBHOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "W002", "웹훅 설정을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

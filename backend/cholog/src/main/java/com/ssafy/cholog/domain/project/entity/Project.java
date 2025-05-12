@@ -1,5 +1,6 @@
 package com.ssafy.cholog.domain.project.entity;
 
+import com.ssafy.cholog.domain.webhook.entity.Webhook;
 import com.ssafy.cholog.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,9 +26,6 @@ public class Project extends BaseEntity {
     @Column(name="project_token", nullable = false)
     private String projectToken;
 
-    @Column(name="mm_url")
-    private String mmURL;
-
     @Column(name="jira_token")
     private String jiraToken;
 
@@ -35,11 +33,13 @@ public class Project extends BaseEntity {
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<ProjectUser> projectUsers = new ArrayList<>();
 
+    @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Webhook webhook;
+
     public void updateProjectToken(String token){
         this.projectToken = token;
     }
 
     public void updateProjectName(String name) { this.name = name; }
-    public void updateMmURL(String url) { this.mmURL = url; }
     public void updateJiraToken(String token) { this.jiraToken = token; }
 }
