@@ -12,7 +12,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.5' // 의존성 관리 플러그인 버전
 }
 
-group = 'com.ssafy.lab.eddy1219'
+group = 'com.ssafy.lab.s12-final'
 version = 'v1.8.7'
 
 // Java 버전 설정
@@ -80,7 +80,7 @@ publishing {
             pom {
                 name = 'CHO:LOG Central Logging Library' // 라이브러리 이름
                 description = 'A Spring Boot auto-configured library for sending enriched logs to a central CHO:LOG server' // 라이브러리 설명
-                url = 'https://lab.ssafy.com/eddy1219/chologger'
+                url = 'https://lab.ssafy.com/s12-final/S12P31B207'
 
                 licenses {
                     license {
