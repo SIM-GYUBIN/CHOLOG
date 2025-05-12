@@ -3,6 +3,7 @@ import userReducer from './slices/userSlice';
 import projectReducer from './slices/projectSlice';
 import logReducer from './slices/logSlice';
 import extraFeaturesReducer from './slices/extraFeaturesSlice';
+import reportReducer from './slices/reportSlice';
 
 const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ const store = configureStore({
     project: projectReducer,
     log: logReducer,
     extraFeatures: extraFeaturesReducer,
+    report: reportReducer,
   },
 });
 

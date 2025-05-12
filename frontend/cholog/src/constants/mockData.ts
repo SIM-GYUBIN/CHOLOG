@@ -313,3 +313,54 @@ export const MOCK_LOGS: LogDetail[] = [
     },
   },
 ];
+
+export const MOCK_REPORTS = [
+  {
+    reportId: "report-20250429-001",
+    projectId: 1,
+    title: "4월 장애 분석 리포트",
+    summary: "4월 한 달 동안 발생한 주요 장애 이슈 및 개선 사항 요약",
+    createdAt: "2025-04-29T12:00:00Z",
+    createdBy: "admin@example.com",
+    sections: [
+      {
+        sectionTitle: "주요 장애 Top3",
+        content: "NullPointerException, DatabaseTimeout, OutOfMemoryError 등"
+      },
+      {
+        sectionTitle: "시간대별 장애 추이",
+        content: "오전 9시, 오후 6시 집중 발생"
+      }
+    ]
+  },
+  {
+    reportId: "report-20250401-002",
+    projectId: 1,
+    title: "3월 장애 분석 리포트",
+    summary: "3월 한 달 동안 발생한 장애 이슈 요약",
+    createdAt: "2025-04-01T09:00:00Z",
+    createdBy: "admin@example.com",
+    sections: [
+      {
+        sectionTitle: "주요 장애 사항",
+        content: "데이터베이스 연결 오류, API 타임아웃 등"
+      }
+    ]
+  }
+];
+
+export const MOCK_REPORT_LIST = {
+  content: MOCK_REPORTS.map(report => ({
+    reportId: report.reportId,
+    title: report.title,
+    summary: report.summary,
+    createdAt: report.createdAt,
+    createdBy: report.createdBy
+  })),
+  pageNumber: 1,
+  totalPages: 1,
+  totalElements: 2,
+  pageSize: 20,
+  first: true,
+  last: true
+};
