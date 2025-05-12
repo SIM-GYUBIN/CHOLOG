@@ -26,6 +26,9 @@ public enum ErrorCode {
     NICKNAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "U003", "이미 사용 중인 닉네임입니다"),
 
     // Project
+    PROJECT_USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "P001", "프로젝트 사용자 정보를 찾을 수 없습니다"),
+    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P002", "프로젝트를 찾을 수 없습니다."),
+    PROJECT_ALREADY_JOINED(HttpStatus.BAD_REQUEST, "P003", "이미 참여한 프로젝트입니다.");
     PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "프로젝트를 찾을 수 없습니다."),
     PROJECT_ALREADY_JOINED(HttpStatus.BAD_REQUEST, "P002", "이미 참여한 프로젝트입니다."),
     NOT_PROJECT_USER(HttpStatus.NOT_FOUND, "P003", "프로젝트에 참여한 유저가 아닙니다."),
