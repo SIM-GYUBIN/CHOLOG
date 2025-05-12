@@ -17,9 +17,11 @@ interface Project {
 interface ProjectTableProps {
   projects: Project[];
   onCopy: (text: string) => void;
+  isLoading: boolean;
+  error: any;
 }
 
-const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
+const ProjectTable = ({ projects, onCopy, isLoading, error }: ProjectTableProps) => {
   const navigate = useNavigate();
   const [showModifyModal, setShowModifyModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -42,6 +44,60 @@ const ProjectTable = ({ projects, onCopy }: ProjectTableProps) => {
     setSelectedProject(null);
     setNewProjectName("");
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b-2 border-[#5EA500]">
+              <th className="w-1/3 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
+                프로젝트명
+              </th>
+              <th className="w-1/3 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
+                프로젝트 ID
+              </th>
+              <th className="w-1/4 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
+                생성 시간
+              </th>
+              <th className="w-12 p-4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3].map((i) => (
+              <tr key={i} className="border-b border-[var(--line)]">
+                <td className="w-1/3 p-4">
+                  <div className="animate-pulse h-6 bg-gray-200 rounded w-3/4"></div>
+                </td>
+                <td className="w-1/3 p-4">
+                  <div className="animate-pulse h-6 bg-gray-200 rounded w-1/2"></div>
+                </td>
+                <td className="w-1/4 p-4">
+                  <div className="animate-pulse h-6 bg-gray-200 rounded w-2/3"></div>
+                </td>
+                <td className="w-12 p-4">
+                  <div className="animate-pulse h-6 w-6 bg-gray-200 rounded-full"></div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full min-h-[200px] flex flex-col items-center justify-center p-8 bg-white rounded-xl">
+        <div className="text-red-500 font-paperlogy6 text-xl mb-2">
+          오류가 발생했습니다
+        </div>
+        <div className="text-gray-500 font-paperlogy4 text-base">
+          {error.message || "데이터를 불러오는 중 문제가 발생했습니다"}
+        </div>
+      </div>
+    );
+  }
 
   if (!projects || projects.length === 0) {
     return (
