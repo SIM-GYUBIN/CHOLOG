@@ -1,12 +1,10 @@
 package com.ssafy.cholog.domain.webhook.service;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
-import com.ssafy.cholog.domain.webhook.entity.ChologLogDocument;
 import com.ssafy.cholog.domain.webhook.entity.Webhook;
 import com.ssafy.cholog.domain.webhook.repository.WebhookRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +35,7 @@ public class WebhookPollingService {
     private final MattermostService mattermostService;
 
     @Value("${cholog.notification.poll.rate}")
-    private String pollRateConfig; // 스케줄러는 문자열 값을 직접 참조
+    private String pollRateConfig;
 
     @Value("${cholog.notification.poll.initialLookbackMinutes}")
     private int initialLookbackMinutes;
@@ -59,7 +57,6 @@ public class WebhookPollingService {
         LocalDateTime currentPollExecutionTime = LocalDateTime.now(ZoneOffset.UTC);
 
         for (Webhook webhookSetting : activeWebhooks) {
-            // isEnabled 필드가 Boolean 래퍼 타입이므로 null 체크 또는 NPE 방지
             if (webhookSetting.getIsEnabled() == null || !webhookSetting.getIsEnabled()) {
                 log.debug("Webhook ID {} is disabled. Skipping.", webhookSetting.getId());
                 continue;
@@ -67,20 +64,17 @@ public class WebhookPollingService {
             try {
                 processSingleWebhook(webhookSetting, currentPollExecutionTime);
             } catch (Exception e) {
-                // 개별 웹훅 처리 실패 시 로깅 후 다음 웹훅으로 넘어감
                 log.error("Error processing webhook ID {}: {}", webhookSetting.getId(), e.getMessage(), e);
             }
         }
         log.info("Webhook poll finished.");
     }
 
-    // 개별 웹훅 처리 로직
     protected void processSingleWebhook(Webhook webhookSetting, LocalDateTime currentPollExecutionTime) {
         log.debug("Processing webhook ID: {}", webhookSetting.getId());
 
         LocalDateTime queryStartTime;
         if (webhookSetting.getLastCheckedTimestamp() == null) {
-            // @Builder.Default로 LocalDateTime.now()가 설정되어 있지만, DB에서 null로 올 수도 있으므로 방어 코드
             queryStartTime = currentPollExecutionTime.minusMinutes(initialLookbackMinutes);
             log.info("Initial poll or null lastCheckedTimestamp for webhook ID {}. Querying logs since {} (last {} minutes).",
                     webhookSetting.getId(), queryStartTime, initialLookbackMinutes);
@@ -90,8 +84,8 @@ public class WebhookPollingService {
 
         Project project = webhookSetting.getProject();
         if (project == null || !StringUtils.hasText(project.getProjectToken())) {
-            log.warn("Project or Project API Key is missing for webhook ID {}. Updating lastCheckedTimestamp and skipping.", webhookSetting.getId());
-            webhookSetting.updateLastCheckedTimestamp(currentPollExecutionTime); // 반복적인 실패 방지
+            log.warn("Project or Project Token is missing for webhook ID {}. Updating lastCheckedTimestamp and skipping.", webhookSetting.getId());
+            webhookSetting.updateLastCheckedTimestamp(currentPollExecutionTime);
             webhookRepository.save(webhookSetting);
             return;
         }
@@ -100,26 +94,25 @@ public class WebhookPollingService {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
         boolQueryBuilder.must(QueryBuilders.match(m -> m
-                .field("projectKey") // ES 문서의 실제 프로젝트 식별자 필드명
+                .field("projectKey")
                 .query(projectKeyForQuery)
         ));
 
         boolQueryBuilder.must(QueryBuilders.match(m -> m
-                .field("level") // ES 문서의 실제 로그 레벨 필드명
-                .query(webhookSetting.getLogLevel().name()) // Webhook 엔티티의 LogLevel Enum 사용
+                .field("level")
+                .query(webhookSetting.getLogLevel().name())
         ));
 
         long queryStartTimeMillis = queryStartTime.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
         boolQueryBuilder.filter(QueryBuilders.range(r -> r
-                .field("@timestamp") // ES 문서의 실제 타임스탬프 필드명
-                .gt(JsonData.of(queryStartTimeMillis)) // gt (>) 사용, 이전 시간 이후 로그
+                .field("@timestamp")
+                .gt(JsonData.of(queryStartTimeMillis))
         ));
 
-        // 환경 필터링 로직 변경: Webhook 엔티티의 notificationENV (String) 필드 사용
         String envTagToFilter = webhookSetting.getNotificationENV();
         if (StringUtils.hasText(envTagToFilter)) {
             boolQueryBuilder.must(QueryBuilders.match(m -> m
-                    .field("environment") // ES 문서의 실제 환경 정보 필드명
+                    .field("environment")
                     .query(envTagToFilter)
             ));
             log.debug("Applying 'environment' filter for webhook ID {}: {}", webhookSetting.getId(), envTagToFilter);
@@ -131,27 +124,29 @@ public class WebhookPollingService {
                 .withPageable(PageRequest.of(0, queryResultLimit))
                 .build();
 
-        SearchHits<ChologLogDocument> searchHits = elasticsearchOperations.search(searchQuery, ChologLogDocument.class);
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(searchQuery, LogDocument.class);
         log.debug("Found {} logs for webhook ID {}", searchHits.getTotalHits(), webhookSetting.getId());
 
         LocalDateTime latestLogTimestampForUpdate = null;
 
         if (searchHits.hasSearchHits()) {
-            for (SearchHit<ChologLogDocument> hit : searchHits) {
-                ChologLogDocument logDoc = hit.getContent();
+            for (SearchHit<LogDocument> hit : searchHits) {
+                LogDocument logDoc = hit.getContent();
                 String esIndex = hit.getIndex();
 
-                // MattermostService의 sendNotification 메소드 호출 시 Webhook 엔티티의 mmURL 사용
                 mattermostService.sendNotification(
-                        webhookSetting.getMmURL(), // Webhook 엔티티의 mmURL 필드 사용
-                        logDoc,
+                        webhookSetting.getMmURL(),
+                        logDoc, // 타입 변경됨
                         webhookSetting,
                         esIndex
                 );
 
-                if (logDoc.getTimestamp() != null) { // ChologLogDocument의 timestamp (LocalDateTime)
-                    if (latestLogTimestampForUpdate == null || logDoc.getTimestamp().isAfter(latestLogTimestampForUpdate)) {
-                        latestLogTimestampForUpdate = logDoc.getTimestamp();
+                if (logDoc.getTimestampEs() != null) { // logDoc.getTimestampEs()는 Instant 타입
+                    // Instant를 LocalDateTime으로 변환 (UTC 기준)
+                    LocalDateTime hitTimestamp = LocalDateTime.ofInstant(logDoc.getTimestampEs(), ZoneOffset.UTC);
+
+                    if (latestLogTimestampForUpdate == null || hitTimestamp.isAfter(latestLogTimestampForUpdate)) {
+                        latestLogTimestampForUpdate = hitTimestamp; // LocalDateTime 타입으로 할당
                     }
                 }
             }

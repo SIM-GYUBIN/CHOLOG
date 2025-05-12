@@ -1,10 +1,10 @@
 package com.ssafy.cholog.domain.webhook.service;
 
+import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.webhook.dto.mattermost.Attachment;
 import com.ssafy.cholog.domain.webhook.dto.mattermost.Field;
 import com.ssafy.cholog.domain.webhook.dto.mattermost.MattermostPayload;
 import com.ssafy.cholog.domain.webhook.dto.mattermost.Props;
-import com.ssafy.cholog.domain.webhook.entity.ChologLogDocument;
 import com.ssafy.cholog.domain.webhook.entity.Webhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,32 +46,43 @@ public class MattermostService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000, multiplier = 2)
     )
-    public void sendNotification(String userWebhookUrl, ChologLogDocument logDoc, Webhook setting, String esIndexFromSearchHit) {
+    public void sendNotification(String userWebhookUrl, LogDocument logDoc, Webhook setting, String esIndexFromSearchHit) {
         String projectName = setting.getProject() != null && StringUtils.hasText(setting.getProject().getName()) ?
                 setting.getProject().getName() : "알 수 없는 프로젝트";
         Integer projectId = setting.getProject() != null ? setting.getProject().getId() : null;
 
         String ruleName = projectName + " - " + setting.getLogLevel().name() + " 레벨 알림";
 
-        String timestampStr = logDoc.getTimestamp() != null ?
-                logDoc.getTimestamp().format(DateTimeFormatter.ISO_DATE_TIME) + "Z" : "N/A";
-        String message = StringUtils.hasText(logDoc.getMessage()) ? logDoc.getMessage() : "내용 없음";
-        String docId = StringUtils.hasText(logDoc.getId()) ? logDoc.getId() : "N/A";
-        String appEnv = StringUtils.hasText(logDoc.getAppEnvironment()) ? logDoc.getAppEnvironment() : "N/A";
-        String appName = StringUtils.hasText(logDoc.getAppName()) ? logDoc.getAppName() : "N/A";
-        String logLevel = logDoc.getLevel() != null ? logDoc.getLevel().toString() : "N/A";
-        String stackTrace = logDoc.getStackTrace();
+        String timestampStr = (logDoc.getTimestampEs() != null) ?
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.of("Z")).format(logDoc.getTimestampEs()) : "N/A";
 
-        String mainText = String.format("🚨 **에러 알림 발생 - %s**\n\n" +
+        String primaryMessage = StringUtils.hasText(logDoc.getMessage()) ? logDoc.getMessage() : "";
+        LogDocument.ErrorInfo errorInfo = logDoc.getError(); // ErrorInfo 객체 가져오기
+        if (errorInfo != null && StringUtils.hasText(errorInfo.getMessage())) {
+            if (primaryMessage.isEmpty() || !primaryMessage.contains(errorInfo.getMessage())) {
+                primaryMessage = primaryMessage.isEmpty() ? errorInfo.getMessage() : primaryMessage + " | 오류: " + errorInfo.getMessage();
+            }
+        }
+        if (primaryMessage.isEmpty()) {
+            primaryMessage = "내용 없음";
+        }
+        String message = primaryMessage;
+
+        String docId = StringUtils.hasText(logDoc.getId()) ? logDoc.getId() : "N/A";
+        String appEnv = StringUtils.hasText(logDoc.getEnvironment()) ? logDoc.getEnvironment() : "N/A";
+        String appName = StringUtils.hasText(logDoc.getSource()) ? logDoc.getSource() : "N/A";
+        String logLevel = StringUtils.hasText(logDoc.getLevel()) ? logDoc.getLevel() : "N/A";
+        String stackTrace = (errorInfo != null && StringUtils.hasText(errorInfo.getStacktrace())) ?
+                errorInfo.getStacktrace() : null; // stackTrace는 내용이 없으면 null로 두어 if 조건에서 처리
+
+        String mainText = String.format("### 🚨 **에러 알림 발생 - %s**\n\n" +
                         "⏰ **시간**: %s\n" +
                         "📜 **메시지**: %s\n" +
-                        "🔍 **인덱스**: %s\n" +
-                        "🔗 **문서 ID**: %s\n" +
+                        "🔗 **로그 ID**: %s\n" +
                         "**환경**: %s",
                 ruleName,
                 timestampStr,
                 message,
-                StringUtils.hasText(esIndexFromSearchHit) ? esIndexFromSearchHit : "N/A",
                 docId,
                 appEnv
         );
@@ -83,6 +95,7 @@ public class MattermostService {
             payload.setProps(props);
         }
 
+        // ================= 수정 필요 --> 로그 조회 api에 맞게 ================= //
         String contextLinkPath = "fallback-link-not-available";
         if (projectId != null) {
             if (StringUtils.hasText(logDoc.getTraceId())) {
@@ -93,6 +106,7 @@ public class MattermostService {
         }
         String fullTitleLink = chologUiBaseUrl + "/" + contextLinkPath;
 
+        // ================= 시간 되면 커스텀도 가능하도록 ================= //
         Attachment attachment = new Attachment();
         attachment.setFallback("에러 발생: " + ruleName);
         attachment.setColor("#FF0000");
@@ -110,7 +124,7 @@ public class MattermostService {
         HttpEntity<MattermostPayload> requestEntity = new HttpEntity<>(payload, headers);
 
         try {
-            log.debug("Sending rich Mattermost notification to webhook URL for setting ID {}...", setting.getId()); // logger 대신 log 사용
+            log.debug("Sending rich Mattermost notification to webhook URL for setting ID {}...", setting.getId());
             ResponseEntity<String> response = restTemplate.postForEntity(userWebhookUrl, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful() && "ok".equalsIgnoreCase(response.getBody())) {
@@ -128,7 +142,7 @@ public class MattermostService {
     }
 
     @Recover
-    public void recover(RestClientException e, String userWebhookUrl, ChologLogDocument logDoc, Webhook setting, String esIndexFromSearchHit) {
+    public void recover(RestClientException e, String userWebhookUrl, LogDocument logDoc, Webhook setting, String esIndexFromSearchHit) {
         String docId = logDoc != null && StringUtils.hasText(logDoc.getId()) ? logDoc.getId() : "N/A";
         Integer settingId = setting != null ? setting.getId() : null;
         log.error("All retries failed for rich Mattermost notification. Log (Doc ID: {}), Setting ID {}. Final Error: {}",

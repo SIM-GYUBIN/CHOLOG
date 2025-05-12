@@ -21,3 +21,6 @@ VALUES (true, 2, 2);
 
 INSERT INTO project_user (is_creator, project_id, user_id)
 VALUES (false, 2, 1);
+
+INSERT INTO webhook (id, is_enabled, project_id, created_at, last_checked_timestamp, mm_url, log_level)
+VALUES (1, true, 1, NOW(), NOW(), 'https://meeting.ssafy.com/hooks/3jcu5pfyfjnbjckay6knt9jrke', 'ERROR')
