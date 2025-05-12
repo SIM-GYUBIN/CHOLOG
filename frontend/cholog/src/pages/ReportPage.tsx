@@ -6,7 +6,7 @@ import RankingCardList from '../components/common/RankingCardList';
 import ProjectNavBar from '../components/projectNavbar';
 
 const ReportPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { projectId, reportId } = useParams<{ projectId: string; reportId: string }>();
 
   const logData = [
     { name: 'ERROR', value: 400, color: '#EF4444' },

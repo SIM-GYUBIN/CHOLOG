@@ -13,7 +13,6 @@ const ProjectSettingPage = () => {
   return (
     <div className="w-full lg:w-[70vw] mx-auto">
           <div>
-
           <ProjectNavBar />
           </div>
           <div className="text-[28px] font-[paperlogy6] my-6">Project Setting</div>
