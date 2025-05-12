@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../store/store';
+import { archiveLog } from '../store/slices/logSlice';
 
 interface ArchiveModalProps {
   logId: string;
@@ -8,6 +11,7 @@ interface ArchiveModalProps {
 }
 
 export default function ArchiveModal({ logId, isOpen, onClose, onArchive }: ArchiveModalProps) {
+  const dispatch = useDispatch<AppDispatch>();
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
 
@@ -31,23 +35,16 @@ export default function ArchiveModal({ logId, isOpen, onClose, onArchive }: Arch
     }
 
     try {
-      const response = await fetch(`/api/log/${logId}/archive`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ archiveReason: reason })
-      });
-
-      if (!response.ok) {
-        throw new Error('아카이브 처리 중 오류가 발생했습니다.');
+      const result = await dispatch(archiveLog({ logId, archiveReason: reason })).unwrap();
+      
+      if (result.success) {
+        onArchive(reason);
+        onClose();
+      } else {
+        setError(result.error?.message || '아카이브 처리 중 오류가 발생했습니다.');
       }
-
-      onArchive(reason);
-      onClose();
-    } catch (error) {
-      setError('아카이브 처리 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      setError(error.message || '아카이브 처리 중 오류가 발생했습니다.');
     }
   };
 

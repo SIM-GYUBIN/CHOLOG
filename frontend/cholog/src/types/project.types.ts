@@ -174,18 +174,18 @@ export interface JoinProjectResponse extends BaseResponse {
 /**
  * [#PROJECT-7]
  * @description 프로젝트 탈퇴 요청을 위한 인터페이스
- * @property {string} projectId - 탈퇴할 프로젝트의 식별자
+ * @property {number} projectId - 탈퇴할 프로젝트의 식별자
  */
 export interface LeaveProjectRequest {
-  projectId: string;
+  projectId: number;
 }
 
 /**
  * [#PROJECT-7]
  * @description 프로젝트 탈퇴 요청에 대한 응답 인터페이스
  * @extends {BaseResponse} 기본 API 응답 형식을 상속
- * @property {Record<string, never>} data - 빈 객체 응답
+ * @property {Record<number, never>} data - 빈 객체 응답
  */
 export interface LeaveProjectResponse extends BaseResponse {
-  data: Record<string, never>;
+  data: Record<number, never>;
 }

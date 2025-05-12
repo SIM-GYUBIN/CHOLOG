@@ -4,8 +4,10 @@ import EachLog from "../components/eachLog";
 import ArchiveModal from "../components/ArchiveModal";
 import ProjectNavBar from "../components/projectNavbar";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchLogDetail } from "@/store/slices/logSlice";
 import frogimg from "@/assets/frog.png";
+
+import { fetchLogDetail, fetchTraceLog } from "../store/slices/logSlice";
+import { useAppDispatch } from "../hooks/useAppDispatch";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -44,7 +46,7 @@ const getLevelIcon = (level: string) => {
 const LogPage = () => {
   const { id } = useParams();
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const { logDetail, traceLogs, isLoading } = useSelector(
     (state: any) => state.log
   );
@@ -147,7 +149,8 @@ const LogPage = () => {
     },
   ];
 
-  const fallbackLogs = traceLogs.length > 0 ? traceLogs : mockLogs;
+  const fallbackLogs =
+    Array.isArray(traceLogs) && traceLogs.length > 0 ? traceLogs : mockLogs;
 
   const nav = useNavigate();
   const handleclick = (id: string) => {
