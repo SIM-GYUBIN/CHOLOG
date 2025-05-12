@@ -1,8 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EachLog from "../components/eachLog";
 import ArchiveModal from "../components/ArchiveModal";
 import ProjectNavBar from "../components/projectNavbar";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchLogDetail } from "@/store/slices/logSlice";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -41,11 +43,30 @@ const getLevelIcon = (level: string) => {
 const LogPage = () => {
   const { id } = useParams();
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { logDetail, traceLogs, isLoading } = useSelector(
+    (state: any) => state.log
+  );
 
-  console.log(id);
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchLogDetail(id));
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (logDetail?.traceId && logDetail?.projectId) {
+      dispatch(
+        fetchTraceLog({
+          traceId: logDetail.traceId,
+          projectId: logDetail.projectId,
+        })
+      );
+    }
+  }, [logDetail?.traceId]);
 
   // 임시 데이터
-  const logData = {
+  const logData = logDetail ?? {
     _id: "13df",
     type: "ERROR",
     timestamp: "2025-04-23 16:32:12",
@@ -125,6 +146,8 @@ const LogPage = () => {
     },
   ];
 
+  const fallbackLogs = traceLogs.length > 0 ? traceLogs : mockLogs;
+
   const nav = useNavigate();
   const handleclick = (id: string) => {
     if (id) {
@@ -140,103 +163,105 @@ const LogPage = () => {
 
   return (
     <div className="w-full lg:w-[80vw] mx-auto">
-    <ProjectNavBar />
+      <ProjectNavBar />
 
-    <div className="flex gap-6 max-w-7xl mx-auto text-slate-600">
-
-      {/* 메인 로그 섹션 */}
-      <div className="flex-1 bg-white rounded-lg p-6 border border-[#E5E5E5]">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <img
-              src="/src/assets/levelicon/error.svg"
-              alt="error icon"
-              className="w-11 h-11"
-            />
-            <div className="text-[28px] font-[paperlogy6]">{logData.type}</div>
-          </div>
-          <button
-            onClick={() => setIsArchiveModalOpen(true)}
-            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-          </button>
-        </div>
-        <div className="text-left font-[paperlogy4] mb-6">
-          {logData.timestamp}
-        </div>
-
-        {/* 로그 메세지 섹션 */}
-        <div className="mb-8">
-          <div className="text-left p-4 text-[18px] font-[paperlogy6]">
-            MESSAGE
-          </div>
-          <div className="text-left bg-[#F8FAFC] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
-            {logData.message}
-          </div>
-        </div>
-
-        {/* 초록 LLM 섹션 */}
-        <div className="mb-8">
-          <div className="text-left p-4 text-[18px] font-[paperlogy6]">
-            CHO:LOG EXPLANE
-          </div>
-          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
-            {logData.message}
-          </div>
-        </div>
-      </div>
-
-      {/* 관련 로그 섹션 */}
-      <div className="rounded-lg p-6 shadow-sm">
-        <h2 className="text-left text-18px font-[paperlogy6] mb-6">
-          Related Log
-        </h2>
-        <div className="space-y-4">
-          {mockLogs.map((log, index) => (
-            <div
-              onClick={() => handleclick(log._id)}
-              key={index}
-              className="flex items-start gap-3 text-slate-600 cursor-pointer hover:bg-[#F7FEE7]"
-            >
-              <div className="relative flex items-center">
-                <img
-                  src={getLevelIcon(log.level)}
-                  alt={`${log.level} icon`}
-                  className="w-5 h-5 mt-1 ml-0.5"
-                />
-                <div
-                  className="absolute h-10 w-[2px] bg-slate-200"
-                  style={{ left: "50%", zIndex: -1 }}
-                ></div>
+      <div className="flex gap-6 max-w-7xl mx-auto text-[var(--text)]">
+        {/* 메인 로그 섹션 */}
+        <div className="flex-1 bg-white/5 rounded-lg p-6 shadow-sm border border-[var(--line)]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <img
+                src={getLevelIcon(logData.type)}
+                alt="level icon"
+                className="w-11 h-11"
+              />
+              <div className="text-[28px] font-[paperlogy6]">
+                {logData.type}
               </div>
-              <div className=" text-[14px]">{log.from}</div>
-              <div className="text-[14px]">{log.message}</div>
             </div>
-          ))}
+            <button
+              onClick={() => setIsArchiveModalOpen(true)}
+              className="p-2 rounded-full hover:bg-slate-100/50 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div className="text-left font-[paperlogy4] mb-6">
+            {logData.timestamp}
+          </div>
+
+          {/* 로그 메세지 섹션 */}
+          <div className="mb-8">
+            <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+              MESSAGE
+            </div>
+            <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              {logData.message}
+            </div>
+          </div>
+
+          {/* 초록 LLM 섹션 */}
+          <div className="mb-8">
+            <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+              CHO:LOG EXPLANE
+            </div>
+            <div className="text-left bg-lime-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              {logData.message}
+            </div>
+          </div>
         </div>
+
+        {/* 관련 로그 섹션 */}
+        <div className="rounded-lg p-6 shadow-sm bg-white/5 border border-[var(--line)]">
+          <h2 className="text-left text-18px font-[paperlogy6] mb-6">
+            Related Log
+          </h2>
+          <div className="space-y-4">
+            {!isLoading &&
+              fallbackLogs.map((log, index) => (
+                <div
+                  onClick={() => handleclick(log._id)}
+                  key={index}
+                  className="flex items-start gap-3 text-[var(--text)] cursor-pointer hover:bg-[#F7FEE7]"
+                >
+                  <div className="relative flex items-center">
+                    <img
+                      src={getLevelIcon(log.level)}
+                      alt={`${log.level} icon`}
+                      className="w-5 h-5 mt-1 ml-0.5"
+                    />
+                    <div
+                      className="absolute h-10 w-[2px] bg-[var(--helpertext)]"
+                      style={{ left: "50%", zIndex: -1 }}
+                    ></div>
+                  </div>
+                  <div className=" text-[14px]">{log.from}</div>
+                  <div className="text-[14px]">{log.message}</div>
+                </div>
+              ))}
+          </div>
+        </div>
+        {/* 아카이브 모달 */}
+        <ArchiveModal
+          logId={logData._id} // id 파라미터 대신 현재 로그의 _id를 전달
+          isOpen={isArchiveModalOpen}
+          onClose={() => setIsArchiveModalOpen(false)}
+          onArchive={handleArchive}
+        />
       </div>
-      {/* 아카이브 모달 */}
-      <ArchiveModal
-        logId={logData._id} // id 파라미터 대신 현재 로그의 _id를 전달
-        isOpen={isArchiveModalOpen}
-        onClose={() => setIsArchiveModalOpen(false)}
-        onArchive={handleArchive}
-      />
-    </div>
     </div>
   );
 };
