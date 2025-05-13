@@ -54,7 +54,9 @@ export interface Project {
  * @property {Project[]} data - 조회된 프로젝트 목록 배열
  */
 export interface ProjectListResponse extends BaseResponse {
-  data: Project[];
+  data: {
+    projects: Project[];
+  };
 }
 
 /**
@@ -106,14 +108,24 @@ export interface UpdateProjectResponse extends BaseResponse {
 }
 
 /**
+ * @description API 에러 응답 타입
+ * @property {ErrorCode} code - 에러 코드
+ * @property {string} message - 에러 메시지
+ */
+export interface ErrorResponse {
+  code: ErrorCode;
+  message: string;
+}
+
+/**
  * @description 프로젝트의 상태 관리를 위한 인터페이스
  * @property {boolean} isLoading - 데이터 로딩 상태 표시
- * @property {BaseResponse["error"] | null} error - 발생한 오류 정보
+ * @property {ErrorResponse | null} error - 발생한 오류 정보
  * @property {Project[]} projects - 프로젝트 목록 데이터
  */
 export interface ProjectState {
   isLoading: boolean;
-  error: BaseResponse["error"] | null;
+  error: ErrorResponse | null;
   projects: Project[];
 }
 
@@ -130,13 +142,9 @@ export interface DeleteProjectRequest {
  * [#PROJECT-4]
  * @description 프로젝트 삭제 작업의 응답 인터페이스
  * @extends {BaseResponse} 기본 API 응답 형식을 상속
- * @property {Object} data - 삭제된 프로젝트 정보
- * @property {number} data.id - 삭제된 프로젝트의 식별자
  */
 export interface DeleteProjectResponse extends BaseResponse {
-  data: {
-    id: number;
-  };
+  data: Record<string, never>;
 }
 
 /**
@@ -155,7 +163,7 @@ export interface GenerateTokenResponse extends BaseResponse {
 /**
  * [#PROJECT-6]
  * @description 프로젝트 참여 요청을 위한 인터페이스
- * @property {string} token - 프로젝트 참여를 위한 인증 토큰
+ * @property {string} projectToken - 프로젝트 참여를 위한 인증 토큰
  */
 export interface JoinProjectRequest {
   projectToken: string;

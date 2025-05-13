@@ -38,7 +38,6 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
       const response = await api.get<ProjectListResponse>("/project", {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       return response.data;
@@ -46,7 +45,9 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
       // 서버 연결 실패 시 목데이터 반환
       return {
         success: true,
-        data: MOCK_PROJECTS,
+        data: {
+          projects: MOCK_PROJECTS
+        },
         error: null,
         timestamp: new Date().toISOString(),
       } as ProjectListResponse;
@@ -168,7 +169,6 @@ export const deleteProject = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -181,7 +181,7 @@ export const deleteProject = createAsyncThunk<
 
     return rejectWithValue({
       success: false,
-      data: { id: 0 },
+      data: {},
       error: {
         code: errorCode,
         message:
@@ -255,8 +255,8 @@ export const joinProject = createAsyncThunk<
 >("project/joinProject", async (requestData, { rejectWithValue }) => {
   try {
     const response = await api.post<JoinProjectResponse>(
-      "/api/project/join",
-      requestData,
+      "/project/join",
+      { token: requestData.projectToken }, // 여기를 수정: token 필드로 전달
       {
         headers: {
           "Content-Type": "application/json",
@@ -301,13 +301,15 @@ export const leaveProject = createAsyncThunk<
   LeaveProjectRequest
 >("project/leaveProject", async (requestData, { rejectWithValue }) => {
   try {
-    const response = await api.delete<LeaveProjectResponse>("/project/me", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      data: requestData,
-    });
+    const response = await api.delete<LeaveProjectResponse>(
+      `/project/${requestData.projectId}/me`,  // URL에 projectId를 포함
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
     return response.data;
   } catch (error: any) {
     const status = error.response?.status;
@@ -358,7 +360,7 @@ const projectSlice = createSlice({
       })
       .addCase(fetchProjects.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.projects = action.payload.data;
+        state.projects = action.payload.data.projects;
       })
       .addCase(fetchProjects.rejected, (state, action) => {
         state.isLoading = false;
@@ -409,7 +411,8 @@ const projectSlice = createSlice({
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        const deletedId = action.payload.data.id;
+        // 삭제된 프로젝트 ID는 action.meta.arg에서 가져옵니다
+        const deletedId = (action.meta.arg as DeleteProjectRequest).projectId;
         state.projects = state.projects.filter((p) => p.id !== deletedId);
       })
       .addCase(deleteProject.rejected, (state, action) => {

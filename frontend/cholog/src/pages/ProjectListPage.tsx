@@ -70,9 +70,9 @@ const ProjectListPage = () => {
         onJoin={() => openModal("join")}
       />
       <section className="mt-8">
-        <ProjectTable 
-          projects={projects} 
-          onCopy={handleCopy} 
+        <ProjectTable
+          projects={projects}
+          onCopy={handleCopy}
           isLoading={isLoading}
           error={error}
         />
