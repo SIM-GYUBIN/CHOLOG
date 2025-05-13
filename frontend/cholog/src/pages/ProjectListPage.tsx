@@ -33,8 +33,6 @@ const ProjectListPage = () => {
     setModalType(null);
   };
 
-  console.log(import.meta.env);
-
   const handleSubmit = async () => {
     if (modalType === "add") {
       try {

@@ -211,6 +211,7 @@ export interface LogDetailRequest {
  * @property {string} message - 로그 메시지
  * @property {string} apiPath - API 경로
  * @property {string} level - 로그 레벨
+ * @property {string} from - 로그 발생 위치
  * @property {string} traceId - 추적 ID
  * @property {string} spanId - 스팬 ID
  * @property {object} details - 상세 정보
@@ -221,6 +222,7 @@ export interface LogDetail {
   message: string;
   apiPath: string;
   level: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
+  from: string;
   traceId: string;
   spanId: string;
   details: {
