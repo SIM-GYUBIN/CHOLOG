@@ -17,10 +17,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -75,6 +72,23 @@ public class LogController {
     ) {
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
         List<LogEntryResponse> logs = logService.getLogByTraceId(userId, projectId, traceId);
+        return CommonResponse.ok(logs);
+    }
+
+    @GetMapping("/{projectId}/search")
+    @Operation(summary = "로그 검색", description = "로그 검색 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<CustomPage<LogEntryResponse>>> searchLog(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Integer projectId,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) String apiPath,
+            @RequestParam(required = false) String message,
+            @PageableDefault(size = 20, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable){
+
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+        CustomPage<LogEntryResponse> logs = logService.searchLog(userId, projectId, level, apiPath, message, pageable);
         return CommonResponse.ok(logs);
     }
 }
