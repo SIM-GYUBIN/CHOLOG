@@ -1,5 +1,6 @@
 package com.ssafy.cholog.domain.project.service;
 
+import com.ssafy.cholog.domain.log.service.LogService;
 import com.ssafy.cholog.domain.project.dto.item.UserProjectItem;
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
@@ -33,6 +34,7 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final ProjectUserRepository projectUserRepository;
+    private final LogService logService;
 
     public UserProjectListResponse getUserProjectList(Integer userId) {
         User user = userRepository.findById(userId)
@@ -66,6 +68,8 @@ public class ProjectService {
                 .isCreator(true)
                 .build();
         projectUserRepository.save(projectUser);
+
+        logService.createIndex(token);
 
         return CreateProjectResponse.builder().token(token).build();
     }

@@ -18,6 +18,7 @@ import com.ssafy.cholog.global.common.CustomPage;
 import com.ssafy.cholog.global.exception.CustomException;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -27,10 +28,7 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregatio
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
-import org.springframework.data.elasticsearch.core.AggregationsContainer;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.*;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -38,9 +36,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -327,5 +328,34 @@ public class LogService {
         }
 
         return LogStatsResponse.of(total, trace, debug, info, warn, error, fatal);
+    }
+
+    public void createIndex(String projectToken) {
+
+        String indexName = "pjt-" + projectToken.toLowerCase();
+
+        IndexCoordinates indexCoordinates = IndexCoordinates.of(indexName);
+        IndexOperations indexOps = elasticsearchOperations.indexOps(indexCoordinates);
+
+        try {
+            if (!indexOps.exists()) {
+                log.info("Elasticsearch index {} 생성 시작", indexName);
+
+                Map<String, Object> settings = new HashMap<>();
+                settings.put("index.number_of_shards", "1");
+                settings.put("index.number_of_replicas", "0");
+
+                indexOps.create(settings);
+
+                // LogDocument 클래스의 @Field 어노테이션을 기반으로 매핑 정보 적용
+                indexOps.putMapping(LogDocument.class);
+
+            } else {
+                log.info("Elasticsearch index {} already exists. Skipping creation.", indexName);
+            }
+        } catch (Exception e) {
+            log.error("Failed to create or configure Elasticsearch index {}. Error: {}", indexName, e.getMessage(), e);
+            throw new CustomException(ErrorCode.INDEX_CREATE_FAIL);
+        }
     }
 }

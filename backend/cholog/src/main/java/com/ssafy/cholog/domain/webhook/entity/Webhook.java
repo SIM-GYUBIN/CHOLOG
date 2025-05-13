@@ -1,7 +1,6 @@
 package com.ssafy.cholog.domain.webhook.entity;
 
 import com.ssafy.cholog.domain.project.entity.Project;
-import com.ssafy.cholog.domain.webhook.enums.LogLevel;
 import com.ssafy.cholog.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,9 +26,8 @@ public class Webhook extends BaseEntity {
     @Column(name = "notification_env", length = 50)
     private String notificationENV;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "log_level", nullable = false, length = 20)
-    private LogLevel logLevel;
+    @Column(name = "keywords", length = 1000)
+    private String keywords;
 
     @Column(name = "is_enabled", nullable = false)
     private Boolean isEnabled;
@@ -38,9 +36,12 @@ public class Webhook extends BaseEntity {
     @Column(name = "last_checked_timestamp")
     private LocalDateTime lastCheckedTimestamp = LocalDateTime.now();
 
-    public void updateMmURL(String mmURL){ this.mmURL = mmURL; }
-    public void updateNotificationENV(String notificationENV){ this.notificationENV = notificationENV; }
-    public void updateLogLevel(LogLevel logLevel) { this.logLevel = logLevel; }
-    public void updateIsEnabled(Boolean isEnabled) { this.isEnabled = isEnabled; }
+    public void updateSettings(String mmURL, String notificationENV, String keywords, Boolean isEnabled) {
+        this.mmURL = mmURL;
+        this.notificationENV = notificationENV;
+        this.keywords = keywords;
+        this.isEnabled = isEnabled;
+    }
+
     public void updateLastCheckedTimestamp(LocalDateTime timestamp) { this.lastCheckedTimestamp = timestamp; }
 }

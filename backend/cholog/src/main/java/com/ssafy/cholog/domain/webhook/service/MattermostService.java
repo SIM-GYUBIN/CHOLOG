@@ -23,11 +23,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -46,76 +50,106 @@ public class MattermostService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000, multiplier = 2)
     )
-    public void sendNotification(String userWebhookUrl, LogDocument logDoc, Webhook setting, String esIndexFromSearchHit) {
+    public void sendNotification(String userWebhookUrl, LogDocument logDoc, Webhook setting, List<String> matchedKeywords) {
         String projectName = setting.getProject() != null && StringUtils.hasText(setting.getProject().getName()) ?
                 setting.getProject().getName() : "알 수 없는 프로젝트";
         Integer projectId = setting.getProject() != null ? setting.getProject().getId() : null;
 
-        String ruleName = projectName + " - " + setting.getLogLevel().name() + " 레벨 알림";
+        String keywordsDisplay = StringUtils.hasText(setting.getKeywords()) ? setting.getKeywords() : "지정 안됨";
+        String ruleName = String.format("%s", projectName);
 
-        String timestampStr = (logDoc.getTimestampEs() != null) ?
-                DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.of("Z")).format(logDoc.getTimestampEs()) : "N/A";
+        // --- LogDocument 필드 값 추출 ---
+        String timestampStr = "N/A";
+        if (logDoc.getTimestampEs() != null) {
+            Instant eventInstantUtc = logDoc.getTimestampEs();
+            // UTC Instant를 한국 시간대(KST, Asia/Seoul)의 ZonedDateTime으로 변환
+            ZonedDateTime eventKst = eventInstantUtc.atZone(ZoneId.of("Asia/Seoul"));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분", Locale.KOREAN);
+            timestampStr = eventKst.format(formatter);
+        }
 
         String primaryMessage = StringUtils.hasText(logDoc.getMessage()) ? logDoc.getMessage() : "";
-        LogDocument.ErrorInfo errorInfo = logDoc.getError(); // ErrorInfo 객체 가져오기
+        LogDocument.ErrorInfo errorInfo = logDoc.getError();
         if (errorInfo != null && StringUtils.hasText(errorInfo.getMessage())) {
             if (primaryMessage.isEmpty() || !primaryMessage.contains(errorInfo.getMessage())) {
                 primaryMessage = primaryMessage.isEmpty() ? errorInfo.getMessage() : primaryMessage + " | 오류: " + errorInfo.getMessage();
             }
         }
-        if (primaryMessage.isEmpty()) {
-            primaryMessage = "내용 없음";
-        }
+        if (primaryMessage.isEmpty()) { primaryMessage = "내용 없음"; }
+
         String message = primaryMessage;
 
-        String docId = StringUtils.hasText(logDoc.getId()) ? logDoc.getId() : "N/A";
         String appEnv = StringUtils.hasText(logDoc.getEnvironment()) ? logDoc.getEnvironment() : "N/A";
         String appName = StringUtils.hasText(logDoc.getSource()) ? logDoc.getSource() : "N/A";
         String logLevel = StringUtils.hasText(logDoc.getLevel()) ? logDoc.getLevel() : "N/A";
         String stackTrace = (errorInfo != null && StringUtils.hasText(errorInfo.getStacktrace())) ?
                 errorInfo.getStacktrace() : null; // stackTrace는 내용이 없으면 null로 두어 if 조건에서 처리
 
-        String mainText = String.format("### 🚨 **에러 알림 발생 - %s**\n\n" +
-                        "⏰ **시간**: %s\n" +
-                        "📜 **메시지**: %s\n" +
-                        "🔗 **로그 ID**: %s\n" +
-                        "**환경**: %s",
-                ruleName,
-                timestampStr,
-                message,
-                docId,
-                appEnv
-        );
+        // 1. `text` 필드 구성
+        StringBuilder mainTextBuilder = new StringBuilder();
+        mainTextBuilder.append(String.format("### 🚨 **로그 발생 - %s**\n\n", ruleName));
+        mainTextBuilder.append(String.format("⏰ **시간**: %s\n", timestampStr));
+        mainTextBuilder.append(String.format("📜 **메시지**: %s\n", message));
+        mainTextBuilder.append(String.format("**환경**: %s", appEnv));
+
+        if (matchedKeywords != null && !matchedKeywords.isEmpty()) {
+            mainTextBuilder.append(String.format("\n**매칭 키워드**: `%s`", matchedKeywords.stream().collect(Collectors.joining("`, `"))));
+        }
+        String mainText = mainTextBuilder.toString();
 
         MattermostPayload payload = new MattermostPayload();
         payload.setText(mainText);
 
+        // 2. `props` 필드 (스택 트레이스) 구성
         if (StringUtils.hasText(stackTrace)) {
             Props props = new Props(String.format("**스택 트레이스**:\n```\n%s\n```", stackTrace));
             payload.setProps(props);
         }
 
-        // ================= 수정 필요 --> 로그 조회 api에 맞게 ================= //
+        // 3. `attachments` 필드 구성
         String contextLinkPath = "fallback-link-not-available";
         if (projectId != null) {
-            if (StringUtils.hasText(logDoc.getTraceId())) {
-                contextLinkPath = String.format("projects/%d/trace/%s", projectId, logDoc.getTraceId());
-            } else if (StringUtils.hasText(logDoc.getId())) {
-                contextLinkPath = String.format("projects/%d/logs/%s", projectId, logDoc.getId());
-            }
+            contextLinkPath = String.format("projects/%d/logs/%s", projectId, logDoc.getId());
         }
         String fullTitleLink = chologUiBaseUrl + "/" + contextLinkPath;
 
         // ================= 시간 되면 커스텀도 가능하도록 ================= //
         Attachment attachment = new Attachment();
-        attachment.setFallback("에러 발생: " + ruleName);
-        attachment.setColor("#FF0000");
+        attachment.setFallback("로그 발생: " + ruleName);
+
+        // --- 로그 레벨에 따라 동적으로 색상 설정 ---
+        String attachmentColor;
+        switch (logLevel) {
+            case "ERROR":
+            case "FATAL": // FATAL 레벨도 ERROR와 유사하게 처리
+                attachmentColor = "#D00000"; // 진한 빨간색 (또는 기존 #FF0000)
+                break;
+            case "WARN":
+            case "WARNING": // WARNING도 WARN과 유사하게 처리
+                attachmentColor = "#FFA500"; // 주황색
+                break;
+            case "INFO":
+                attachmentColor = "#2EB886"; // 초록색 계열 (또는 파란색 #007BFF)
+                break;
+            case "DEBUG":
+            case "TRACE":
+                attachmentColor = "#CCCCCC"; // 밝은 회색
+                break;
+            default:
+                attachmentColor = "#808080"; // 기본 회색 (알 수 없는 레벨)
+                break;
+        }
+        attachment.setColor(attachmentColor);
+
         attachment.setTitle("CHO:LOG에서 자세히 보기");
         attachment.setTitleLink(fullTitleLink);
 
         List<Field> fields = new ArrayList<>();
         fields.add(new Field(true, "애플리케이션", appName));
         fields.add(new Field(true, "로그 레벨", logLevel));
+         if (matchedKeywords != null && !matchedKeywords.isEmpty()) {
+            fields.add(new Field(false, "매칭된 키워드", String.join(", ", matchedKeywords)));
+         }
         attachment.setFields(fields);
         payload.setAttachments(Collections.singletonList(attachment));
 
@@ -128,24 +162,24 @@ public class MattermostService {
             ResponseEntity<String> response = restTemplate.postForEntity(userWebhookUrl, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful() && "ok".equalsIgnoreCase(response.getBody())) {
-                log.info("Successfully sent rich Mattermost notification for log (Doc ID: {}) via setting ID {}.",
-                        docId, setting.getId());
+                log.info("Successfully sent rich Mattermost notification for log via setting ID {}.",
+                        setting.getId());
             } else {
-                log.warn("Rich Mattermost notification sent for log (Doc ID: {}), but received status: {} - Body: {}",
-                        docId, response.getStatusCode(), response.getBody());
+                log.warn("Rich Mattermost notification sent for log, but received status: {} - Body: {}",
+                        response.getStatusCode(), response.getBody());
             }
         } catch (RestClientException e) {
-            log.warn("Failed to send rich Mattermost notification for log (Doc ID: {}) for setting ID {} (Attempting retry if applicable): {}",
-                    docId, setting.getId(), e.getMessage());
+            log.warn("Failed to send rich Mattermost notification for log for setting ID {} (Attempting retry if applicable): {}",
+                    setting.getId(), e.getMessage());
             throw e;
         }
     }
 
     @Recover
-    public void recover(RestClientException e, String userWebhookUrl, LogDocument logDoc, Webhook setting, String esIndexFromSearchHit) {
-        String docId = logDoc != null && StringUtils.hasText(logDoc.getId()) ? logDoc.getId() : "N/A";
-        Integer settingId = setting != null ? setting.getId() : null;
-        log.error("All retries failed for rich Mattermost notification. Log (Doc ID: {}), Setting ID {}. Final Error: {}",
-                docId, settingId, e.getMessage());
+    public void recover(RestClientException e, String userWebhookUrl, LogDocument logDoc, Webhook webhookSetting, String esIndexFromSearchHit, List<String> matchedKeywords) {
+        String docId = (logDoc != null && StringUtils.hasText(logDoc.getId())) ? logDoc.getId() : "N/A";
+        Integer settingId = (webhookSetting != null) ? webhookSetting.getId() : null; // Integer로 가정
+        log.error("All retries failed for Mattermost notification. Log (Doc ID: {}), Setting ID {}. Matched Keywords: {}. Final Error: {}",
+                docId, settingId, (matchedKeywords != null ? String.join(", ", matchedKeywords) : "N/A"), e.getMessage());
     }
 }
