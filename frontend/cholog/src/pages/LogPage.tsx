@@ -53,7 +53,12 @@ const LogPage = () => {
 
   useEffect(() => {
     if (id) {
-      dispatch(fetchLogDetail(id));
+      // Get projectId from URL or state management
+      const projectId = window.location.pathname.split('/')[2]; // Assuming URL pattern is /project/{projectId}/log/{logId}
+      dispatch(fetchLogDetail({ 
+        logId: id,
+        projectId: Number(projectId)
+      }));
     }
   }, [id]);
 
