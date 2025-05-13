@@ -2,6 +2,7 @@ package com.ssafy.cholog.domain.log.service;
 
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.Aggregation;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
+import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.AggregationsContainer;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -33,6 +35,7 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,6 +183,77 @@ public class LogService {
                 .map(SearchHit::getContent)
                 .map(LogEntryResponse::fromLogDocument)
                 .collect(Collectors.toList());
+    }
+
+    public CustomPage<LogEntryResponse> searchLog(Integer userId, Integer projectId, String level, String apiPath, String message, Pageable pageable) {
+
+        if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
+                    .addParameter("userId", userId)
+                    .addParameter("projectId", projectId);
+        }
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+                        .addParameter("projectId", projectId));
+
+        String projectToken = project.getProjectToken();
+        String indexName = "pjt-" + projectToken;
+
+        BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
+
+        if (StringUtils.hasText(level)) {
+            boolQueryBuilder.must(QueryBuilders.term(t -> t
+                    .field("level")
+                    .value(level)
+            ));
+        }
+        if (StringUtils.hasText(apiPath)) {
+            boolQueryBuilder.must(QueryBuilders.wildcard(w -> w
+                    .field("http.request.url.keyword")
+                    .value("*" + apiPath + "*") // 성능 모니터링 필요
+                    .caseInsensitive(true)
+            ));
+        }
+        if (StringUtils.hasText(message)) {
+            boolQueryBuilder.must(QueryBuilders.match(m -> m
+                    .field("message")
+                    .query(message)
+            ));
+        }
+
+        List<SortOptions> sortOptionsList = new ArrayList<>();
+        pageable.getSort().forEach(order -> {
+            final String finalProperty = order.getProperty(); // for lambda
+            sortOptionsList.add(
+                    SortOptions.of(so -> so
+                            .field(f -> f
+                                    .field(finalProperty)
+                                    .order(order.getDirection() == Sort.Direction.ASC ? SortOrder.Asc : SortOrder.Desc)
+                            )
+                    )
+            );
+        });
+
+        org.springframework.data.elasticsearch.core.query.Query searchQuery = NativeQuery.builder()
+                .withQuery(q -> q.bool(boolQueryBuilder.build()))
+                .withPageable(pageable)
+                .withSort(sortOptionsList)
+                .build();
+
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+                searchQuery,
+                LogDocument.class,
+                IndexCoordinates.of(indexName)
+        );
+
+        List<LogEntryResponse> logEntries = searchHits.getSearchHits().stream()
+                .map(SearchHit::getContent)
+                .map(LogEntryResponse::fromLogDocument)
+                .collect(Collectors.toList());
+
+        Page<LogEntryResponse> page = new PageImpl<>(logEntries, pageable, searchHits.getTotalHits());
+        return new CustomPage<>(page);
     }
 
     public LogStatsResponse getProjectLogStats(Integer userId, Integer projectId) {
