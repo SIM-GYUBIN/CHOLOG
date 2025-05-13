@@ -16,6 +16,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -118,13 +119,15 @@ public class WebhookPollingService {
             log.debug("Applying 'environment' filter for webhook ID {}: {}", webhookSetting.getId(), envTagToFilter);
         }
 
+        String indexName = "pjt-" + project.getProjectToken();
+
         org.springframework.data.elasticsearch.core.query.Query searchQuery = NativeQuery.builder()
                 .withQuery(q -> q.bool(boolQueryBuilder.build()))
                 .withSort(Sort.by(Sort.Direction.ASC, "@timestamp"))
                 .withPageable(PageRequest.of(0, queryResultLimit))
                 .build();
 
-        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(searchQuery, LogDocument.class);
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(searchQuery, LogDocument.class, IndexCoordinates.of(indexName));
         log.debug("Found {} logs for webhook ID {}", searchHits.getTotalHits(), webhookSetting.getId());
 
         LocalDateTime latestLogTimestampForUpdate = null;
