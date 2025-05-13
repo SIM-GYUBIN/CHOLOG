@@ -2,13 +2,12 @@ package com.ssafy.cholog.domain.log.service;
 
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
-import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
-import co.elastic.clients.elasticsearch._types.aggregations.TermsAggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.json.JsonData;
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
+import com.ssafy.cholog.domain.log.dto.response.LogTimelineResponse;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
 import com.ssafy.cholog.domain.project.repository.ProjectRepository;
@@ -17,6 +16,7 @@ import com.ssafy.cholog.global.common.CustomPage;
 import com.ssafy.cholog.global.exception.CustomException;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -34,10 +34,12 @@ import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -223,29 +225,26 @@ public class LogService {
 
         AggregationsContainer<?> aggregationsContainer = searchHits.getAggregations();
 
-        if (aggregationsContainer instanceof ElasticsearchAggregations) {
-            ElasticsearchAggregations esAggsImpl = (ElasticsearchAggregations) aggregationsContainer;
+        if (aggregationsContainer instanceof ElasticsearchAggregations esAggsImpl) {
             ElasticsearchAggregation levelCountAggregationWrapper = esAggsImpl.get(levelCountsAggregationName);
 
             if (levelCountAggregationWrapper != null) {
                 Aggregation sdeInternalAggregation = levelCountAggregationWrapper.aggregation();
 
-                if (sdeInternalAggregation != null) {
-                    Aggregate elcAggregate = sdeInternalAggregation.getAggregate();
+                Aggregate elcAggregate = sdeInternalAggregation.getAggregate();
 
-                    if (elcAggregate != null && elcAggregate.isSterms()) {
-                        StringTermsAggregate sterms = elcAggregate.sterms();
-                        for (StringTermsBucket bucket : sterms.buckets().array()) {
-                            String level = bucket.key().stringValue();
-                            long count = bucket.docCount();
-                            switch (level.toUpperCase()) {
-                                case "TRACE": trace = (int) count; break;
-                                case "DEBUG": debug = (int) count; break;
-                                case "INFO":  info  = (int) count; break;
-                                case "WARN":  warn  = (int) count; break;
-                                case "ERROR": error = (int) count; break;
-                                case "FATAL": fatal = (int) count; break;
-                            }
+                if (elcAggregate.isSterms()) {
+                    StringTermsAggregate sterms = elcAggregate.sterms();
+                    for (StringTermsBucket bucket : sterms.buckets().array()) {
+                        String level = bucket.key().stringValue();
+                        long count = bucket.docCount();
+                        switch (level.toUpperCase()) {
+                            case "TRACE": trace = (int) count; break;
+                            case "DEBUG": debug = (int) count; break;
+                            case "INFO":  info  = (int) count; break;
+                            case "WARN":  warn  = (int) count; break;
+                            case "ERROR": error = (int) count; break;
+                            case "FATAL": fatal = (int) count; break;
                         }
                     }
                 }
@@ -253,5 +252,93 @@ public class LogService {
         }
 
         return LogStatsResponse.of(total, trace, debug, info, warn, error, fatal);
+    }
+
+    public List<LogTimelineResponse> getProjectLogTimeline(Integer userId, Integer projectId, String startDateStr, String endDateStr) {
+
+        if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
+                    .addParameter("userId", userId)
+                    .addParameter("projectId", projectId);
+        }
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+                        .addParameter("projectId", projectId));
+        String indexName = "pjt-" + project.getProjectToken();
+
+        LocalDate startDate = LocalDate.parse(startDateStr);
+        LocalDate endDate = LocalDate.parse(endDateStr);
+
+        // 쿼리 범위: startDate의 시작 ~ endDate의 다음 날 시작 (exclusive)
+        ZonedDateTime startDateTimeUtc = startDate.atStartOfDay(ZoneOffset.UTC);
+        ZonedDateTime endDateTimeUtc = endDate.plusDays(1).atStartOfDay(ZoneOffset.UTC);
+
+        String timestampFieldName = "timestamp";
+
+        // Range Query 생성: 지정된 시간 범위 내의 로그만 필터링
+        co.elastic.clients.elasticsearch._types.query_dsl.Query elcRangeQuery =
+                co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery.of(r -> r
+                        .field(timestampFieldName)
+                        .gte(JsonData.of(startDateTimeUtc.toInstant().toEpochMilli()))
+                        .lt(JsonData.of(endDateTimeUtc.toInstant().toEpochMilli()))
+                )._toQuery();
+
+        // Date Histogram Aggregation 생성: 시간대별(1시간 간격) 로그 수 집계
+        String timelineAggregationName = "log_timeline_by_hour";
+        DateHistogramAggregation dateHistogramAgg = DateHistogramAggregation.of(dh -> dh
+                .field(timestampFieldName)
+                .calendarInterval(CalendarInterval.Hour) // 1시간 간격
+                .minDocCount(0) // 로그가 없는 시간대도 0으로 표시
+                .extendedBounds(eb -> eb // 집계 범위를 명시적으로 설정하여 빈 구간도 포함
+                        .min(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(startDateTimeUtc.toInstant().toEpochMilli()))))
+                        .max(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(endDateTimeUtc.toInstant().toEpochMilli() - 1))))
+                )
+        );
+
+        // NativeQuery 빌드: Range Query와 Date Histogram Aggregation 결합
+        NativeQuery searchQuery = NativeQuery.builder()
+                .withQuery(elcRangeQuery)
+                .withAggregation(timelineAggregationName, co.elastic.clients.elasticsearch._types.aggregations.Aggregation.of(agg -> agg.dateHistogram(dateHistogramAgg)))
+                .withMaxResults(0) // 실제 문서는 필요 없고 집계 결과만 필요
+                .build();
+
+        // Elasticsearch 검색 실행
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+                searchQuery,
+                LogDocument.class,
+                IndexCoordinates.of(indexName)
+        );
+
+        List<LogTimelineResponse> timelineResponses = new ArrayList<>();
+
+        // 집계 결과 처리
+        AggregationsContainer<?> aggregationsContainer = searchHits.getAggregations();
+
+        if (aggregationsContainer instanceof ElasticsearchAggregations esAggsImpl) {
+            ElasticsearchAggregation timelineAggregationWrapper = esAggsImpl.get(timelineAggregationName);
+
+            if (timelineAggregationWrapper != null) {
+                Aggregation sdeInternalAggregation = timelineAggregationWrapper.aggregation();
+
+                Aggregate elcAggregate = sdeInternalAggregation.getAggregate();
+
+                if (elcAggregate.isDateHistogram()) {
+                    DateHistogramAggregate dateHistogram = elcAggregate.dateHistogram();
+                    for (DateHistogramBucket bucket : dateHistogram.buckets().array()) {
+                        // 버킷의 키는 해당 시간 간격의 시작 시간 (epoch milliseconds)
+                        long epochMillis = bucket.key();
+                        LocalDateTime bucketTimestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC);
+                        Integer logCount = (int) bucket.docCount();
+
+                        timelineResponses.add(LogTimelineResponse.builder()
+                                .timestamp(bucketTimestamp)
+                                .logCount(logCount)
+                                .build());
+                    }
+                }
+            }
+        }
+        return timelineResponses;
     }
 }

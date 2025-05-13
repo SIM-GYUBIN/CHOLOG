@@ -2,6 +2,7 @@ package com.ssafy.cholog.domain.log.controller;
 
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
+import com.ssafy.cholog.domain.log.dto.response.LogTimelineResponse;
 import com.ssafy.cholog.domain.log.service.LogService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.CustomPage;
@@ -18,10 +19,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -88,5 +86,21 @@ public class LogController {
     ) {
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
         return CommonResponse.ok(logService.getProjectLogStats(userId, projectId));
+    }
+
+    @GetMapping("/{projectId}/timeline")
+    @Operation(summary = "시간대별 로그 발생 추이", description = "시간대별 로그 발생 추이 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<List<LogTimelineResponse>>> getProjectLogTimeline(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Integer projectId,
+            // 기본값은 endDate는 현재 시간, startDate는 1주일 전을 기본값으로 설정
+            @RequestParam(required = false, defaultValue = "#{T(java.time.LocalDate).now().minusDays(7).toString()}") String startDate,
+            @RequestParam(required = false, defaultValue = "#{T(java.time.LocalDate).now().toString()}") String endDate
+    ) {
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+        List<LogTimelineResponse> logs = logService.getProjectLogTimeline(userId, projectId, startDate, endDate);
+        return CommonResponse.ok(logs);
     }
 }
