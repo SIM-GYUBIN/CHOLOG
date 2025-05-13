@@ -13,7 +13,7 @@ export default function ProjectNavBar() {
   };
 
   return (
-    <nav className="w-full inline-flex justify-end items-center gap-4 py-4">
+    <div className="w-full inline-flex justify-end items-center gap-4 py-4">
       <button 
         onClick={() => navigate(`/project/${projectId}`)}
         className={`flex justify-start items-center gap-2 cursor-pointer ${
@@ -55,15 +55,15 @@ export default function ProjectNavBar() {
       </button>
 
       <button 
-        onClick={() => navigate(`/report/${projectId}`)}
+        onClick={() => navigate(`/reportlist/${projectId}`)}
         className={`flex justify-start items-center gap-2 cursor-pointer ${
-          isActive('/report')
+          isActive('/reportlist')
             ? 'text-green-600 font-bold' 
             : 'text-slate-400'
         }`}
       >
         <div className={` ${
-          isActive('/report')
+          isActive('/reportlist')
             ? 'text-green-600'
             : 'text-slate-400'
         }`}>
@@ -93,6 +93,6 @@ export default function ProjectNavBar() {
         </div>
         <span className="text-[12px]">Setting</span>
       </button>
-    </nav>
+    </div>
   );
 }
