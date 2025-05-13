@@ -2,8 +2,13 @@ package com.ssafy.cholog.domain.log.service;
 
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
+import co.elastic.clients.elasticsearch._types.aggregations.TermsAggregation;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
+import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
 import com.ssafy.cholog.domain.project.repository.ProjectRepository;
@@ -16,7 +21,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.client.elc.Aggregation;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.AggregationsContainer;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -171,5 +180,78 @@ public class LogService {
                 .map(SearchHit::getContent)
                 .map(LogEntryResponse::fromLogDocument)
                 .collect(Collectors.toList());
+    }
+
+    public LogStatsResponse getProjectLogStats(Integer userId, Integer projectId) {
+        if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
+                    .addParameter("userId", userId)
+                    .addParameter("projectId", projectId);
+        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+                        .addParameter("projectId", projectId));
+        String projectToken = project.getProjectToken();
+        String indexName = "pjt-" + projectToken;
+
+        String levelCountsAggregationName = "level_counts";
+        TermsAggregation esTermsAggregation = TermsAggregation.of(ta -> ta.field("level.keyword"));
+
+        co.elastic.clients.elasticsearch._types.query_dsl.Query esQueryDsl =
+                QueryBuilders.matchAll(m -> m);
+
+        Query searchQuery = NativeQuery.builder()
+                .withQuery(esQueryDsl)
+                .withAggregation(levelCountsAggregationName, co.elastic.clients.elasticsearch._types.aggregations.Aggregation.of(agg -> agg.terms(esTermsAggregation)))
+                .withMaxResults(0)
+                .withTrackTotalHits(true)
+                .build();
+
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+                searchQuery,
+                LogDocument.class,
+                IndexCoordinates.of(indexName)
+        );
+
+        long total = searchHits.getTotalHits();
+        int trace = 0;
+        int debug = 0;
+        int info = 0;
+        int warn = 0;
+        int error = 0;
+        int fatal = 0;
+
+        AggregationsContainer<?> aggregationsContainer = searchHits.getAggregations();
+
+        if (aggregationsContainer instanceof ElasticsearchAggregations) {
+            ElasticsearchAggregations esAggsImpl = (ElasticsearchAggregations) aggregationsContainer;
+            ElasticsearchAggregation levelCountAggregationWrapper = esAggsImpl.get(levelCountsAggregationName);
+
+            if (levelCountAggregationWrapper != null) {
+                Aggregation sdeInternalAggregation = levelCountAggregationWrapper.aggregation();
+
+                if (sdeInternalAggregation != null) {
+                    Aggregate elcAggregate = sdeInternalAggregation.getAggregate();
+
+                    if (elcAggregate != null && elcAggregate.isSterms()) {
+                        StringTermsAggregate sterms = elcAggregate.sterms();
+                        for (StringTermsBucket bucket : sterms.buckets().array()) {
+                            String level = bucket.key().stringValue();
+                            long count = bucket.docCount();
+                            switch (level.toUpperCase()) {
+                                case "TRACE": trace = (int) count; break;
+                                case "DEBUG": debug = (int) count; break;
+                                case "INFO":  info  = (int) count; break;
+                                case "WARN":  warn  = (int) count; break;
+                                case "ERROR": error = (int) count; break;
+                                case "FATAL": fatal = (int) count; break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return LogStatsResponse.of(total, trace, debug, info, warn, error, fatal);
     }
 }

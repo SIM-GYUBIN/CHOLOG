@@ -1,6 +1,7 @@
 package com.ssafy.cholog.domain.log.controller;
 
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
+import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
 import com.ssafy.cholog.domain.log.service.LogService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.CustomPage;
@@ -63,7 +64,6 @@ public class LogController {
         return CommonResponse.ok(logDetail);
     }
 
-    // traceId가 같은 로그목록 조회
     @GetMapping("/{projectId}/trace/{traceId}")
     @Operation(summary = "traceId로 로그 조회", description = "traceId로 로그 조회 API")
     @PreAuthorize("isAuthenticated()")
@@ -76,5 +76,17 @@ public class LogController {
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
         List<LogEntryResponse> logs = logService.getLogByTraceId(userId, projectId, traceId);
         return CommonResponse.ok(logs);
+    }
+
+    @GetMapping("/{projectId}/stats")
+    @Operation(summary = "프로젝트 로그 통계 조회", description = "프로젝트 로그 통계 조회 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<LogStatsResponse>> getProjectLogStats(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Integer projectId
+    ) {
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+        return CommonResponse.ok(logService.getProjectLogStats(userId, projectId));
     }
 }
