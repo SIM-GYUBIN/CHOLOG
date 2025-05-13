@@ -6,7 +6,9 @@ import com.ssafy.cholog.domain.project.repository.ProjectRepository;
 import com.ssafy.cholog.domain.project.repository.ProjectUserRepository;
 import com.ssafy.cholog.domain.user.entity.User;
 import com.ssafy.cholog.domain.user.repository.UserRepository;
+import com.ssafy.cholog.domain.webhook.dto.item.WebhookItem;
 import com.ssafy.cholog.domain.webhook.dto.request.WebhookRequest;
+import com.ssafy.cholog.domain.webhook.dto.response.WebhookResponse;
 import com.ssafy.cholog.domain.webhook.entity.Webhook;
 import com.ssafy.cholog.domain.webhook.repository.WebhookRepository;
 import com.ssafy.cholog.global.exception.CustomException;
@@ -42,11 +44,6 @@ public class WebhookService {
                         .addParameter("userId", userId)
                         .addParameter("projectId", projectId));
 
-        // 해당 유저가 프로젝트 생성자인지 확인
-        if (!projectUser.getIsCreator()) {
-            throw new CustomException(ErrorCode.FORBIDDEN_ACCESS, "웹훅 설정 권한이 없습니다.");
-        }
-
         Webhook webhook = Webhook.builder()
                 .project(project)
                 .mmURL(request.getMmURL())
@@ -75,16 +72,37 @@ public class WebhookService {
                         .addParameter("userId", userId)
                         .addParameter("projectId", projectId));
 
-        // 해당 유저가 프로젝트 생성자인지 확인
-        if (!projectUser.getIsCreator()) {
-            throw new CustomException(ErrorCode.FORBIDDEN_ACCESS, "웹훅 수정 권한이 없습니다.");
-        }
-
         webhook.updateMmURL(request.getMmURL());
         webhook.updateLogLevel(request.getLogLevel());
         webhook.updateNotificationENV(request.getNotificationENV());
         webhook.updateIsEnabled(request.getIsEnabled());
 
         return null;
+    }
+
+    public WebhookResponse getWebhook(Integer userId, Integer projectId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId",projectId));
+
+        Webhook webhook = webhookRepository.findByProject(project).orElse(null);
+
+        ProjectUser projectUser = projectUserRepository.findByUserAndProject(user, project)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_PROJECT_USER)
+                        .addParameter("userId", userId)
+                        .addParameter("projectId", projectId));
+
+        if(webhook == null){
+            return WebhookResponse.builder()
+                    .exists(false)
+                    .build();
+        }else{
+            return WebhookResponse.builder()
+                    .exists(true)
+                    .webhookItem(WebhookItem.of(webhook))
+                    .build();
+        }
     }
 }
