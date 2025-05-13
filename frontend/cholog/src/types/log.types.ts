@@ -194,20 +194,29 @@ export interface ErrorTrendResponse extends BaseResponse {
 
 /**
  * [#LOG-10]
+ * @description 로그 상세 조회를 위한 요청 파라미터
+ * @property {number} projectId - 프로젝트 식별자
+ * @property {string} logId - 로그 고유 식별자
+ */
+export interface LogDetailRequest {
+  projectId: number;
+  logId: string;
+}
+
+/**
+ * [#LOG-10]
  * @description 로그 상세 정보 타입
  * @property {string} _id - 로그 고유 식별자
- * @property {string} from - 로그가 발생한 프레임워크
  * @property {string} timestamp - 로그 발생 시간
  * @property {string} message - 로그 메시지
  * @property {string} apiPath - API 경로
- * @property {string} level - 로그 레벨 (TRACE/DEBUG/INFO/WARN/ERROR/FATAL)
+ * @property {string} level - 로그 레벨
  * @property {string} traceId - 추적 ID
  * @property {string} spanId - 스팬 ID
  * @property {object} details - 상세 정보
  */
 export interface LogDetail {
   _id: string;
-  from: string;
   timestamp: string;
   message: string;
   apiPath: string;

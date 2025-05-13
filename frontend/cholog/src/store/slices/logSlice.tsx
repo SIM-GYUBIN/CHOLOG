@@ -20,6 +20,7 @@ import {
   TraceLogRequest,
   TraceLogResponse,
   LogDetailResponse,
+  LogDetailRequest,
   ArchiveLogRequest,
   ArchiveLogResponse,
   ArchiveLogResponseData,
@@ -502,64 +503,21 @@ export const fetchTraceLog = createAsyncThunk<
 /**
  * ============================================
  * [#LOG-10]
- * [GET] /api/log/:logId
- * 특정 로그 ID에 대한 상세 정보를 조회합니다.
+ * [GET] /api/log/:projectId/detail/:logId
+ * 특정 로그의 상세 정보를 조회합니다.
  * --------------------------------------------
- * @param logId - 조회할 로그의 고유 ID
+ * @param params - 프로젝트 ID, 로그 ID
  * @returns LogDetailResponse
+ * - 로그 상세 정보 포함
  * ============================================
  */
-export const fetchLogDetail = createAsyncThunk<LogDetailResponse, string>(
-  "log/fetchLogDetail",
-  async (logId, { rejectWithValue }) => {
-    try {
-      const response = await api.get<LogDetailResponse>(`/api/log/${logId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      return response.data;
-    } catch (error: any) {
-      const status = error.response?.status;
-      let errorCode = "INTERNAL_ERROR";
-      if (status === 400) errorCode = "INVALID_REQUEST";
-      else if (status === 401) errorCode = "UNAUTHORIZED";
-      else if (status === 404) errorCode = "NOT_FOUND";
-
-      return rejectWithValue({
-        success: false,
-        data: null,
-        error: {
-          code: errorCode,
-          message:
-            error.response?.data?.error?.message ||
-            "로그 상세 조회 중 오류가 발생했습니다.",
-        },
-        timestamp: new Date().toISOString(),
-      } as LogDetailResponse);
-    }
-  }
-);
-
-/**
- * ============================================
- * [#LOG-11]
- * [POST] /api/log/:logId/archive
- * 로그를 아카이브 처리합니다.
- * --------------------------------------------
- * @param ArchiveLogRequest - logId와 사유 포함
- * @returns ArchiveLogResponse
- * ============================================
- */
-export const archiveLog = createAsyncThunk<
-  ArchiveLogResponse,
-  ArchiveLogRequest
->("log/archiveLog", async ({ logId, archiveReason }, { rejectWithValue }) => {
+export const fetchLogDetail = createAsyncThunk<
+  LogDetailResponse,
+  LogDetailRequest
+>("log/fetchLogDetail", async (params, { rejectWithValue }) => {
   try {
-    const response = await api.post<ArchiveLogResponse>(
-      `/api/log/${logId}/archive`,
-      { archiveReason },
+    const response = await api.get<LogDetailResponse>(
+      `/api/log/${params.projectId}/detail/${params.logId}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -571,18 +529,73 @@ export const archiveLog = createAsyncThunk<
   } catch (error: any) {
     const status = error.response?.status;
     let errorCode = "INTERNAL_ERROR";
+    
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    else if (status === 404) errorCode = "NOT_FOUND";
+
+    return rejectWithValue({
+      success: false,
+      data: null,
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "로그 상세 정보 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as LogDetailResponse);
+  }
+});
+
+/**
+ * ============================================
+ * [#LOG-11]
+ * [POST] /api/log/:projectId/archive
+ * 로그를 아카이브 처리합니다.
+ * --------------------------------------------
+ * @param params - projectId, logId, archiveReason
+ * @returns ArchiveLogResponse
+ * ============================================
+ */
+export const archiveLog = createAsyncThunk<
+  ArchiveLogResponse,
+  { projectId: number } & ArchiveLogRequest
+>("log/archiveLog", async (params, { rejectWithValue }) => {
+  try {
+    const response = await api.post<ArchiveLogResponse>(
+      `/api/log/${params.projectId}/archive`,
+      {
+        logId: params.logId,
+        archiveReason: params.archiveReason
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    
     if (status === 400) errorCode = "INVALID_REQUEST";
     else if (status === 401) errorCode = "UNAUTHORIZED";
     else if (status === 404) errorCode = "LOG_NOT_FOUND";
 
     return rejectWithValue({
       success: false,
-      data: {} as ArchiveLogResponseData,
+      data: {
+        logId: params.logId,
+        archiveStatus: "FAILED",
+        archiveReason: params.archiveReason,
+        timestamp: new Date().toISOString()
+      },
       error: {
         code: errorCode,
-        message:
-          error.response?.data?.error?.message ||
-          "로그 아카이브 중 오류가 발생했습니다.",
+        message: error.response?.data?.error?.message || "로그 아카이브 처리 중 오류가 발생했습니다.",
       },
       timestamp: new Date().toISOString(),
     } as ArchiveLogResponse);

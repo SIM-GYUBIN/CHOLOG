@@ -54,7 +54,9 @@ export interface Project {
  * @property {Project[]} data - 조회된 프로젝트 목록 배열
  */
 export interface ProjectListResponse extends BaseResponse {
-  data: Project[];
+  data: {
+    projects: Project[];
+  };
 }
 
 /**
@@ -106,14 +108,24 @@ export interface UpdateProjectResponse extends BaseResponse {
 }
 
 /**
+ * @description API 에러 응답 타입
+ * @property {ErrorCode} code - 에러 코드
+ * @property {string} message - 에러 메시지
+ */
+export interface ErrorResponse {
+  code: ErrorCode;
+  message: string;
+}
+
+/**
  * @description 프로젝트의 상태 관리를 위한 인터페이스
  * @property {boolean} isLoading - 데이터 로딩 상태 표시
- * @property {BaseResponse["error"] | null} error - 발생한 오류 정보
+ * @property {ErrorResponse | null} error - 발생한 오류 정보
  * @property {Project[]} projects - 프로젝트 목록 데이터
  */
 export interface ProjectState {
   isLoading: boolean;
-  error: BaseResponse["error"] | null;
+  error: ErrorResponse | null;
   projects: Project[];
 }
 

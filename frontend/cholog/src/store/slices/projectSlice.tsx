@@ -38,7 +38,8 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
       const response = await api.get<ProjectListResponse>("/project", {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          // Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "X-DEV-USER" : 1,
         },
       });
       return response.data;
@@ -46,7 +47,9 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
       // 서버 연결 실패 시 목데이터 반환
       return {
         success: true,
-        data: MOCK_PROJECTS,
+        data: {
+          projects: MOCK_PROJECTS
+        },
         error: null,
         timestamp: new Date().toISOString(),
       } as ProjectListResponse;
@@ -358,7 +361,7 @@ const projectSlice = createSlice({
       })
       .addCase(fetchProjects.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.projects = action.payload.data;
+        state.projects = action.payload.data.projects;
       })
       .addCase(fetchProjects.rejected, (state, action) => {
         state.isLoading = false;
