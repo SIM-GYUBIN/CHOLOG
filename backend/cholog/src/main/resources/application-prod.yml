@@ -1,14 +1,14 @@
 spring:
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: validate
     properties:
       hibernate:
-        format_sql: true
-    defer-datasource-initialization: true
+        format_sql: false
+    defer-datasource-initialization: false
   sql:
     init:
-      mode: always
+      mode: never
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
