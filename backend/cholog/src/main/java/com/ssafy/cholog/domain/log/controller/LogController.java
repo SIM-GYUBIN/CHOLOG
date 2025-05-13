@@ -76,6 +76,23 @@ public class LogController {
         return CommonResponse.ok(logs);
     }
 
+    @GetMapping("/{projectId}/search")
+    @Operation(summary = "로그 검색", description = "로그 검색 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<CustomPage<LogEntryResponse>>> searchLog(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Integer projectId,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) String apiPath,
+            @RequestParam(required = false) String message,
+            @PageableDefault(size = 20, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable){
+
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+        CustomPage<LogEntryResponse> logs = logService.searchLog(userId, projectId, level, apiPath, message, pageable);
+        return CommonResponse.ok(logs);
+    }
+
     @GetMapping("/{projectId}/stats")
     @Operation(summary = "프로젝트 로그 통계 조회", description = "프로젝트 로그 통계 조회 API")
     @PreAuthorize("isAuthenticated()")
