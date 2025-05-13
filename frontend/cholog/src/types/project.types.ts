@@ -142,13 +142,9 @@ export interface DeleteProjectRequest {
  * [#PROJECT-4]
  * @description 프로젝트 삭제 작업의 응답 인터페이스
  * @extends {BaseResponse} 기본 API 응답 형식을 상속
- * @property {Object} data - 삭제된 프로젝트 정보
- * @property {number} data.id - 삭제된 프로젝트의 식별자
  */
 export interface DeleteProjectResponse extends BaseResponse {
-  data: {
-    id: number;
-  };
+  data: Record<string, never>;
 }
 
 /**
@@ -167,7 +163,7 @@ export interface GenerateTokenResponse extends BaseResponse {
 /**
  * [#PROJECT-6]
  * @description 프로젝트 참여 요청을 위한 인터페이스
- * @property {string} token - 프로젝트 참여를 위한 인증 토큰
+ * @property {string} projectToken - 프로젝트 참여를 위한 인증 토큰
  */
 export interface JoinProjectRequest {
   projectToken: string;

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../../hooks/useAppDispatch";
 import exitIcon from "@/assets/exit.svg";
 import deleteIcon from "@/assets/delete.svg";
 import copyIcon from "@/assets/copy.svg";
 import modifyIcon from "@/assets/modify.svg";
 import ModifyProjectModal from "./ModifyProjectModal";
+import { deleteProject, leaveProject } from "../../store/slices/projectSlice";
 
 interface Project {
   id: number;
@@ -23,9 +25,12 @@ interface ProjectTableProps {
 
 const ProjectTable = ({ projects, onCopy, isLoading, error }: ProjectTableProps) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [showModifyModal, setShowModifyModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [newProjectName, setNewProjectName] = useState("");
+  const [modalType, setModalType] = useState<"delete" | "leave" | null>(null);
 
   const handleCopy = (projectId: string) => {
     onCopy(projectId);
@@ -43,6 +48,41 @@ const ProjectTable = ({ projects, onCopy, isLoading, error }: ProjectTableProps)
     setShowModifyModal(false);
     setSelectedProject(null);
     setNewProjectName("");
+  };
+
+  const handleActionClick = (project: Project, type: "delete" | "leave") => {
+    setSelectedProject(project);
+    setModalType(type);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedProject || !selectedProject.id) {
+      console.error("선택된 프로젝트가 없거나 프로젝트 ID가 유효하지 않습니다.");
+      return;
+    }
+
+    try {
+      if (modalType === "delete") {
+        const result = await dispatch(deleteProject({ projectId: selectedProject.id })).unwrap();
+        if (result) {
+          alert("프로젝트가 성공적으로 삭제되었습니다.");
+          window.location.reload(); // 프로젝트 목록 새로고침
+        }
+      } else if (modalType === "leave") {
+        const result = await dispatch(leaveProject({ projectId: selectedProject.id })).unwrap();
+        if (result) {
+          alert("프로젝트에서 성공적으로 탈퇴했습니다.");
+          window.location.reload(); // 프로젝트 목록 새로고침
+        }
+      }
+      setShowConfirmModal(false);
+      setSelectedProject(null);
+      setModalType(null);
+    } catch (error: any) {
+      console.error("작업 실패:", error);
+      alert(error.message || "작업 중 오류가 발생했습니다.");
+    }
   };
 
   if (isLoading) {
@@ -172,7 +212,10 @@ const ProjectTable = ({ projects, onCopy, isLoading, error }: ProjectTableProps)
                 {project.createdAt}
               </td>
               <td className="w-12 p-4">
-                <button className="p-1.5 hover:bg-[#5EA50015] rounded-md transition-colors focus:outline-none cursor-pointer">
+                <button 
+                  className="p-1.5 hover:bg-[#5EA50015] rounded-md transition-colors focus:outline-none cursor-pointer"
+                  onClick={() => handleActionClick(project, project.isCreator ? "delete" : "leave")}
+                >
                   <img
                     src={project.isCreator ? deleteIcon : exitIcon}
                     alt={project.isCreator ? "Delete" : "Exit"}
@@ -196,6 +239,40 @@ const ProjectTable = ({ projects, onCopy, isLoading, error }: ProjectTableProps)
         }}
         onSubmit={handleModifySubmit}
       />
+
+      {/* 확인 모달 */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h2 className="text-xl font-paperlogy6 mb-4">
+              {modalType === "delete" ? "프로젝트 삭제" : "프로젝트 탈퇴"}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {modalType === "delete"
+                ? "정말로 이 프로젝트를 삭제하시겠습니까?"
+                : "정말로 이 프로젝트에서 탈퇴하시겠습니까?"}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setSelectedProject(null);
+                  setModalType(null);
+                }}
+              >
+                취소
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-md transition-colors"
+                onClick={handleConfirm}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
