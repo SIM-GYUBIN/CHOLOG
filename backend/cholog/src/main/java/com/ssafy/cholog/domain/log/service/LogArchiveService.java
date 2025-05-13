@@ -2,6 +2,7 @@ package com.ssafy.cholog.domain.log.service;
 
 
 import com.ssafy.cholog.domain.log.dto.request.archive.LogArchiveRequest;
+import com.ssafy.cholog.domain.log.dto.response.LogArchiveResponse;
 import com.ssafy.cholog.domain.log.entity.LogArchive;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.log.repository.LogArchiveRepository;
@@ -10,9 +11,12 @@ import com.ssafy.cholog.domain.project.repository.ProjectRepository;
 import com.ssafy.cholog.domain.project.repository.ProjectUserRepository;
 import com.ssafy.cholog.domain.user.entity.User;
 import com.ssafy.cholog.domain.user.repository.UserRepository;
+import com.ssafy.cholog.global.common.CustomPage;
 import com.ssafy.cholog.global.exception.CustomException;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
@@ -70,5 +74,18 @@ public class LogArchiveService {
                 .build();
 
         logArchiveRepository.save(logArchive);
+    }
+
+
+    public CustomPage<LogArchiveResponse> getAllArchiveLog(Integer userId, Integer projectId, Pageable pageable) {
+        if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
+                    .addParameter("userId", userId)
+                    .addParameter("projectId", projectId);
+        }
+
+        Page<LogArchive> logArchiveList = logArchiveRepository.findAllArchiveLogByProjectId(projectId, pageable);
+
+        return new CustomPage<>(logArchiveList.map(LogArchiveResponse::of));
     }
 }
