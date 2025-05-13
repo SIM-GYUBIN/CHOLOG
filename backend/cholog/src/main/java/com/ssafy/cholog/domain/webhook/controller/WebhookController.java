@@ -1,6 +1,7 @@
 package com.ssafy.cholog.domain.webhook.controller;
 
 import com.ssafy.cholog.domain.webhook.dto.request.WebhookRequest;
+import com.ssafy.cholog.domain.webhook.dto.response.WebhookResponse;
 import com.ssafy.cholog.domain.webhook.service.WebhookService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.response.CommonResponse;
@@ -31,8 +32,7 @@ public class WebhookController {
     @Operation(summary = "웹훅 알림 생성", description = "웹훅 알림 생성 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
-            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.WEBHOOK_ALREADY_EXISTS,
-            ErrorCode.FORBIDDEN_ACCESS, ErrorCode.NOT_PROJECT_USER})
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.WEBHOOK_ALREADY_EXISTS, ErrorCode.NOT_PROJECT_USER})
     public ResponseEntity<CommonResponse<Void>> createWebhook(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("projectId") Integer projectId,
@@ -46,9 +46,7 @@ public class WebhookController {
     @PutMapping("/{projectId}")
     @Operation(summary = "웹훅 알림 수정", description = "웹훅 알림 수정 API")
     @PreAuthorize("isAuthenticated()")
-    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
-            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.WEBHOOK_NOT_FOUND,
-            ErrorCode.FORBIDDEN_ACCESS, ErrorCode.NOT_PROJECT_USER})
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR, ErrorCode.NOT_PROJECT_USER})
     public ResponseEntity<CommonResponse<Void>> updateWebhook(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("projectId") Integer projectId,
@@ -57,5 +55,19 @@ public class WebhookController {
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
         return CommonResponse.ok(webhookService.updateWebhook(userId, projectId, request));
+    }
+
+    @GetMapping("/{projectId}")
+    @Operation(summary = "웹훅 알림 조회", description = "웹훅 알림 조회 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER})
+    public ResponseEntity<CommonResponse<WebhookResponse>> getWebhook(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable("projectId") Integer projectId){
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(webhookService.getWebhook(userId, projectId));
     }
 }
