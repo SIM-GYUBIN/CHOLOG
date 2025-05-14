@@ -44,23 +44,45 @@ const getLevelIcon = (level: string) => {
 };
 
 const LogPage = () => {
-  const { id } = useParams();
+  const { projectId, logId } = useParams();
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const dispatch = useAppDispatch();
   const { logDetail, traceLogs, isLoading } = useSelector(
     (state: any) => state.log
   );
 
+  // useEffect(() => {
+  //   if (id) {
+  //     // Get projectId from URL or state management
+  //     const projectId = window.location.pathname.split('/')[2]; // Assuming URL pattern is /project/{projectId}/log/{logId}
+  //     dispatch(fetchLogDetail({ 
+  //       logId: id,
+  //       projectId: Number(projectId)
+  //     }));
+  //   }
+  // }, [id]);
+
+  // useEffect(() => {
+  //   if (logDetail?.traceId && logDetail?.projectId) {
+  //     dispatch(
+  //       fetchTraceLog({
+  //         traceId: logDetail.traceId,
+  //         projectId: logDetail.projectId,
+  //       })
+  //     );
+  //   }
+  // }, [logDetail?.traceId]);
+
+  // 임시 데이터
+  
   useEffect(() => {
-    if (id) {
-      // Get projectId from URL or state management
-      const projectId = window.location.pathname.split('/')[2]; // Assuming URL pattern is /project/{projectId}/log/{logId}
+    if (logId && projectId) {
       dispatch(fetchLogDetail({ 
-        logId: id,
+        logId,
         projectId: Number(projectId)
       }));
     }
-  }, [id]);
+  }, [logId, projectId, dispatch]);
 
   useEffect(() => {
     if (logDetail?.traceId && logDetail?.projectId) {
@@ -71,9 +93,9 @@ const LogPage = () => {
         })
       );
     }
-  }, [logDetail?.traceId]);
+  }, [logDetail?.traceId, dispatch]);
 
-  // 임시 데이터
+  
   const logData = logDetail ?? {
     _id: "13df",
     type: "ERROR",
@@ -159,8 +181,8 @@ const LogPage = () => {
 
   const nav = useNavigate();
   const handleclick = (id: string) => {
-    if (id) {
-      nav(`/log/${id}`);
+    if (id && projectId) {
+      nav(`/project/${projectId}/log/${id}`);
     }
   };
 
@@ -299,7 +321,8 @@ const LogPage = () => {
         </div>
         {/* 아카이브 모달 */}
         <ArchiveModal
-          logId={logData._id} // id 파라미터 대신 현재 로그의 _id를 전달
+          logId={logData._id}
+          projectId={projectId} // projectId 추가
           isOpen={isArchiveModalOpen}
           onClose={() => setIsArchiveModalOpen(false)}
           onArchive={handleArchive}

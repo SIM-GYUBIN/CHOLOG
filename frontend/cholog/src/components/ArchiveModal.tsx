@@ -5,12 +5,13 @@ import { archiveLog } from '../store/slices/logSlice';
 
 interface ArchiveModalProps {
   logId: string;
+  projectId: string | undefined; // projectId 추가
   isOpen: boolean;
   onClose: () => void;
   onArchive: (reason: string) => void;
 }
 
-export default function ArchiveModal({ logId, isOpen, onClose, onArchive }: ArchiveModalProps) {
+export default function ArchiveModal({ logId, projectId, isOpen, onClose, onArchive }: ArchiveModalProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
@@ -35,9 +36,11 @@ export default function ArchiveModal({ logId, isOpen, onClose, onArchive }: Arch
     }
 
     try {
-      const result = await dispatch(archiveLog({
-        logId, archiveReason: reason,
-        projectId: 0
+      // projectId 파라미터 추가
+      const result = await dispatch(archiveLog({ 
+        logId, 
+        archiveReason: reason,
+        projectId: projectId ? Number(projectId) : undefined
       })).unwrap();
       
       if (result.success) {

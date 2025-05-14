@@ -53,7 +53,17 @@ export default function EachLog({
 
   const handleclick = () => {
     if (id) {
-      nav(`/log/${id}`);
+      // URL에서 projectId 추출
+      const pathParts = window.location.pathname.split('/');
+      const projectIdIndex = pathParts.findIndex(part => part === 'project') + 1;
+      const projectId = projectIdIndex > 0 && projectIdIndex < pathParts.length ? pathParts[projectIdIndex] : null;
+      
+      if (projectId) {
+        nav(`/project/${projectId}/log/${id}`);
+      } else {
+        // 프로젝트 ID를 찾을 수 없는 경우 처리
+        console.error('프로젝트 ID를 찾을 수 없습니다.');
+      }
     }
   };
 
