@@ -57,6 +57,7 @@ public class WebhookPollingService {
         }
 
         LocalDateTime currentPollExecutionTime = LocalDateTime.now(ZoneOffset.UTC);
+        List<Webhook> webhooksToUpdate = new ArrayList<>(); // 업데이트할 웹훅들을 담을 리스트
 
         for (Webhook webhookSetting : activeWebhooks) {
             if (webhookSetting.getIsEnabled() == null || !webhookSetting.getIsEnabled()) {
@@ -65,10 +66,20 @@ public class WebhookPollingService {
             }
             try {
                 processSingleWebhook(webhookSetting, currentPollExecutionTime);
+                webhooksToUpdate.add(webhookSetting);
             } catch (Exception e) {
                 log.error("Error processing webhook ID {}: {}", webhookSetting.getId(), e.getMessage(), e);
             }
         }
+
+        if (!webhooksToUpdate.isEmpty()) {
+            log.info("Attempting to batch update {} webhook settings.", webhooksToUpdate.size());
+            webhookRepository.saveAll(webhooksToUpdate);
+            log.info("Successfully batch updated {} webhook settings.", webhooksToUpdate.size());
+        } else {
+            log.info("No webhooks were processed or needed updates in this cycle.");
+        }
+
         log.info("Webhook poll finished.");
     }
 
@@ -88,7 +99,6 @@ public class WebhookPollingService {
         if (project == null || !StringUtils.hasText(project.getProjectToken())) {
             log.warn("Project or Project Token is missing for webhook ID {}. Updating lastCheckedTimestamp and skipping.", webhookSetting.getId());
             webhookSetting.updateLastCheckedTimestamp(currentPollExecutionTime);
-            webhookRepository.save(webhookSetting);
             return;
         }
         String projectKeyForQuery = project.getProjectToken();
@@ -109,7 +119,6 @@ public class WebhookPollingService {
         if (parsedKeywords.isEmpty()) {
             log.warn("No valid keywords configured for webhook ID {}. Skipping this setting.", webhookSetting.getId());
             webhookSetting.updateLastCheckedTimestamp(currentPollExecutionTime);
-            webhookRepository.save(webhookSetting);
             return;
         }
         // --- 키워드 파싱 끝 ---
@@ -227,6 +236,5 @@ public class WebhookPollingService {
             log.debug("No new logs found for webhook ID {}. Updating lastCheckedTimestamp to current poll time {}.",
                     webhookSetting.getId(), currentPollExecutionTime);
         }
-        webhookRepository.save(webhookSetting);
     }
 }

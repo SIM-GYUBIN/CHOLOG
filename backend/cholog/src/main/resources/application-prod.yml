@@ -5,6 +5,11 @@ spring:
     properties:
       hibernate:
         format_sql: false
+        order_inserts: true
+        order_updates: true
+        jdbc:
+          batch_size: 20
+        dialect: org.hibernate.dialect.MariaDBDialect
     defer-datasource-initialization: false
   sql:
     init:
