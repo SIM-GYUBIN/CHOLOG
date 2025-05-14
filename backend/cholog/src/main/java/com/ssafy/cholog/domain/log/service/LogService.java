@@ -25,7 +25,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.Aggregation;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
-import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.AggregationsContainer;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -38,6 +37,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -336,48 +338,102 @@ public class LogService {
                     .addParameter("projectId", projectId);
         }
 
+        final ZonedDateTime startDateTimeBoundaryUtc;
+        final LocalDate startDateForCompare;
+
+        try {
+            LocalDateTime parsedLdtStart = null;
+            try {
+                // 1. LocalDateTime (yyyy-MM-ddTHH:mm:ss) 형식으로 파싱 시도
+                parsedLdtStart = LocalDateTime.parse(startDateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } catch (DateTimeParseException ignored) {
+                // 실패해도 괜찮음, 다음 단계에서 LocalDate로 파싱 시도
+            }
+
+            if (parsedLdtStart != null) { // LocalDateTime 파싱 성공
+                startDateTimeBoundaryUtc = parsedLdtStart.atZone(ZoneOffset.UTC);
+                startDateForCompare = parsedLdtStart.toLocalDate();
+            } else { // LocalDateTime 파싱 실패 시, LocalDate (yyyy-MM-dd) 형식으로 파싱 시도
+                LocalDate parsedLdStart = LocalDate.parse(startDateStr, DateTimeFormatter.ISO_LOCAL_DATE); // 여기서 실패하면 외부 catch로
+                startDateTimeBoundaryUtc = parsedLdStart.atStartOfDay(ZoneOffset.UTC);
+                startDateForCompare = parsedLdStart;
+            }
+        } catch (DateTimeParseException ex) { // LocalDate 파싱마저 실패한 경우 (즉, 두 형식 모두 아님)
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE)
+                    .addParameter("startDate", startDateStr)
+                    .addParameter("reason", "유효하지 않은 시작 날짜 형식입니다. yyyy-MM-dd 또는 yyyy-MM-ddTHH:mm:ss 형식을 사용해주세요.");
+        }
+
+        final ZonedDateTime endDateTimeBoundaryUtc;
+        final LocalDate endDateForCompare;
+
+        try {
+            LocalDateTime parsedLdtEnd = null;
+            try {
+                // 1. LocalDateTime (yyyy-MM-ddTHH:mm:ss) 형식으로 파싱 시도
+                parsedLdtEnd = LocalDateTime.parse(endDateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } catch (DateTimeParseException ignored) {
+                // 실패해도 괜찮음, 다음 단계에서 LocalDate로 파싱 시도
+            }
+
+            if (parsedLdtEnd != null) { // LocalDateTime 파싱 성공
+                endDateTimeBoundaryUtc = parsedLdtEnd.atZone(ZoneOffset.UTC); // 시간 명시된 경우 해당 시간 사용
+                endDateForCompare = parsedLdtEnd.toLocalDate();
+            } else { // LocalDateTime 파싱 실패 시, LocalDate (yyyy-MM-dd) 형식으로 파싱 시도
+                LocalDate parsedLdEnd = LocalDate.parse(endDateStr, DateTimeFormatter.ISO_LOCAL_DATE); // 여기서 실패하면 외부 catch로
+                endDateTimeBoundaryUtc = parsedLdEnd.plusDays(1).atStartOfDay(ZoneOffset.UTC); // 날짜만 명시 시, 다음날 00:00 UTC (lt 조건용)
+                endDateForCompare = parsedLdEnd;
+            }
+        } catch (DateTimeParseException ex) { // LocalDate 파싱마저 실패한 경우 (즉, 두 형식 모두 아님)
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE)
+                    .addParameter("endDate", endDateStr)
+                    .addParameter("reason", "유효하지 않은 종료 날짜 형식입니다. yyyy-MM-dd 또는 yyyy-MM-ddTHH:mm:ss 형식을 사용해주세요.");
+        }
+
+        // 날짜 순서 유효성 검사
+        if (startDateForCompare.isAfter(endDateForCompare)) {
+            throw new CustomException(ErrorCode.LOG_START_TIME_AFTER_END_TIME)
+                    .addParameter("startDate", startDateStr)
+                    .addParameter("endDate", endDateStr);
+        }
+
+        // Elasticsearch 쿼리 로직 시작
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
                         .addParameter("projectId", projectId));
         String indexName = "pjt-" + project.getProjectToken();
-
-        LocalDate startDate = LocalDate.parse(startDateStr);
-        LocalDate endDate = LocalDate.parse(endDateStr);
-
-        // 쿼리 범위: startDate의 시작 ~ endDate의 다음 날 시작 (exclusive)
-        ZonedDateTime startDateTimeUtc = startDate.atStartOfDay(ZoneOffset.UTC);
-        ZonedDateTime endDateTimeUtc = endDate.plusDays(1).atStartOfDay(ZoneOffset.UTC);
-
         String timestampFieldName = "timestamp";
 
-        // Range Query 생성: 지정된 시간 범위 내의 로그만 필터링
+        // Elasticsearch Range Query 생성 (final 변수 사용)
         co.elastic.clients.elasticsearch._types.query_dsl.Query elcRangeQuery =
                 co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery.of(r -> r
                         .field(timestampFieldName)
-                        .gte(JsonData.of(startDateTimeUtc.toInstant().toEpochMilli()))
-                        .lt(JsonData.of(endDateTimeUtc.toInstant().toEpochMilli()))
+                        .gte(JsonData.of(startDateTimeBoundaryUtc.toInstant().toEpochMilli()))
+                        .lt(JsonData.of(endDateTimeBoundaryUtc.toInstant().toEpochMilli()))
                 )._toQuery();
 
-        // Date Histogram Aggregation 생성: 시간대별(1시간 간격) 로그 수 집계
+        // Date Histogram Aggregation 생성 (final 변수 사용)
         String timelineAggregationName = "log_timeline_by_hour";
         DateHistogramAggregation dateHistogramAgg = DateHistogramAggregation.of(dh -> dh
                 .field(timestampFieldName)
                 .calendarInterval(CalendarInterval.Hour) // 1시간 간격
                 .minDocCount(0) // 로그가 없는 시간대도 0으로 표시
                 .extendedBounds(eb -> eb // 집계 범위를 명시적으로 설정하여 빈 구간도 포함
-                        .min(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(startDateTimeUtc.toInstant().toEpochMilli()))))
-                        .max(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(endDateTimeUtc.toInstant().toEpochMilli() - 1))))
+                        .min(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(startDateTimeBoundaryUtc.toInstant().toEpochMilli()))))
+                        .max(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(
+                                endDateTimeBoundaryUtc.minusNanos(1)
+                                        .truncatedTo(ChronoUnit.HOURS)
+                                        .toInstant().toEpochMilli()
+                        ))))
                 )
         );
 
-        // NativeQuery 빌드: Range Query와 Date Histogram Aggregation 결합
         NativeQuery searchQuery = NativeQuery.builder()
                 .withQuery(elcRangeQuery)
                 .withAggregation(timelineAggregationName, co.elastic.clients.elasticsearch._types.aggregations.Aggregation.of(agg -> agg.dateHistogram(dateHistogramAgg)))
-                .withMaxResults(0) // 실제 문서는 필요 없고 집계 결과만 필요
+                .withMaxResults(0) // 집계 결과만 필요
                 .build();
 
-        // Elasticsearch 검색 실행
         SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
                 LogDocument.class,
@@ -385,22 +441,16 @@ public class LogService {
         );
 
         List<LogTimelineResponse> timelineResponses = new ArrayList<>();
-
-        // 집계 결과 처리
         AggregationsContainer<?> aggregationsContainer = searchHits.getAggregations();
 
         if (aggregationsContainer instanceof ElasticsearchAggregations esAggsImpl) {
             ElasticsearchAggregation timelineAggregationWrapper = esAggsImpl.get(timelineAggregationName);
-
             if (timelineAggregationWrapper != null) {
                 Aggregation sdeInternalAggregation = timelineAggregationWrapper.aggregation();
-
                 Aggregate elcAggregate = sdeInternalAggregation.getAggregate();
-
                 if (elcAggregate.isDateHistogram()) {
                     DateHistogramAggregate dateHistogram = elcAggregate.dateHistogram();
                     for (DateHistogramBucket bucket : dateHistogram.buckets().array()) {
-                        // 버킷의 키는 해당 시간 간격의 시작 시간 (epoch milliseconds)
                         long epochMillis = bucket.key();
                         LocalDateTime bucketTimestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC);
                         Integer logCount = (int) bucket.docCount();
