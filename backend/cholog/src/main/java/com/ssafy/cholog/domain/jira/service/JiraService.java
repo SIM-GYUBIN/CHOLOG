@@ -1,5 +1,7 @@
 package com.ssafy.cholog.domain.jira.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.cholog.domain.jira.dto.request.JiraIssueRequest;
 import com.ssafy.cholog.domain.jira.dto.request.JiraRequest;
 import com.ssafy.cholog.domain.jira.dto.response.JiraResponse;
 import com.ssafy.cholog.domain.project.entity.Project;
@@ -13,6 +15,7 @@ import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,9 @@ public class JiraService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final ProjectUserRepository projectUserRepository;
+
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     public JiraResponse getJiraToken(Integer userId, Integer projectId) {
         User user = userRepository.findById(userId)
