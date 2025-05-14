@@ -82,8 +82,7 @@ cholog:
     
     # 민감 정보 필터링 설정 (LogSenderService 및 RequestTimingFilter에서 사용)
     sensitive-patterns:                     # 민감 정보로 간주하여 필터링할 필드 경로 패턴 목록 (예: ["user.password", "creditCard"])
-      - "password"
-      - "apiKey" # API 키 자체도 필터링 대상에 포함 가능
+      - "password
       - "ssn"
       - "token"
     sensitive-value-replacement: "[FILTERED]" # 민감 정보 대체 문자열 (기본값: "***")
@@ -99,7 +98,7 @@ cholog:
     use-https: false                        # HTTPS 사용 여부
     allow-insecure-tls: false               # TLS 인증서 검증 무시 여부 (개발 환경에서만 주의해서 사용)
     
-    # 연결 오류 로그 최적화 설정 (LogSenderService, v1.7.5 기준 초안 내용)
+    # 연결 오류 로그 최적화 설정 (LogSenderService)
     suppress-connection-errors: true        # 연결 오류 로그 최소화
     max-connection-error-logs-per-period: 1 
     connection-error-log-period: 300000     
@@ -112,7 +111,7 @@ cholog:
     disk-queue-enabled: true                # 디스크 큐 활성화 여부
     disk-queue-path: ./log-queue            # 디스크 큐 저장 경로
     disk-resend-interval: 60000             # 디스크 큐 재전송 간격(ms)
-    max-disk-queue-size-bytes: 1073741824   # 디스크 큐 최대 크기(바이트 단위, 예: 1GB) - LogServerProperties에는 MB 단위 설정이 있을 수 있음, 확인 필요
+    max-disk-queue-size-mb: 1024            # 디스크 큐 최대 크기(mb)
     
     # 연결 모니터링 설정 (LogSenderService)
     connection-check-interval: 300000       # 서버 연결 상태 확인 간격(ms)
