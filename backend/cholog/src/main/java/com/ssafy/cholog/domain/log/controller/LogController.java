@@ -3,6 +3,7 @@ package com.ssafy.cholog.domain.log.controller;
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogTimelineResponse;
+import com.ssafy.cholog.domain.log.service.LogSearchService;
 import com.ssafy.cholog.domain.log.service.LogService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.CustomPage;
@@ -35,6 +36,7 @@ import java.util.List;
 public class LogController {
 
     private final LogService logService;
+    private final LogSearchService logSearchService;
     private final AuthenticationUtil authenticationUtil;
 
     @GetMapping("/{projectId}")
@@ -94,7 +96,7 @@ public class LogController {
             @PageableDefault(size = 20, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
-        CustomPage<LogEntryResponse> logs = logService.searchLog(userId, projectId, level, apiPath, message, pageable);
+        CustomPage<LogEntryResponse> logs = logSearchService.searchLog(userId, projectId, level, apiPath, message, pageable);
         return CommonResponse.ok(logs);
     }
 
