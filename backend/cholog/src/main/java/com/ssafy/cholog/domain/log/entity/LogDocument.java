@@ -18,7 +18,6 @@ import java.util.Map;
 public class LogDocument {
 
     @Id
-    @Field(name = "_id") // Elasticsearch의 내부 ID 필드
     private String id;
 
     // ES의 @timestamp 필드는 ISO 8601 형식의 문자열 또는 epoch_millis. Instant로 매핑.

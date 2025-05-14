@@ -34,7 +34,8 @@ public enum ErrorCode {
 
     // Log
     LOG_NOT_FOUND(HttpStatus.NOT_FOUND, "L001", "로그를 찾을 수 없습니다"),
-    LOG_START_TIME_AFTER_END_TIME(HttpStatus.BAD_REQUEST, "L002", "시작시간이 종료시간보다 늦을 수 없습니다"),
+    INDEX_CREATE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "L002", "인덱스 생성에 실패했습니다."),
+    LOG_START_TIME_AFTER_END_TIME(HttpStatus.BAD_REQUEST, "L003", "시작시간이 종료시간보다 늦을 수 없습니다"),
 
     // Webhook
     WEBHOOK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "W001", "이미 웹훅 설정이 존재합니다."),

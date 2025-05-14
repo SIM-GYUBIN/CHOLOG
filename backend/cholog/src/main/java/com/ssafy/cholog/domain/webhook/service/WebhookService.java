@@ -47,7 +47,7 @@ public class WebhookService {
         Webhook webhook = Webhook.builder()
                 .project(project)
                 .mmURL(request.getMmURL())
-                .logLevel(request.getLogLevel())
+                .keywords(request.getKeywords())
                 .notificationENV(request.getNotificationENV())
                 .isEnabled(request.getIsEnabled())
                 .build();
@@ -72,10 +72,7 @@ public class WebhookService {
                         .addParameter("userId", userId)
                         .addParameter("projectId", projectId));
 
-        webhook.updateMmURL(request.getMmURL());
-        webhook.updateLogLevel(request.getLogLevel());
-        webhook.updateNotificationENV(request.getNotificationENV());
-        webhook.updateIsEnabled(request.getIsEnabled());
+        webhook.updateSettings(request.getMmURL(), request.getNotificationENV(), request.getKeywords(), request.getIsEnabled());
 
         return null;
     }
