@@ -31,7 +31,6 @@ bin/
 # Java 관련 파일
 *.class
 *.log
-*.jar
 *.war
 *.nar
 *.ear
