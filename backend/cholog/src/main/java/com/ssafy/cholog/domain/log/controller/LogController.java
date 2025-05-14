@@ -91,7 +91,7 @@ public class LogController {
             @RequestParam(required = false) String level,
             @RequestParam(required = false) String apiPath,
             @RequestParam(required = false) String message,
-            @PageableDefault(size = 20, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable){
+            @PageableDefault(size = 20, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
         CustomPage<LogEntryResponse> logs = logService.searchLog(userId, projectId, level, apiPath, message, pageable);
@@ -113,7 +113,7 @@ public class LogController {
     @GetMapping("/{projectId}/timeline")
     @Operation(summary = "시간대별 로그 발생 추이", description = "시간대별 로그 발생 추이 API")
     @PreAuthorize("isAuthenticated()")
-    @ApiErrorCodeExamples({ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
+    @ApiErrorCodeExamples({ErrorCode.PROJECT_NOT_FOUND, ErrorCode.LOG_START_TIME_AFTER_END_TIME, ErrorCode.PROJECT_USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<CommonResponse<List<LogTimelineResponse>>> getProjectLogTimeline(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Integer projectId,
@@ -124,19 +124,18 @@ public class LogController {
 
         String effectiveStartDate;
         if (startDate == null || startDate.trim().isEmpty()) {
-            // 기본 startDate: 한국 시간 기준 7일 전
             effectiveStartDate = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(7).toString();
         } else {
-            effectiveStartDate = startDate; // yyyy-MM-dd 형식으로 기대
+            effectiveStartDate = startDate;
         }
 
         String effectiveEndDate;
         if (endDate == null || endDate.trim().isEmpty()) {
             ZonedDateTime nowKst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
             LocalDateTime nextHourKst = nowKst.toLocalDateTime().withMinute(0).withSecond(0).withNano(0).plusHours(1);
-            effectiveEndDate = nextHourKst.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME); // "yyyy-MM-ddTHH:00:00"
+            effectiveEndDate = nextHourKst.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } else {
-            effectiveEndDate = endDate; // "yyyy-MM-dd" 또는 "yyyy-MM-ddTHH:mm:ss" 형식으로 기대
+            effectiveEndDate = endDate;
         }
 
         List<LogTimelineResponse> logs = logService.getProjectLogTimeline(userId, projectId, effectiveStartDate, effectiveEndDate);
