@@ -100,6 +100,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                 <div>
                   <div className="text-[14px] mb-1">로그 키워드<span className="text-red-500">*</span></div>
                   <div className="mb-2 text-[12px] text-slate-500 font-[paperlogy4]">웹훅 알림을 받고싶은 로그 키워드를 입력해주세요</div>
+                  {/* 키워드 api요청할때 ","포함해서 그냥 텍스트 자체로 보내기!! */}
                   <input
                     type="text"
                     value={logLevel}

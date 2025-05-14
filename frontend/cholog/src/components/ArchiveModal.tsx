@@ -35,7 +35,10 @@ export default function ArchiveModal({ logId, isOpen, onClose, onArchive }: Arch
     }
 
     try {
-      const result = await dispatch(archiveLog({ logId, archiveReason: reason })).unwrap();
+      const result = await dispatch(archiveLog({
+        logId, archiveReason: reason,
+        projectId: 0
+      })).unwrap();
       
       if (result.success) {
         onArchive(reason);
