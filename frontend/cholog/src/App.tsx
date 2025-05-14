@@ -24,7 +24,7 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/projectlist" element={<ProjectListPage />} />
           <Route path="/project/:projectId" element={<ProjectPage />} />
-          <Route path="/log/:logId" element={<LogPage />} />
+          <Route path="/project/:projectId/log/:logId" element={<LogPage />} />
           <Route path="/report/:projectId/:reportId" element={<ReportPage />} />
           <Route path="/reportlist/:projectId" element={<ReportListPage />} />
           <Route path="/archive/:projectId" element={<ArchiveListPage />} />
