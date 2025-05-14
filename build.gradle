@@ -13,7 +13,7 @@ plugins {
 }
 
 group = 'com.ssafy.lab.s12-final'
-version = 'v1.0.3'
+version = 'v1.0.2'
 
 // Java 버전 설정
 java {
