@@ -31,7 +31,7 @@ public class LogArchiveController {
     @PostMapping("/{projectId}/archive")
     @Operation(summary = "로그 아카이빙", description = "로그 아카이빙 API")
     @PreAuthorize("isAuthenticated()")
-    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.LOG_NOT_FOUND})
     public ResponseEntity<CommonResponse<Void>> archiveLog(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Integer projectId,
@@ -45,7 +45,7 @@ public class LogArchiveController {
     @GetMapping("/{projectId}/archive")
     @Operation(summary = "로그 아카이빙 목록 조회", description = "로그 아카이빙 목록 조회 API")
     @PreAuthorize("isAuthenticated()")
-    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    @ApiErrorCodeExamples({ErrorCode.PROJECT_USER_NOT_FOUND})
     public ResponseEntity<CommonResponse<CustomPage<LogArchiveResponse>>> getAllArchiveLog(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Integer projectId,
