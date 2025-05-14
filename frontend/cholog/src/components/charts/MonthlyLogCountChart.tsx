@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import {
   AreaChart,
   Area,
@@ -8,29 +9,79 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const ErrorCountChart = () => {
+interface LogData {
+  timestamp: string;
+  logCount: number;
+}
+
+interface MonthlyLogCountChartProps {
+  projectId: number;
+  startDate?: string; // yyyy-MM-dd
+  endDate?: string; // yyyy-MM-dd
+  token: string;
+}
+
+const MonthlyLogCountChart: React.FC<MonthlyLogCountChartProps> = ({
+  projectId,
+  startDate,
+  endDate,
+  token,
+}) => {
+  const [data, setData] = useState<{ day: string; count: number }[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const mockData = [
-    { period: "8", count: 120 },
-    { period: "9", count: 200 },
-    { period: "10", count: 160 },
-    { period: "11", count: 350 },
-    { period: "12", count: 220 },
-    { period: "13", count: 180 },
-    { period: "14", count: 240 },
-    { period: "15", count: 230 },
-    { period: "16", count: 210 },
-    { period: "17", count: 190 },
-    { period: "18", count: 300 },
-    { period: "19", count: 280 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`/api/log/${projectId}/timeline`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          params: {
+            startDate,
+            endDate,
+          },
+        });
+
+        const raw: LogData[] = response.data.data;
+        const dateMap: { [key: string]: number } = {};
+
+        raw.forEach((item) => {
+          const date = new Date(item.timestamp);
+          const day = date.getDate();
+          dateMap[day] = item.logCount;
+        });
+
+        const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
+        const parsed = daysInMonth.map((day) => ({
+          day: day.toString(),
+          count: dateMap[day] ?? 0,
+        }));
+
+        setData(parsed);
+      } catch (err) {
+        console.error("Failed to fetch log data, using mock data", err);
+
+        const mock = Array.from({ length: 31 }, (_, i) => ({
+          day: (i + 1).toString(),
+          count: Math.floor(Math.random() * 300),
+        }));
+
+        setData(mock);
+      }
+    };
+
+    fetchData();
+  }, [projectId, startDate, endDate, token]);
+
+  const chartWidth = Math.max(data.length * 40 + 40, 400); // 양 끝 여백 포함
 
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
 
-    container.scrollLeft = container.scrollWidth;
+    container.scrollLeft = 0;
 
     let isDown = false;
     let startX = 0;
@@ -67,16 +118,27 @@ const ErrorCountChart = () => {
   }, []);
 
   return (
-    <div className="w-full p-6 bg-white/5 rounded-2xl h-full border border-[var(--line)]">
-      <h2 className="text-left text-xl font-semibold text-[var(--text)] mb-4">
-        Daily Log Count
-      </h2>
+    <div className="w-full p-6 rounded-2xl h-full">
       <div
         ref={scrollRef}
-        className="scroll-hidden overflow-x-auto cursor-grab active:cursor-grabbing"
+        className="overflow-x-auto overflow-y-hidden cursor-grab active:cursor-grabbing"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
-        <div style={{ width: `${mockData.length * 60}px`, height: "160px" }}>
-          <AreaChart data={mockData} width={mockData.length * 60} height={160}>
+        <div
+          style={{
+            width: `${chartWidth}px`,
+            minWidth: "100%",
+            height: "160px",
+            paddingLeft: "4px",
+            paddingRight: "4px",
+          }}
+        >
+          <AreaChart
+            data={data}
+            width={chartWidth}
+            height={160}
+            margin={{ left: 2, right: 10 }}
+          >
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#9CA3AF" stopOpacity={0.4} />
@@ -88,7 +150,12 @@ const ErrorCountChart = () => {
               strokeDasharray="3 3"
               strokeOpacity={0.1}
             />
-            <XAxis dataKey="period" tick={{ fill: "#9CA3AF" }} />
+            <XAxis
+              dataKey="day"
+              tick={{ fill: "#9CA3AF" }}
+              interval={0}
+              allowDataOverflow={true}
+            />
             <YAxis hide />
             <Tooltip
               formatter={(value: number) => [`${value}`]}
@@ -98,7 +165,7 @@ const ErrorCountChart = () => {
                 borderRadius: "8px",
                 border: "none",
                 color: "#fff",
-                fontSize: "14px",
+                fontSize: "1rem",
                 padding: "2px 6px",
               }}
               itemStyle={{ color: "#fff" }}
@@ -124,4 +191,4 @@ const ErrorCountChart = () => {
   );
 };
 
-export default ErrorCountChart;
+export default MonthlyLogCountChart;
