@@ -1,11 +1,9 @@
 package com.ssafy.cholog.domain.user.entity;
 
+import com.ssafy.cholog.domain.jira.entity.JiraUser;
 import com.ssafy.cholog.domain.project.entity.ProjectUser;
 import com.ssafy.cholog.global.common.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -28,6 +26,9 @@ public class User extends BaseEntity {
 
     @Column(name = "nickname", nullable = false, length = 50)
     private String nickname;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private JiraUser jiraUser;
 
     @Builder.Default
     @OneToMany(mappedBy = "user")

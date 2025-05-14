@@ -1,8 +1,11 @@
 package com.ssafy.cholog.domain.jira.controller;
 
 import com.ssafy.cholog.domain.jira.dto.request.JiraIssueRequest;
-import com.ssafy.cholog.domain.jira.dto.request.JiraRequest;
-import com.ssafy.cholog.domain.jira.dto.response.JiraResponse;
+import com.ssafy.cholog.domain.jira.dto.request.JiraProjectRequest;
+import com.ssafy.cholog.domain.jira.dto.request.JiraUserRequest;
+import com.ssafy.cholog.domain.jira.dto.response.JiraIssueCreationResponse;
+import com.ssafy.cholog.domain.jira.dto.response.JiraProjectResponse;
+import com.ssafy.cholog.domain.jira.dto.response.JiraUserResponse;
 import com.ssafy.cholog.domain.jira.service.JiraIssueService;
 import com.ssafy.cholog.domain.jira.service.JiraService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
@@ -31,56 +34,95 @@ public class JiraController {
     private final JiraIssueService jiraIssueService;
     private final AuthenticationUtil authenticationUtil;
 
-    @GetMapping("/{projectId}")
-    @Operation(summary = "JIRA 토큰 조회", description = "JIRA 토큰 조회 API")
+    @GetMapping("/user")
+    @Operation(summary = "JIRA 개인 설정 조회", description = "JIRA 개인 설정 조회 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    public ResponseEntity<CommonResponse<JiraUserResponse>> getJiraUser (
+            @AuthenticationPrincipal UserPrincipal userPrincipal){
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(jiraService.getJiraUser(userId));
+    }
+
+    @PostMapping("/user")
+    @Operation(summary = "JIRA 개인 설정 등록", description = "JIRA 개인 설정 등록 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR, ErrorCode.JIRA_USER_ALREADY_EXISTS})
+    public ResponseEntity<CommonResponse<Void>> registJiraUser(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody JiraUserRequest request){
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(jiraService.registJiraUser(userId, request));
+    }
+
+    @PutMapping("/user")
+    @Operation(summary = "JIRA 개인 설정 수정", description = "JIRA 개인 설정 수정 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR, ErrorCode.JIRA_USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<Void>> updateJiraUser (
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody JiraUserRequest request){
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(jiraService.updateJiraUser(userId, request));
+    }
+
+    @GetMapping("/project/{projectId}")
+    @Operation(summary = "JIRA 프로젝트 설정 조회", description = "JIRA 프로젝트 설정 조회 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
             ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER})
-    public ResponseEntity<CommonResponse<JiraResponse>> getJiraToken (
+    public ResponseEntity<CommonResponse<JiraProjectResponse>> getJiraProject (
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("projectId") Integer projectId){
 
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
-        return CommonResponse.ok(jiraService.getJiraToken(userId, projectId));
+        return CommonResponse.ok(jiraService.getJiraProject(userId, projectId));
     }
 
-    @PostMapping("/{projectId}")
-    @Operation(summary = "JIRA 토큰 등록", description = "JIRA 토큰 등록 API")
+    @PostMapping("/project/{projectId}")
+    @Operation(summary = "JIRA 프로젝트 설정 등록", description = "JIRA 프로젝트 설정 등록 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
-            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER, ErrorCode.JIRATOKEN_ALREADY_EXISTS})
-    public ResponseEntity<CommonResponse<Void>> registJiraToken(
+                            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER, ErrorCode.JIRA_PROJECT_ALREADY_EXISTS})
+    public ResponseEntity<CommonResponse<Void>> registJiraProject(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("projectId") Integer projectId,
-            @Valid @RequestBody JiraRequest request){
+            @Valid @RequestBody JiraProjectRequest request){
 
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
-        return CommonResponse.ok(jiraService.registJiraToken(userId, projectId, request));
+        return CommonResponse.ok(jiraService.registJiraProject(userId, projectId, request));
     }
 
-    @PutMapping("/{projectId}")
-    @Operation(summary = "JIRA 토큰 수정", description = "JIRA 토큰 수정 API")
+    @PutMapping("/project/{projectId}")
+    @Operation(summary = "JIRA 프로젝트 설정 수정", description = "JIRA 프로젝트 설정 수정 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
-            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER, ErrorCode.JIRATOKEN_NOT_EXISTS})
-    public ResponseEntity<CommonResponse<Void>> updateJiraToken (
+                            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER, ErrorCode.JIRA_PROJECT_NOT_FOUND})
+    public ResponseEntity<CommonResponse<Void>> updateJiraProject (
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("projectId") Integer projectId,
-            @Valid @RequestBody JiraRequest request){
+            @Valid @RequestBody JiraProjectRequest request){
 
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
-        return CommonResponse.ok(jiraService.updateJiraToken(userId, projectId, request));
+        return CommonResponse.ok(jiraService.updateJiraProject(userId, projectId, request));
     }
 
-    @PostMapping("/{projectId}/issue")
+    @PostMapping("/issue/{projectId}")
     @Operation(summary = "JIRA 이슈 생성", description = "JIRA 이슈 생성 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
-            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER, ErrorCode.JIRATOKEN_NOT_EXISTS})
-    public ResponseEntity<CommonResponse<Void>> createJiraIssue(
+                            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER,
+                            ErrorCode.JIRA_USER_NOT_FOUND, ErrorCode.JIRA_PROJECT_NOT_FOUND})
+    public ResponseEntity<CommonResponse<JiraIssueCreationResponse>> createJiraIssue(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("projectId") Integer projectId,
             @Valid @RequestBody JiraIssueRequest request){
