@@ -61,7 +61,7 @@ cholog:
   logger:
     # 중앙 로그 서버 URL (필수)
     url: http://your-log-server.com/api/logs # 예시 엔드포인트, (기본값 cho:log server)
-    # API 키 (필수) - 로그 JSON에서 'apiKey' 필드로 출력됨 (전송 전 필터링될 수 있음)
+    # API 키 (필수) - 로그 JSON에서 'apiKey' 필드로 출력됨
     api-key: your-api-key
     # 서비스 식별 이름 (필수) - 로그 JSON에서 'serviceName' 필드로 출력됨
     service-name: my-awesome-service
