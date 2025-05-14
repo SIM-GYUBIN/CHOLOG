@@ -2,6 +2,7 @@ package com.ssafy.cholog.domain.log.controller;
 
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
+import com.ssafy.cholog.domain.log.dto.response.LogTimelineResponse;
 import com.ssafy.cholog.domain.log.service.LogService;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.CustomPage;
@@ -20,6 +21,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -102,5 +108,38 @@ public class LogController {
     ) {
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
         return CommonResponse.ok(logService.getProjectLogStats(userId, projectId));
+    }
+
+    @GetMapping("/{projectId}/timeline")
+    @Operation(summary = "시간대별 로그 발생 추이", description = "시간대별 로그 발생 추이 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
+    public ResponseEntity<CommonResponse<List<LogTimelineResponse>>> getProjectLogTimeline(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Integer projectId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate
+    ) {
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+
+        String effectiveStartDate;
+        if (startDate == null || startDate.trim().isEmpty()) {
+            // 기본 startDate: 한국 시간 기준 7일 전
+            effectiveStartDate = LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(7).toString();
+        } else {
+            effectiveStartDate = startDate; // yyyy-MM-dd 형식으로 기대
+        }
+
+        String effectiveEndDate;
+        if (endDate == null || endDate.trim().isEmpty()) {
+            ZonedDateTime nowKst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            LocalDateTime nextHourKst = nowKst.toLocalDateTime().withMinute(0).withSecond(0).withNano(0).plusHours(1);
+            effectiveEndDate = nextHourKst.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME); // "yyyy-MM-ddTHH:00:00"
+        } else {
+            effectiveEndDate = endDate; // "yyyy-MM-dd" 또는 "yyyy-MM-ddTHH:mm:ss" 형식으로 기대
+        }
+
+        List<LogTimelineResponse> logs = logService.getProjectLogTimeline(userId, projectId, effectiveStartDate, effectiveEndDate);
+        return CommonResponse.ok(logs);
     }
 }
