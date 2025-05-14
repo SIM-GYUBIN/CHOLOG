@@ -6,8 +6,6 @@
 
 ```
 .
-├── gradle/wrapper/            # Gradle Wrapper
-├── S12P31B207/                # (내용 미확인 - 필요시 추가 설명)
 ├── src
 │   ├── main
 │   │   ├── java/com/example/logserver
