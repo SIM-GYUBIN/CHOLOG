@@ -29,10 +29,10 @@ import org.springframework.web.filter.CorsFilter;
  * - LogSenderService 빈 생성
  * - CentralLogAppender 생성 및 Logback ROOT 로거에 등록
  * - HTTP 요청/응답을 로깅하기 위한 필터 등록
- * - 기본 CORS 설정 제공
+ * - 기본 CORS 설정 제공 (v1.8.6 추가)
  *
  * @author eddy1219
- * @version 1.8.7
+ * @version 1.8.6
  * @see com.cholog.logger.config.LogServerProperties
  * @see com.cholog.logger.service.LogSenderService
  * @see com.cholog.logger.appender.CentralLogAppender
@@ -102,17 +102,6 @@ public class LogAutoConfiguration {
             ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
             rootLogger.addAppender(appender);
             log.info("CHO:LOG - CentralLogAppender successfully registered to ROOT logger.");
-            
-            // JMX 메트릭 활성화
-            if (properties.isExposeMetricsViaJmx()) {
-                try {
-                    // LogSenderService의 JMX 메트릭 활성화 메서드 호출
-                    logSenderService.getClass().getMethod("registerJmxMetrics").invoke(logSenderService);
-                    log.info("CHO:LOG - JMX metrics registration triggered for LogSenderService.");
-                } catch (Exception e) {
-                    log.warn("CHO:LOG - Failed to register JMX metrics: {}", e.getMessage());
-                }
-            }
         } catch (Exception e) {
             log.error("CHO:LOG - Failed to configure or register CentralLogAppender. Centralized logging may not work as expected.", e);
         }
@@ -126,14 +115,15 @@ public class LogAutoConfiguration {
      * MDC에 저장된 정보는 후속 로그 이벤트에 자동으로 포함됩니다.
      * 서블릿 기반 웹 애플리케이션 환경 ({@link ConditionalOnWebApplication})에서만 생성됩니다.
      *
+     * @param properties 로그 서버 접속 설정 (자동 주입)
      * @return 생성된 {@link RequestTimingFilter} 인스턴스
      */
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-    public RequestTimingFilter requestTimingFilter() {
+    public RequestTimingFilter requestTimingFilter(LogServerProperties properties) {
         log.info("CHO:LOG - Initializing RequestTimingFilter bean for Servlet environment.");
-        return new RequestTimingFilter();
+        return new RequestTimingFilter(properties);
     }
     
     /**
@@ -159,15 +149,16 @@ public class LogAutoConfiguration {
      * 이 필터는 {@code cholog.logger.request-response-logging=true} (기본값)일 때 활성화됩니다.
      * 서블릿 기반 웹 애플리케이션 환경에서만 생성됩니다.
      *
+     * @param properties 로그 서버 접속 설정 (자동 주입)
      * @return 생성된 {@link RequestResponseLoggingFilter} 인스턴스
      */
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     @ConditionalOnProperty(prefix = "cholog.logger", name = "request-response-logging", havingValue = "true", matchIfMissing = true)
-    public RequestResponseLoggingFilter requestResponseLoggingFilter() {
+    public RequestResponseLoggingFilter requestResponseLoggingFilter(LogServerProperties properties) {
         log.info("CHO:LOG - Initializing RequestResponseLoggingFilter bean for detailed request/response logging.");
-        return new RequestResponseLoggingFilter();
+        return new RequestResponseLoggingFilter(properties);
     }
     
     /**

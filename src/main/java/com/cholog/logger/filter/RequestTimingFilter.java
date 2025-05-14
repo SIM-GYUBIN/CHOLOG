@@ -1,6 +1,7 @@
 package com.cholog.logger.filter;
 
 import com.cholog.logger.appender.CentralLogAppender;
+import com.cholog.logger.config.LogServerProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,7 +46,7 @@ import java.util.UUID;
  *
  * @version 1.8.6
  * @see CentralLogAppender (MDC 키 상수 공유)
- * @see com.cholog.logger.config.LogAutoConfiguration#requestTimingFilter()
+ * @see com.cholog.logger.config.LogAutoConfiguration
  * @see MDC
  */
 @Order(Ordered.HIGHEST_PRECEDENCE) // 다른 필터보다 먼저 실행되어 전체 요청 시간을 감싸도록 순서 지정
@@ -53,6 +54,25 @@ public class RequestTimingFilter implements Filter {
 
     /** 필터 자체의 로그 기록(특히 요청 완료 자동 로그)을 위한 Logger */
     private static final Logger log = LoggerFactory.getLogger(RequestTimingFilter.class);
+    
+    /** 로깅에서 제외해야 할 민감 파라미터 키워드 목록 */
+    private static final String[] SENSITIVE_PARAMETER_KEYWORDS = {
+        "password", "pwd", "secret", "token", "auth", "key", "apikey", "api-key", "credential", 
+        "card", "credit", "cvv", "cvc", "pin", "ssn", "social", "sin", "tax", "fiscal", 
+        "passport", "license", "national", "identity", "private"
+    };
+    
+    /** 로그 서버 설정 */
+    private final LogServerProperties properties;
+    
+    /**
+     * 생성자를 통한 LogServerProperties 주입
+     * 
+     * @param properties 로그 서버 설정
+     */
+    public RequestTimingFilter(LogServerProperties properties) {
+        this.properties = properties;
+    }
 
     /**
      * 서블릿 필터의 핵심 로직을 수행하는 메소드입니다.
@@ -133,7 +153,12 @@ public class RequestTimingFilter implements Filter {
 
                 // request parameter를 평평하게 MDC에 추가
                 httpServletRequest.getParameterMap().forEach((key, values) -> {
-                    MDC.put("request_param_" + key, String.join(",", values));
+                    if (isSensitiveParameter(key)) {
+                        // 민감 정보로 판단된 파라미터는 마스킹 처리
+                        MDC.put("request_param_" + key, properties.getSensitiveValueReplacement());
+                    } else {
+                        MDC.put("request_param_" + key, String.join(",", values));
+                    }
                 });
             }
             // --------------------------
@@ -256,5 +281,14 @@ public class RequestTimingFilter implements Filter {
                 // ---------------------------------------
             }
         }
+    }
+
+    private boolean isSensitiveParameter(String key) {
+        for (String keyword : SENSITIVE_PARAMETER_KEYWORDS) {
+            if (key.toLowerCase().contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
