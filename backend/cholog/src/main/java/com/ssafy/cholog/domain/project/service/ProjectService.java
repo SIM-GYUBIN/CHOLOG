@@ -4,7 +4,7 @@ import com.ssafy.cholog.domain.project.dto.item.UserProjectItem;
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.RecreateTokenRequest;
-import com.ssafy.cholog.domain.project.dto.request.UpdateProjectRequest;
+import com.ssafy.cholog.domain.project.dto.request.UpdateProjectNameRequest;
 import com.ssafy.cholog.domain.project.dto.response.CreateProjectResponse;
 import com.ssafy.cholog.domain.project.dto.response.ProjectDetailResponse;
 import com.ssafy.cholog.domain.project.dto.response.RecreateTokenResponse;
@@ -126,7 +126,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public Void updateProject(Integer userId, Integer projectId, UpdateProjectRequest request) {
+    public Void updateProjectName(Integer userId, Integer projectId, UpdateProjectNameRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
 
@@ -144,10 +144,6 @@ public class ProjectService {
         }
 
         project.updateProjectName(request.getName());
-
-        if(request.getJiraToken() != null){
-            project.updateJiraToken(request.getJiraToken());
-        }
 
         return null;
     }
