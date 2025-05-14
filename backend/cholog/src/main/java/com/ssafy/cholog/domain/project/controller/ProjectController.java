@@ -3,7 +3,7 @@ package com.ssafy.cholog.domain.project.controller;
 import com.ssafy.cholog.domain.project.dto.request.CreateProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.JoinProjectRequest;
 import com.ssafy.cholog.domain.project.dto.request.RecreateTokenRequest;
-import com.ssafy.cholog.domain.project.dto.request.UpdateProjectRequest;
+import com.ssafy.cholog.domain.project.dto.request.UpdateProjectNameRequest;
 import com.ssafy.cholog.domain.project.dto.response.CreateProjectResponse;
 import com.ssafy.cholog.domain.project.dto.response.ProjectDetailResponse;
 import com.ssafy.cholog.domain.project.dto.response.RecreateTokenResponse;
@@ -88,18 +88,18 @@ public class ProjectController {
     }
 
     @PutMapping("/{projectId}")
-    @Operation(summary = "프로젝트 기타 정보 수정", description = "프로젝트 기타 정보 수정 API")
+    @Operation(summary = "프로젝트 이름 수정", description = "프로젝트 이름 수정 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
             ErrorCode.PROJECT_NOT_FOUND, ErrorCode.FORBIDDEN_ACCESS, ErrorCode.NOT_PROJECT_USER})
-    public ResponseEntity<CommonResponse<Void>> updateProject(
+    public ResponseEntity<CommonResponse<Void>> updateProjectName(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable("projectId") Integer projectId,
-            @Valid @RequestBody UpdateProjectRequest request) {
+            @Valid @RequestBody UpdateProjectNameRequest request) {
 
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
-        return CommonResponse.ok(projectService.updateProject(userId, projectId, request));
+        return CommonResponse.ok(projectService.updateProjectName(userId, projectId, request));
     }
 
     @DeleteMapping("/{projectId}/me")
