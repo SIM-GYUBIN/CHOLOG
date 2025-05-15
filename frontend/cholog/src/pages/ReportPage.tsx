@@ -54,7 +54,10 @@ const ReportPage: React.FC = () => {
             <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
               로그 발생 추이
             </h2>
-            <ErrorCountChart />
+            <ErrorCountChart
+              projectId={parseInt(projectId!, 10)}
+              token={localStorage.getItem("token") ?? ""}
+            />
           </div>
         </div>
 
