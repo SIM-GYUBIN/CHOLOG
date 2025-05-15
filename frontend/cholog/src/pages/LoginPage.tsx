@@ -1,10 +1,18 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import logo from "../assets/logo.svg";
 import close from "../assets/delete.svg";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../store/store";
+import { userLogin, userSignup } from "../store/slices/userSlice";
 
 type MatchStatus = "match" | "mismatch" | null;
 
 const LoginPage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, error, signupSuccess } = useSelector(
+    (state: RootState) => state.user
+  );
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoginValid, setIsLoginValid] = useState(false);
@@ -14,6 +22,7 @@ const LoginPage: React.FC = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [signupNickname, setSignupNickname] = useState("");
   const [signupMatchStatus, setSignupMatchStatus] = useState<MatchStatus>(null);
 
   // 로그인 유효성
@@ -32,12 +41,18 @@ const LoginPage: React.FC = () => {
     }
   }, [signupPassword, signupConfirmPassword]);
 
+  useEffect(() => {
+    if (signupSuccess) {
+      alert("회원가입 성공!");
+      setShowSignupModal(false);
+    }
+  }, [signupSuccess]);
+
   // 로그인 핸들러
   const handleLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isLoginValid) return;
-    // TODO: 실제 로그인 로직
-    console.log("로그인 시도:", { email, password });
+    dispatch(userLogin({ email, password }));
   };
 
   // 회원가입 핸들러
@@ -54,14 +69,13 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    // TODO: 실제 회원가입 로직
-    console.log("회원가입 시도:", {
-      signupEmail,
-      signupPassword,
-      signupConfirmPassword,
-    });
-
-    setShowSignupModal(false);
+    dispatch(
+      userSignup({
+        email: signupEmail,
+        password: signupPassword,
+        nickname: signupNickname,
+      })
+    );
   };
 
   return (
@@ -80,6 +94,20 @@ const LoginPage: React.FC = () => {
             </button>
             <h2 className="text-lg font-semibold mb-6">회원가입</h2>
             <form onSubmit={handleSignup} className="flex flex-col gap-4">
+              {/* 닉네임 */}
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-700 text-left mb-0.5">
+                  닉네임
+                </label>
+                <input
+                  type="text"
+                  placeholder="이름을 입력해주세요"
+                  value={signupNickname}
+                  onChange={(e) => setSignupNickname(e.target.value)}
+                  className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 placeholder:text-sm placeholder:text-gray-300"
+                />
+              </div>
+
               {/* 이메일 */}
               <div className="flex flex-col">
                 <label className="text-sm text-gray-700 text-left mb-0.5">
@@ -131,6 +159,9 @@ const LoginPage: React.FC = () => {
                   비밀번호가 일치하지 않습니다.
                 </p>
               )}
+              {error?.code && (
+                <p className="text-sm text-red-500 mt-1">{error.message}</p>
+              )}
 
               {/* 회원가입 버튼 */}
               <button
@@ -144,7 +175,7 @@ const LoginPage: React.FC = () => {
         </div>
       )}
 
-      {/* 로그인 페이지 */}
+      {/* 로그인 폼 */}
       <div className="min-h-[700px] bg-[var(--bg)] flex flex-col items-center px-4 py-8">
         <div className="flex flex-col items-center w-full max-w-md px-6">
           <img src={logo} alt="cho:log*" className="w-50 mb-8" />
@@ -167,6 +198,10 @@ const LoginPage: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400"
             />
+
+            {error?.code && (
+              <p className="text-sm text-red-500 mt-1">{error.message}</p>
+            )}
 
             <button
               type="submit"
