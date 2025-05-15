@@ -6,9 +6,11 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class JiraResponse {
+public class JiraUserResponse {
     @Schema(example = "true")
     private final boolean exists;
+    @Schema(example = "123@example.com")
+    private final String username;
     @Schema(example = "LSldfmvewladok13eldspdsge-fgqlvnewwo")
     private final String jiraToken;
 }

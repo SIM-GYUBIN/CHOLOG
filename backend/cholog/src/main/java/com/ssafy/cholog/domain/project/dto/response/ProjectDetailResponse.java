@@ -12,8 +12,6 @@ public class ProjectDetailResponse {
     private final String name;
     @Schema(example = "143258dkfjwoi100mfvl")
     private final String projectToken;
-    @Schema(example = "sdfsfd-aswtgg300b-dfa")
-    private final String jiraToken;
     @Schema(example = "false")
     private final Boolean isCreator;
 
@@ -21,7 +19,6 @@ public class ProjectDetailResponse {
         return ProjectDetailResponse.builder()
                 .name(project.getName())
                 .projectToken(project.getProjectToken())
-                .jiraToken(project.getJiraToken())
                 .isCreator(isCreator)
                 .build();
     }

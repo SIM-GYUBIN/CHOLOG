@@ -42,8 +42,10 @@ public enum ErrorCode {
     WEBHOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "W002", "웹훅 설정을 찾을 수 없습니다."),
 
     // JIRA
-    JIRATOKEN_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "J001", "이미 등록된 JIRA 토큰이 존재합니다."),
-    JIRATOKEN_NOT_EXISTS(HttpStatus.NOT_FOUND, "J002", "등록된 JIRA 토큰이 없습니다.");
+    JIRA_PROJECT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "J001", "이미 프로젝트의 JIRA 설정이 존재합니다."),
+    JIRA_PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "J002", "프로젝트의 JIRA 설정을 찾을 수 없습니다."),
+    JIRA_USER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "J003", "이미 유저의 JIRA 설정이 존재합니다."),
+    JIRA_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "J004", "유저의 JIRA 설정을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
