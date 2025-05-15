@@ -124,7 +124,6 @@ cholog:
     
     # 압축 및 지표 설정 (LogSenderService)
     compress-logs: true                     # 로그 압축 활성화 여부 (LogServerProperties에는 gzip-enabled)
-    # compression-threshold: 1024             # (LogServerProperties에 해당 필드가 있는지 확인 필요)
     metrics-enabled: true                   # 지표 수집 활성화 여부 (LogSenderService 내부 로직)
     metrics-collection-interval: 60000      # 지표 수집 간격(ms)
     expose-metrics-via-jmx: true            # JMX를 통한 지표 노출 여부
