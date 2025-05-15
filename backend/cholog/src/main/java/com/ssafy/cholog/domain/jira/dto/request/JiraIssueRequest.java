@@ -3,9 +3,6 @@ package com.ssafy.cholog.domain.jira.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
-import java.util.List;
-import java.util.Map;
-
 @Getter
 public class JiraIssueRequest {
 
@@ -19,7 +16,5 @@ public class JiraIssueRequest {
     @NotBlank(message = "보고자(reporter)는 필수입니다.")
     private String reporterName;
 
-    private String assigneeName; // 담당자 Jira 사용자 이름 (선택 사항)
-
-    private List<String> labels; // 레이블 (선택 사항)
+    private String assigneeName;
 }

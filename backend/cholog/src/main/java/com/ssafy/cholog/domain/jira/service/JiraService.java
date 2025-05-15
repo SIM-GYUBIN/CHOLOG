@@ -1,8 +1,10 @@
 package com.ssafy.cholog.domain.jira.service;
 
+import com.ssafy.cholog.domain.jira.dto.item.JiraUserItem;
 import com.ssafy.cholog.domain.jira.dto.request.JiraProjectRequest;
 import com.ssafy.cholog.domain.jira.dto.request.JiraUserRequest;
 import com.ssafy.cholog.domain.jira.dto.response.JiraProjectResponse;
+import com.ssafy.cholog.domain.jira.dto.response.JiraUserListResponse;
 import com.ssafy.cholog.domain.jira.dto.response.JiraUserResponse;
 import com.ssafy.cholog.domain.jira.entity.JiraProject;
 import com.ssafy.cholog.domain.jira.entity.JiraUser;
@@ -19,6 +21,10 @@ import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -160,5 +166,42 @@ public class JiraService {
         jiraProject.updateJiraProject(request.getInstanceUrl(), request.getProjectKey());
 
         return null;
+    }
+
+    public JiraUserListResponse getJiraUserList(Integer userId, Integer projectId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "userId",userId));
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId",projectId));
+
+        ProjectUser projectUser = projectUserRepository.findByUserAndProject(user, project)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_PROJECT_USER)
+                        .addParameter("userId", userId)
+                        .addParameter("projectId", project.getId()));
+
+        JiraUser myJiraUser = jiraUserRepository.findByUser(user)
+                .orElseThrow(() -> new CustomException(ErrorCode.JIRA_USER_NOT_FOUND, "userId",userId));
+
+        JiraProject jiraProject = jiraProjectRepository.findByProject(project)
+                .orElseThrow(() -> new CustomException(ErrorCode.JIRA_PROJECT_NOT_FOUND, "projectId",projectId));
+
+        List<ProjectUser> projectMembers = projectUserRepository.findAllByProject(project);
+
+        List<JiraUserItem> jiraUserItems = projectMembers.stream()
+                .map(ProjectUser::getUser) // ProjectUser에서 User 엔티티를 가져옴
+                .filter(Objects::nonNull)   // User 객체가 null이 아닌 경우만 필터링
+                .map(User::getJiraUser)     // User에서 JiraUser 엔티티를 가져옴
+                .filter(Objects::nonNull)   // JiraUser 객체가 null이 아닌 경우만 (Jira 연동 안 한 사용자 제외)
+                .map(jiraUser -> {
+                    String userName = jiraUser.getUserName();
+                    return JiraUserItem.builder().userName(userName).build();
+                })
+                .filter(Objects::nonNull)   // null로 매핑된 아이템 제외
+                .collect(Collectors.toList());
+
+        return JiraUserListResponse.builder()
+                .userNames(jiraUserItems)
+                .build();
     }
 }

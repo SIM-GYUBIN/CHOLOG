@@ -45,7 +45,7 @@ public class JiraIssueService {
     private final JiraProjectRepository jiraProjectRepository;
     private final ProjectUserRepository projectUserRepository;
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper; // JSON 페이로드 생성용 (선택적)
+    private final ObjectMapper objectMapper;
 
     public JiraIssueCreationResponse createJiraIssue(Integer userId, Integer projectId, JiraIssueRequest request) {
         User user = userRepository.findById(userId)
@@ -71,7 +71,7 @@ public class JiraIssueService {
         String jiraInstanceUrl = jiraProject.getInstanceUrl();
         String jiraProjectKey = jiraProject.getProjectKey();
 
-        // 6. Jira API 요청 본문(payload) 생성 (Lombok 빌더 활용)
+        // Jira API 요청 본문(payload) 생성 (Lombok 빌더 활용)
         JiraIssueFieldsPayload.JiraIssueFieldsPayloadBuilder fieldsBuilder = JiraIssueFieldsPayload.builder()
                 .project(JiraIssueIdentifierPayload.builder().key(jiraProjectKey).build())
                 .summary(request.getSummary())
@@ -83,13 +83,10 @@ public class JiraIssueService {
 
         // 보고자(Reporter) 설정
         String reporterAccountIdToUse = null;
-        if (request.getReporterName() != null && !request.getReporterName().isBlank()) { // 이름/이메일 등으로 조회 시도
-            // 여기서 reporterName이 실제로는 이메일일 수 있도록 클라이언트와 약속하거나, DTO 필드를 분리 (reporterEmail)
+        if (request.getReporterName() != null && !request.getReporterName().isBlank()) { // 이메일로 조회 시도
             reporterAccountIdToUse = fetchAccountIdByReporterIdentifier(jiraInstanceUrl, request.getReporterName(), jiraApiUsername, jiraToken);
             if (reporterAccountIdToUse == null) {
                 log.warn("Could not fetch accountId for reporterName: {}. Falling back or issue creation might fail.", request.getReporterName());
-                // fallback: API 호출자 본인을 보고자로 지정하거나, 이름으로라도 시도 (이전 문제 발생 가능)
-                // 또는 여기서 에러를 발생시켜 이슈 생성을 중단할 수도 있음
             }
         }
 
@@ -97,10 +94,6 @@ public class JiraIssueService {
             fieldsBuilder.reporter(JiraIssueIdentifierPayload.builder().accountId(reporterAccountIdToUse).build());
         } else if (jiraApiUsername != null && !jiraApiUsername.isBlank()) {
             // API 호출자 본인을 보고자로 지정 (이 경우에도 API 호출자의 accountId를 미리 저장해두고 사용하는 것이 최선)
-            // String apiUserAccountId = jiraUser.getAccountId(); // JiraUser 엔티티에 API 호출자의 accountId가 저장되어 있다면
-            // if (apiUserAccountId != null) {
-            //    fieldsBuilder.reporter(JiraIssueIdentifierPayload.builder().accountId(apiUserAccountId).build());
-            // } else {
             fieldsBuilder.reporter(JiraIssueIdentifierPayload.builder().name(jiraApiUsername).build()); // 이메일로 시도
             log.info("Setting reporter to API user by name/email: {}", jiraApiUsername);
             // }
@@ -113,18 +106,7 @@ public class JiraIssueService {
             fieldsBuilder.assignee(JiraIssueIdentifierPayload.builder().name(request.getAssigneeName()).build());
         }
 
-        // 레이블(Labels) 설정
-        if (request.getLabels() != null && !request.getLabels().isEmpty()) {
-            fieldsBuilder.labels(request.getLabels());
-        }
-
         JiraIssueFieldsPayload fieldsPayload = fieldsBuilder.build();
-
-        // 사용자 정의 필드(Custom Fields) 설정
-        // JiraIssueFieldsPayload 객체 생성 후 addCustomField 메소드 사용
-//        if (request.getCustomFields() != null && !request.getCustomFields().isEmpty()) {
-//            request.getCustomFields().forEach(fieldsPayload::addCustomField);
-//        }
 
         JiraIssueCreatePayload jiraPayloadObject = JiraIssueCreatePayload.builder()
                 .fields(fieldsPayload)
@@ -139,7 +121,7 @@ public class JiraIssueService {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Jira 요청 데이터 생성 중 오류 발생");
         }
 
-        // 7. HTTP 요청 생성 및 전송
+        // HTTP 요청 생성 및 전송
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         // Basic Authentication: Jira 사용자 이름과 API 토큰 사용
@@ -151,12 +133,11 @@ public class JiraIssueService {
 
         HttpEntity<String> entity = new HttpEntity<>(jiraPayloadJson, headers);
 
-        // Jira API 엔드포인트 (Jira Cloud API v2 또는 v3, Jira Server 등 확인 필요)
+        // Jira API 엔드포인트
         String jiraApiEndpoint = jiraInstanceUrl.endsWith("/") ? jiraInstanceUrl : jiraInstanceUrl + "/";
         jiraApiEndpoint += "rest/api/2/issue";
 
         log.info("Sending JIRA Issue Creation Request to: {}", jiraApiEndpoint);
-        log.debug("JIRA API Request Payload (JSON): {}", jiraPayloadJson); // 토큰은 실제 로그에 남기지 않도록 주의
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(jiraApiEndpoint, entity, String.class);
@@ -166,15 +147,13 @@ public class JiraIssueService {
                 String responseBody = response.getBody();
                 try {
                     JsonNode rootNode = objectMapper.readTree(responseBody);
-                    String issueId = rootNode.path("id").asText();
                     String issueKey = rootNode.path("key").asText();
-                    String issueApiUrl = rootNode.path("self").asText();
 
                     // 사용자에게 보여줄 Jira 이슈 URL 생성
                     String userViewableIssueUrl = jiraInstanceUrl.endsWith("/") ? jiraInstanceUrl : jiraInstanceUrl + "/";
                     userViewableIssueUrl += "browse/" + issueKey;
 
-                    return new JiraIssueCreationResponse(issueKey, userViewableIssueUrl, issueApiUrl, issueId);
+                    return new JiraIssueCreationResponse(issueKey, userViewableIssueUrl);
 
                 } catch (JsonProcessingException e) {
                     log.error("Failed to parse Jira issue creation response: {}", responseBody, e);
@@ -203,7 +182,6 @@ public class JiraIssueService {
 
     private String fetchAccountIdByReporterIdentifier(String jiraInstanceUrl, String reporterIdentifier,
                                                       String authUsername, String authToken) {
-        // reporterIdentifier는 이름일 수도, 이메일일 수도 있습니다. 이메일이 더 정확합니다.
         if (reporterIdentifier == null || reporterIdentifier.isBlank()) {
             return null;
         }
@@ -227,11 +205,6 @@ public class JiraIssueService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 JsonNode usersNode = objectMapper.readTree(response.getBody());
                 if (usersNode.isArray() && !usersNode.isEmpty()) {
-                    if (usersNode.size() > 1) {
-                        // 여러 사용자가 검색된 경우의 처리 (예: 첫 번째 사용자를 선택하거나, 이메일로 더 정확히 필터링)
-                        log.warn("Multiple users found for identifier: {}. Using the first one.", reporterIdentifier);
-                        // TODO: 더 정교한 매칭 로직 필요 (예: 이메일이 일치하는 사용자 찾기)
-                    }
                     JsonNode firstUser = usersNode.get(0);
                     if (firstUser.has("accountId")) {
                         String accountId = firstUser.get("accountId").asText();

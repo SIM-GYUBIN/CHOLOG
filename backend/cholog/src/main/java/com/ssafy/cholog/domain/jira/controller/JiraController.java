@@ -5,6 +5,7 @@ import com.ssafy.cholog.domain.jira.dto.request.JiraProjectRequest;
 import com.ssafy.cholog.domain.jira.dto.request.JiraUserRequest;
 import com.ssafy.cholog.domain.jira.dto.response.JiraIssueCreationResponse;
 import com.ssafy.cholog.domain.jira.dto.response.JiraProjectResponse;
+import com.ssafy.cholog.domain.jira.dto.response.JiraUserListResponse;
 import com.ssafy.cholog.domain.jira.dto.response.JiraUserResponse;
 import com.ssafy.cholog.domain.jira.service.JiraIssueService;
 import com.ssafy.cholog.domain.jira.service.JiraService;
@@ -114,6 +115,21 @@ public class JiraController {
         Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
 
         return CommonResponse.ok(jiraService.updateJiraProject(userId, projectId, request));
+    }
+
+    @GetMapping("/issue/{projectId}")
+    @Operation(summary = "JIRA 이슈 생성을 위한 정보 조회", description = "JIRA 이슈 생성을 위한 정보 API")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR,
+            ErrorCode.PROJECT_NOT_FOUND, ErrorCode.NOT_PROJECT_USER,
+            ErrorCode.JIRA_PROJECT_NOT_FOUND, ErrorCode.JIRA_PROJECT_NOT_FOUND})
+    public ResponseEntity<CommonResponse<JiraUserListResponse>> getJira(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable("projectId") Integer projectId){
+
+        Integer userId =  authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return CommonResponse.ok(jiraService.getJiraUserList(userId, projectId));
     }
 
     @PostMapping("/issue/{projectId}")
