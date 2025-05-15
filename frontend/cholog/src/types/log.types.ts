@@ -21,33 +21,32 @@ interface BaseResponse {
 /**
  * [#LOG-1]
  * @description 로그 레벨별 통계 정보
- * @property {number} TRACE - 추적 레벨 로그 수
- * @property {number} DEBUG - 디버그 레벨 로그 수
- * @property {number} INFO - 정보 레벨 로그 수
- * @property {number} WARN - 경고 레벨 로그 수
- * @property {number} ERROR - 에러 레벨 로그 수
- * @property {number} FATAL - 치명적 에러 레벨 로그 수
+ * @property {number} total - 전체 로그 수
+ * @property {number} trace - 추적 레벨 로그 수
+ * @property {number} debug - 디버그 레벨 로그 수
+ * @property {number} info - 정보 레벨 로그 수
+ * @property {number} warn - 경고 레벨 로그 수
+ * @property {number} error - 에러 레벨 로그 수
+ * @property {number} fatal - 치명적 에러 레벨 로그 수
  */
 export interface LogStats {
-  TRACE: number;
-  DEBUG: number;
-  INFO: number;
-  WARN: number;
-  ERROR: number;
-  FATAL: number;
+  total: number;
+  trace: number;
+  debug: number;
+  info: number;
+  warn: number;
+  error: number;
+  fatal: number;
 }
 
 /**
  * [#LOG-1]
  * @description 로그 통계 API 응답 타입
  * @extends {BaseResponse}
- * @property {object} data - 프로젝트별 로그 통계 데이터
+ * @property {LogStats} data - 로그 레벨별 통계 데이터
  */
 export interface LogStatsResponse extends BaseResponse {
-  data: {
-    projectId: number;
-    stats: LogStats;
-  };
+  data: LogStats;
 }
 
 /**

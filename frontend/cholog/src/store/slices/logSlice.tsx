@@ -58,11 +58,17 @@ export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
       let errorCode = "INTERNAL_ERROR";
       if (status === 400) errorCode = "INVALID_REQUEST";
       else if (status === 401) errorCode = "UNAUTHORIZED";
+      
       return rejectWithValue({
         success: false,
         data: {
-          projectId,
-          stats: { TRACE: 0, DEBUG: 0, INFO: 0, WARN: 0, ERROR: 0, FATAL: 0 },
+          total: 0,
+          trace: 0,
+          debug: 0,
+          info: 0,
+          warn: 0,
+          error: 0,
+          fatal: 0
         },
         error: {
           code: errorCode,
@@ -703,8 +709,7 @@ const logSlice = createSlice({
       })
       .addCase(fetchLogStats.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.projectId = action.payload.data.projectId;
-        state.stats = action.payload.data.stats;
+        state.stats = action.payload.data;
         state.error = null;
       })
       // Update error handling pattern

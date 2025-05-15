@@ -1,3 +1,5 @@
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
 import errorIcon from "@/assets/levelicon/error.svg";
 import warnIcon from "@/assets/levelicon/warn.svg";
 import infoIcon from "@/assets/levelicon/info.svg";
@@ -6,15 +8,19 @@ import traceIcon from "@/assets/levelicon/trace.svg";
 import fatalIcon from "@/assets/levelicon/fatal.svg";
 
 const LogSummary = () => {
-  const logsMockData = {
-    total: 2183,
+  const { stats } = useSelector((state: RootState) => state.log);
+
+  console.log(stats);
+
+  const logData = {
+    total: stats ? Object.values(stats).reduce((acc, curr) => acc + curr, 0) : 0,
     logs: {
-      error: 56,
-      warn: 21,
-      info: 1240,
-      debug: 5,
-      trace: 861,
-      fatal: 0,
+      error: stats?.error || 0,
+      warn: stats?.warn || 0,
+      info: stats?.info || 0,
+      debug: stats?.debug || 0,
+      trace: stats?.trace || 0,
+      fatal: stats?.fatal || 0,
     },
   };
 
@@ -34,7 +40,7 @@ const LogSummary = () => {
       <div className="text-left text-[var(--text)] mb-4 flex items-end gap-3">
         <span className="text-lg">Total</span>
         <span className="text-2xl font-bold">
-          {logsMockData.total.toLocaleString()}
+          {logData.total.toLocaleString()}
         </span>
       </div>
 
@@ -49,7 +55,7 @@ const LogSummary = () => {
             <div className="flex flex-col text-left text-[var(--text)]">
               <span className="text-sm text-[var(--text)]">{label}</span>
               <span className="text-base font-medium">
-                {logsMockData.logs[label]}
+                {logData.logs[label]}
               </span>
             </div>
           </div>
