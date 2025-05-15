@@ -1,10 +1,13 @@
 package com.ssafy.cholog.domain.log.controller;
 
+import com.ssafy.cholog.domain.log.dto.response.LogAnalysisResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogTimelineResponse;
+import com.ssafy.cholog.domain.log.service.LogAnalysisService;
 import com.ssafy.cholog.domain.log.service.LogSearchService;
 import com.ssafy.cholog.domain.log.service.LogService;
+import com.ssafy.cholog.domain.webhook.dto.request.LogAnalysisRequest;
 import com.ssafy.cholog.global.aop.swagger.ApiErrorCodeExamples;
 import com.ssafy.cholog.global.common.CustomPage;
 import com.ssafy.cholog.global.common.response.CommonResponse;
@@ -13,7 +16,9 @@ import com.ssafy.cholog.global.security.auth.UserPrincipal;
 import com.ssafy.cholog.global.util.AuthenticationUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -21,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/log")
 @RequiredArgsConstructor
@@ -37,6 +44,7 @@ public class LogController {
 
     private final LogService logService;
     private final LogSearchService logSearchService;
+    private final LogAnalysisService logAnalysisService;
     private final AuthenticationUtil authenticationUtil;
 
     @GetMapping("/{projectId}")
@@ -142,5 +150,23 @@ public class LogController {
 
         List<LogTimelineResponse> logs = logService.getProjectLogTimeline(userId, projectId, effectiveStartDate, effectiveEndDate);
         return CommonResponse.ok(logs);
+    }
+
+    @PostMapping("/{projectId}/analysis")
+    @Operation(summary = "로그 LLM 분석", description = "특정 프로젝트의 지정된 로그에 대해 LLM 분석을 수행합니다.")
+    @PreAuthorize("isAuthenticated()")
+    @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.LOG_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
+    public Mono<ResponseEntity<CommonResponse<LogAnalysisResponse>>> analyzeLog(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Integer projectId,
+            @Valid @RequestBody LogAnalysisRequest request) {
+
+        Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
+
+        return logAnalysisService.analyzeLogWithGroq(projectId, request)
+                .map(analysisResult -> {
+                    log.info("Log analysis successfully completed for projectId: {}, logId: {}", projectId, request.getLogId());
+                    return CommonResponse.ok(analysisResult);
+                });
     }
 }
