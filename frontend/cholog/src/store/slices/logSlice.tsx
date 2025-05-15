@@ -307,7 +307,6 @@ export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
           },
         }
       );
-      console.log(response.data.data.content); // LogListResponse 구조 확인
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
@@ -478,7 +477,7 @@ export const fetchTraceLog = createAsyncThunk<
 >("log/fetchTraceLog", async (params, { rejectWithValue }) => {
   try {
     const response = await api.get<TraceLogResponse>(
-      `/api/log/${params.projectId}/trace/${params.traceId}`,
+      `/log/${params.projectId}/trace/${params.traceId}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -486,6 +485,7 @@ export const fetchTraceLog = createAsyncThunk<
         },
       }
     );
+    console.log(response.data);
     return response.data;
   } catch (error: any) {
     const status = error.response?.status;
@@ -524,7 +524,7 @@ export const fetchLogDetail = createAsyncThunk<
 >("log/fetchLogDetail", async (params, { rejectWithValue }) => {
   try {
     const response = await api.get<LogDetailResponse>(
-      `/api/log/${params.projectId}/detail/${params.logId}`,
+      `/log/${params.projectId}/detail/${params.logId}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -822,7 +822,11 @@ const logSlice = createSlice({
             message: "알 수 없는 오류가 발생했습니다.",
           };
       })
-
+      .addCase(fetchLogDetail.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.logDetail = action.payload.data;
+        state.error = null;
+      })
       .addCase(fetchLogDetail.rejected, (state, action) => {
         state.isLoading = false;
         state.logDetail = null;
@@ -884,39 +888,68 @@ const logSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-        .addCase(fetchLogs.fulfilled, (state, action) => {
-          state.isLoading = false;
-          state.logs = action.payload.data.content;
-          state.pagination = {
-            pageNumber: action.payload.data.pageNumber,
-            totalPages: action.payload.data.totalPages,
-            totalElements: action.payload.data.totalElements,
-            pageSize: action.payload.data.pageSize,
-            first: action.payload.data.first,
-            last: action.payload.data.last,
-          };
-          state.error = null;
-        })
-        .addCase(fetchLogs.rejected, (state, action) => {
-          state.isLoading = false;
-          state.logs = [];
-          state.pagination = null;
+      .addCase(fetchLogs.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.logs = action.payload.data.content;
+        state.pagination = {
+          pageNumber: action.payload.data.pageNumber,
+          totalPages: action.payload.data.totalPages,
+          totalElements: action.payload.data.totalElements,
+          pageSize: action.payload.data.pageSize,
+          first: action.payload.data.first,
+          last: action.payload.data.last,
+        };
+        state.error = null;
+      })
+      .addCase(fetchLogs.rejected, (state, action) => {
+        state.isLoading = false;
+        state.logs = [];
+        state.pagination = null;
 
-          const payloadError = (action.payload as LogListResponse)?.error;
-          state.error = payloadError
-            ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
-            : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
-        });
+        const payloadError = (action.payload as LogListResponse)?.error;
+        state.error = payloadError
+          ? {
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
+          : {
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
+      })
+      .addCase(fetchTraceLog.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.traceLogs = [];
+      })
+      .addCase(fetchTraceLog.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.traceLogs = action.payload.data;
+        state.error = null;
+      })
+      .addCase(fetchTraceLog.rejected, (state, action) => {
+        state.isLoading = false;
+        state.traceLogs = [];
+
+        const payloadError = (action.payload as TraceLogResponse)?.error;
+        state.error = payloadError
+          ? {
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
+          : {
+            code: "INTERNAL_ERROR",
+            message: "Trace 로그 조회 중 오류가 발생했습니다.",
+          };
+      });
   },
 });
 
