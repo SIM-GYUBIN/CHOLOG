@@ -6,33 +6,23 @@ type LogDetails = {
 };
 
 type LogProps = {
-  islevelBg?: boolean; // Added islevelBg prop for conditional styling
-  id?: string;
-  from?: string;
-  type?: string;
-  status?: number; // http 상태코드
-  timestamp?: string;
-  message?: string;
-  apiPath?: string;
-  level: "INFO" | "WARN" | "ERROR" | "DEBUG" | "FATAL" | "TRACE";
-  traceId?: string;
-  spanId?: string;
-  details?: LogDetails; // Changed from object to LogDetails for better type safety
+  id: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  source: 'frontend' | 'backend';
+  environment: string;
+  islevelBg?: boolean;
 };
 
 export default function EachLog({
   id,
   timestamp,
-  type,
-  status,
-  message,
-  from,
-  apiPath,
   level,
-  // traceId,
-  // spanId,
-  // details,
-  islevelBg = false,
+  message,
+  source,
+  environment,
+  islevelBg,
 }: LogProps) {
   const formattedTime = timestamp
     ? new Date(timestamp)
@@ -103,15 +93,10 @@ export default function EachLog({
         {/* 나머지 */}
         <div className="flex flex-row items-start col-span-7 gap-10">
           <div className="items-center grid grid-cols-10 gap-10 w-full">
-            <div className="col-span-0.5 shrink-0 min-w-0">{from}</div>
-            <div className="col-span-1.5 shrink-0 min-w-0">{type}</div>
-            <div className="col-span-1 shrink-0 min-w-0">{status}</div>
-            <div className="col-span-4 text-start min-w-0 truncate">
-              {message}
-            </div>
-            <div className="col-span-3 min-w-0 shrink-0 text-start">
-              {formattedTime}
-            </div>
+            <div className="col-span-2 shrink-0 min-w-0 truncate">{source}</div>
+            <div className="col-span-2 shrink-0 min-w-0 truncate">{environment}</div>
+            <div className="col-span-4 text-start min-w-0 truncate">{message}</div>
+            <div className="col-span-2 min-w-0 shrink-0 text-start">{formattedTime}</div>
           </div>
         </div>
       </div>

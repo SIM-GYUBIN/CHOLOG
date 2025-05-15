@@ -205,55 +205,66 @@ export interface LogDetailRequest {
 /**
  * [#LOG-10]
  * @description 로그 상세 정보 타입
- * @property {string} _id - 로그 고유 식별자
- * @property {string} timestamp - 로그 발생 시간
- * @property {string} message - 로그 메시지
- * @property {string} apiPath - API 경로
- * @property {string} level - 로그 레벨
- * @property {string} from - 로그 발생 위치
+ * @property {string} id - 로그 고유 식별자 - 필수
+ * @property {string} timestamp - 로그 발생 시간 - 필수
+ * @property {string} level - 로그 레벨 - 필수 
+ * @property {string} message - 로그 메시지 - 필수
+ * @property {string} source - 로그 소스 - 필수
+ * @property {string} projectKey - 프로젝트 키 - 필수
+ * @property {string} environment - 환경 - 필수
  * @property {string} traceId - 추적 ID
- * @property {string} spanId - 스팬 ID
- * @property {object} details - 상세 정보
+ * @property {string} logger - 로거 이름
+ * @property {string} logType - 로그 타입
+ * @property {object} http - HTTP 관련 정보
+ * @property {object} error - 에러 정보
+ * @property {object} payload - 추가 데이터
  */
 export interface LogDetail {
-  _id: string;
+  id: string;
   timestamp: string;
-  message: string;
-  apiPath: string;
   level: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
-  from: string;
+  message: string;
+  source: "frontend" | "backend";
+  projectKey: string;
+  environment: string;
   traceId: string;
-  spanId: string;
-  details: {
-    errorCode?: string;
-    stackTrace?: string;
-    error?: {
-      name: string;
-      message: string;
-      stackTrace: string;
+  logger: string;
+  logType: string;
+  http?: {
+    request: {
+      method: string;
+      url: string;
     };
-    userId?: string;
-    ip?: string;
+    response: {
+      statusCode: number;
+    };
+    durationMs: number;
+  };
+  error?: {
+    type: string;
+    message: string;
+    stacktrace: string;
+  };
+  payload?: {
     [key: string]: unknown;
   };
 }
 
 /**
- * [#LOG-10]
- * @description 특정 로그 상세 정보 조회를 위한 요청 파라미터
- * @property {success} success - API 호출 성공 여부
- * @property {data} data - 로그 상세 정보 데이터
- * @property {error} error - 에러 정보 (선택적)
- * @property {timestamp} timestamp - API 응답 시간
+ * @description 로그 목록 응답 타입
+ * @extends {BaseResponse}
+ * @property {object} data - 로그 목록 데이터
  */
-export interface LogDetailResponse {
-  success: boolean;
-  data: LogDetail | null;
-  error?: {
-    code: string;
-    message: string;
+export interface LogListResponse extends BaseResponse {
+  data: {
+    content: LogDetail[];
+    pageNumber: number;
+    totalPages: number;
+    totalElements: number;
+    pageSize: number;
+    first: boolean;
+    last: boolean;
   };
-  timestamp: string;
 }
 
 /**
@@ -406,40 +417,6 @@ export interface TraceLogResponse extends BaseResponse {
 
 /**
  * [#LOG-10]
- * @description 로그 상세 정보 타입
- * @property {string} _id - 로그 고유 식별자
- * @property {string} timestamp - 로그 발생 시간
- * @property {string} message - 로그 메시지
- * @property {string} apiPath - API 경로
- * @property {string} level - 로그 레벨 (TRACE/DEBUG/INFO/WARN/ERROR/FATAL)
- * @property {string} traceId - 추적 ID
- * @property {string} spanId - 스팬 ID
- * @property {object} details - 상세 정보
- */
-export interface LogDetail {
-  _id: string;
-  timestamp: string;
-  message: string;
-  apiPath: string;
-  level: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
-  traceId: string;
-  spanId: string;
-  details: {
-    errorCode?: string;
-    stackTrace?: string;
-    error?: {
-      name: string;
-      message: string;
-      stackTrace: string;
-    };
-    userId?: string;
-    ip?: string;
-    [key: string]: unknown;
-  };
-}
-
-/**
- * [#LOG-10]
  * @description 특정 로그 상세 정보 조회를 위한 요청 파라미터
  * @property {success} success - API 호출 성공 여부
  * @property {data} data - 로그 상세 정보 데이터
@@ -492,28 +469,6 @@ export interface ArchiveLogResponse extends BaseResponse {
   data: ArchiveLogResponseData;
 }
 
-// 로그 상세 정보 타입
-export interface LogDetail {
-  _id: string;
-  timestamp: string;
-  message: string;
-  apiPath: string;
-  level: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
-  traceId: string;
-  spanId: string;
-  details: {
-    errorCode?: string;
-    stackTrace?: string;
-    error?: {
-      name: string;
-      message: string;
-      stackTrace: string;
-    };
-    userId?: string;
-    ip?: string;
-    [key: string]: unknown;
-  };
-}
 
 /**
  * [#LOG-12]

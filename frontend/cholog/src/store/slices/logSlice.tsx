@@ -58,7 +58,7 @@ export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
       let errorCode = "INTERNAL_ERROR";
       if (status === 400) errorCode = "INVALID_REQUEST";
       else if (status === 401) errorCode = "UNAUTHORIZED";
-      
+
       return rejectWithValue({
         success: false,
         data: {
@@ -299,7 +299,7 @@ export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
       if (params.sort) queryParams.append("sort", params.sort);
 
       const response = await api.get<LogListResponse>(
-        `/api/log/${params.projectId}?${queryParams.toString()}`,
+        `/log/${params.projectId}?${queryParams.toString()}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -307,6 +307,7 @@ export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
           },
         }
       );
+      console.log(response.data.data.content); // LogListResponse 구조 확인
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
@@ -535,7 +536,7 @@ export const fetchLogDetail = createAsyncThunk<
   } catch (error: any) {
     const status = error.response?.status;
     let errorCode = "INTERNAL_ERROR";
-    
+
     if (status === 400) errorCode = "INVALID_REQUEST";
     else if (status === 401) errorCode = "UNAUTHORIZED";
     else if (status === 404) errorCode = "NOT_FOUND";
@@ -586,7 +587,7 @@ export const archiveLog = createAsyncThunk<
   } catch (error: any) {
     const status = error.response?.status;
     let errorCode = "INTERNAL_ERROR";
-    
+
     if (status === 400) errorCode = "INVALID_REQUEST";
     else if (status === 401) errorCode = "UNAUTHORIZED";
     else if (status === 404) errorCode = "LOG_NOT_FOUND";
@@ -718,17 +719,17 @@ const logSlice = createSlice({
         const payloadError = (action.payload as LogStatsResponse)?.error;
         state.error = payloadError
           ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
           : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
       })
 
       // Update all rejected cases with consistent type casting
@@ -737,17 +738,17 @@ const logSlice = createSlice({
         const payloadError = (action.payload as ErrorStatsResponse)?.error;
         state.error = payloadError
           ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
           : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
       })
 
       .addCase(fetchErrorTimeline.rejected, (state, action) => {
@@ -755,17 +756,17 @@ const logSlice = createSlice({
         const payloadError = (action.payload as ErrorTimelineResponse)?.error;
         state.error = payloadError
           ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
           : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
       })
 
       .addCase(fetchErrorTypeRatio.rejected, (state, action) => {
@@ -773,17 +774,17 @@ const logSlice = createSlice({
         const payloadError = (action.payload as ErrorTypeRatioResponse)?.error;
         state.error = payloadError
           ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
           : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
       })
 
       .addCase(fetchErrorTrend.rejected, (state, action) => {
@@ -791,17 +792,17 @@ const logSlice = createSlice({
         const payloadError = (action.payload as ErrorTrendResponse)?.error;
         state.error = payloadError
           ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
           : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
       })
 
       .addCase(searchLogs.rejected, (state, action) => {
@@ -809,17 +810,17 @@ const logSlice = createSlice({
         const payloadError = (action.payload as LogSearchResponse)?.error;
         state.error = payloadError
           ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
           : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
       })
 
       .addCase(fetchLogDetail.rejected, (state, action) => {
@@ -828,17 +829,17 @@ const logSlice = createSlice({
         const payloadError = (action.payload as LogDetailResponse)?.error;
         state.error = payloadError
           ? {
-              code: payloadError.code as
-                | "INVALID_REQUEST"
-                | "UNAUTHORIZED"
-                | "NOT_FOUND"
-                | "INTERNAL_ERROR",
-              message: payloadError.message,
-            }
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
           : {
-              code: "INTERNAL_ERROR",
-              message: "알 수 없는 오류가 발생했습니다.",
-            };
+            code: "INTERNAL_ERROR",
+            message: "알 수 없는 오류가 발생했습니다.",
+          };
       })
       .addCase(archiveLog.pending, (state) => {
         state.isLoading = true;
@@ -878,7 +879,44 @@ const logSlice = createSlice({
             message: "알 수 없는 오류가 발생했습니다.",
           };
         }
-      });
+      })
+      .addCase(fetchLogs.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+        .addCase(fetchLogs.fulfilled, (state, action) => {
+          state.isLoading = false;
+          state.logs = action.payload.data.content;
+          state.pagination = {
+            pageNumber: action.payload.data.pageNumber,
+            totalPages: action.payload.data.totalPages,
+            totalElements: action.payload.data.totalElements,
+            pageSize: action.payload.data.pageSize,
+            first: action.payload.data.first,
+            last: action.payload.data.last,
+          };
+          state.error = null;
+        })
+        .addCase(fetchLogs.rejected, (state, action) => {
+          state.isLoading = false;
+          state.logs = [];
+          state.pagination = null;
+
+          const payloadError = (action.payload as LogListResponse)?.error;
+          state.error = payloadError
+            ? {
+              code: payloadError.code as
+                | "INVALID_REQUEST"
+                | "UNAUTHORIZED"
+                | "NOT_FOUND"
+                | "INTERNAL_ERROR",
+              message: payloadError.message,
+            }
+            : {
+              code: "INTERNAL_ERROR",
+              message: "알 수 없는 오류가 발생했습니다.",
+            };
+        });
   },
 });
 

@@ -3,28 +3,25 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import LogList from "../components/logList";
 import copy from "@/assets/copy.svg";
-import report from "@/assets/report.svg";
-import setting from "@/assets/setting.svg";
 import ErrorChart from "../components/charts/ErrorChart";
 import LogSummary from "../components/LogSummary";
 import { fetchLogStats, fetchLogs } from "../store/slices/logSlice";
 import { AppDispatch, RootState } from "../store/store";
-import { MOCK_LOGS } from "../constants/mockData";
 import ProjectNavBar from "../components/projectNavbar";
 
 const ProjectPage = () => {
   const { projectId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
-  const { logs, isLoading, error } = useSelector(
+  const { logs, isLoading, error, pagination } = useSelector(
     (state: RootState) => state.log
   );
-  
+
   const projectName = "프로젝트이름이다";
 
   useEffect(() => {
     if (projectId) {
       dispatch(fetchLogs({ projectId: Number(projectId) }));
-      dispatch(fetchLogStats(Number(projectId)));  // 로그 통계 데이터 요청 추가
+      dispatch(fetchLogStats(Number(projectId)));
     }
   }, [dispatch, projectId]);
 
@@ -36,10 +33,6 @@ const ProjectPage = () => {
       alert("프로젝트ID 복사 실패");
     }
   };
-
-  // 로딩 중이거나 에러 발생 시 목데이터 사용
-  // const displayLogs = isLoading || error ? MOCK_LOGS : logs;
-  const displayLogs = MOCK_LOGS;
 
   return (
     <div className="flex flex-col w-full lg:w-[70vw] mx-auto ">
@@ -55,7 +48,6 @@ const ProjectPage = () => {
             <img src={copy} alt="복사" className="w-5 h-5" />
           </div>
         </div>
-
       </div>
       <div className="grid grid-cols-7 py-5 gap-10">
         <div className="col-span-3">
@@ -65,7 +57,7 @@ const ProjectPage = () => {
           <ErrorChart />
         </div>
       </div>
-      <LogList logs={displayLogs} />
+      <LogList logs={logs} pagination={pagination} />
     </div>
   );
 };
