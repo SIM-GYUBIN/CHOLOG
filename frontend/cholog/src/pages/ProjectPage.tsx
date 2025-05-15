@@ -7,7 +7,7 @@ import report from "@/assets/report.svg";
 import setting from "@/assets/setting.svg";
 import ErrorChart from "../components/charts/ErrorChart";
 import LogSummary from "../components/LogSummary";
-import { fetchLogs } from "../store/slices/logSlice";
+import { fetchLogStats, fetchLogs } from "../store/slices/logSlice";
 import { AppDispatch, RootState } from "../store/store";
 import { MOCK_LOGS } from "../constants/mockData";
 import ProjectNavBar from "../components/projectNavbar";
@@ -18,11 +18,13 @@ const ProjectPage = () => {
   const { logs, isLoading, error } = useSelector(
     (state: RootState) => state.log
   );
+  
   const projectName = "프로젝트이름이다";
 
   useEffect(() => {
     if (projectId) {
       dispatch(fetchLogs({ projectId: Number(projectId) }));
+      dispatch(fetchLogStats(Number(projectId)));  // 로그 통계 데이터 요청 추가
     }
   }, [dispatch, projectId]);
 
