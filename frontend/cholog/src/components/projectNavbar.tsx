@@ -55,7 +55,7 @@ export default function ProjectNavBar() {
         </button>
 
         <button 
-          onClick={() => navigate(`/report/${projectId}`)}
+          onClick={() => navigate(`/reportlist/${projectId}`)}
           className={`flex justify-start items-center gap-2 cursor-pointer ${
             isActive('/report')
               ? 'text-green-600 font-bold' 
