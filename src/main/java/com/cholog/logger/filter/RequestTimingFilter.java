@@ -25,7 +25,7 @@ import java.util.UUID;
  * X-Request-Id 헤더가 있는 경우 해당 값을 요청 ID로 사용합니다 (프론트엔드-백엔드 통합 추적 지원).
  * 요청의 상세 정보(HTTP Method, URI, Client IP, User-Agent)를 추출합니다.
  * 요청 처리가 완료된 후 최종 HTTP 응답 상태 코드(Status Code)를 가져옵니다.
- * 위에서 수집된 주요 컨텍스트 정보(요청 ID 포함)를 SLF4j MDC(Mapped Diagnostic Context)와 {@link HttpServletRequest} attribute에 저장하여, 후속 처리기(예: com.cholog.logger.config.GlobalExceptionHandler)에서 참조할 수 있도록 합니다.
+ * 위에서 수집된 주요 컨텍스트 정보(요청 ID 포함)를 SLF4j MDC(Mapped Diagnostic Context)와 {@link HttpServletRequest} attribute에 저장하여, 후속 로깅 처리(예: `CentralLogAppender`에서의 `requestId` 참조)나 다른 사용자 정의 필터/핸들러에서 활용될 수 있도록 합니다.
  * 요청 처리가 완료되는 시점에 INFO 레벨의 로그를 자동으로 기록하여, {@link CentralLogAppender}가 해당 요청의 모든 컨텍스트 정보를 포함한 로그를 중앙 서버로 전송하도록 트리거합니다.
  * 요청 처리가 완전히 끝나면 해당 스레드의 MDC에서 추가했던 모든 정보를 정리합니다.
  * 이 필터는 {@link com.cholog.logger.config.LogAutoConfiguration}에 의해 서블릿 기반 웹 애플리케이션 환경에서
@@ -44,7 +44,7 @@ import java.util.UUID;
  * - 요청 처리 중 예외 발생 시 예외 정보를 MDC에 저장하여 로그에 예외 정보 포함
  * - MDC 정리 과정에서 모든 관련 필드(예외 정보, 에러 정보, 요청 파라미터, 헤더 등)를 제거하도록 개선
  *
- * @version 1.8.6
+ * @version 1.0.3
  * @see CentralLogAppender (MDC 키 상수 공유)
  * @see com.cholog.logger.config.LogAutoConfiguration
  * @see MDC

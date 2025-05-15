@@ -1,15 +1,16 @@
 # CHANGELOG
 
-## [1.0.3] - 2024-07-24
+## [1.0.3] - 2025-05-15
 ### 주요 변경 사항
-* **에러 로그 `requestId` 추적 강화**:
-  - `GlobalExceptionHandler` 도입 및 자동 설정을 통해, 애플리케이션 레벨에서 발생하는 예외에 대해 `requestId`를 포함한 상세 에러 로그 기록.
-  - `RequestTimingFilter`에서 생성된 `requestId`를 `HttpServletRequest` attribute에 저장하여 `GlobalExceptionHandler`에서 참조 가능하도록 개선.
-* **Tomcat 네이티브 에러 로그 필터링**:
-  - `CentralLogAppender`에서 `requestId`가 없는 Tomcat 자체 에러 로그 (예: `org.apache.catalina...` 로거)는 중앙 로그 서버로 전송하지 않도록 필터링 기능 추가.
-  - 이를 통해 `requestId`로 추적 가능한 애플리케이션 레벨 에러 로그에 집중하고 중복 로그 감소.
-* **코드 주석 및 문서화 개선**:
-  - 변경된 로직에 맞춰 관련 클래스 Javadoc 및 내부 주석 업데이트.
+* **Tomcat 네이티브 에러 로그에 `requestId` 직접 주입**:
+  - `CentralLogAppender`가 `org.apache.catalina...` 등 Tomcat 자체 로거가 발생시키는 에러 로그를 처리할 때, MDC에 존재하는 `requestId`를 해당 로그의 `requestId` 필드에 직접 주입하도록 변경.
+  - 이를 통해 별도의 에러 핸들러 없이 Tomcat 에러 로그에서도 요청 추적이 가능하도록 단순화.
+* **`GlobalExceptionHandler` 및 관련 자동 설정 제거**:
+  - 기존에 Tomcat 에러를 포함한 전역 예외를 처리하고 별도 로그를 생성하던 `GlobalExceptionHandler` 및 이를 등록하던 `ChologLoggerAutoConfiguration` 제거.
+  - 에러 로깅 방식을 단순화하여 Tomcat 에러의 경우, `requestId`가 주입된 Tomcat 자체 로그만 남도록 변경.
+* **코드 주석 및 문서 업데이트**:
+  - 변경된 에러 로깅 방식에 맞춰 관련 클래스(`CentralLogAppender`, `RequestTimingFilter`)의 Javadoc 및 내부 주석 업데이트.
+  - `README.md`의 에러 로깅 관련 설명 수정.
 
 ## [v1.0.2] - 2025-05-13
 ### 개선 사항

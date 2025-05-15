@@ -9,8 +9,7 @@ CHO:LOG는 Spring Boot 애플리케이션을 위한 지능형 로깅 SDK입니�
 - **ELK 스택 호환**: 로그를 JSON 형식으로 전송하여 Logstash, Elasticsearch, Kibana (ELK) 스택과 쉽게 연동할 수 있습니다.
 - **서비스 식별 및 다중 사용자 지원**: 각 애플리케이션(서비스)은 고유한 API 키, 서비스 이름, 환경 정보를 설정하여 로그를 식별합니다. 이를 통해 여러 서비스/사용자가 동일한 중앙 로그 서버를 사용하면서도 각자의 로그를 명확히 구분할 수 있습니다.
 - **고유 요청 ID (Trace ID)**: 각 HTTP 요청에 고유한 UUID(또는 프론트엔드 제공 ID)를 부여하여, 분산 환경에서도 특정 요청과 관련된 모든 로그를 쉽게 추적합니다.
-- **자동 예외 캡처 및 로깅 (v1.0.3 개선)**: `GlobalExceptionHandler`를 통해 처리되지 않은 모든 예외를 감지하여, `requestId`를 포함한 상세 정보(스택 트레이스 포함)와 함께 로깅하고 표준화된 오류 응답을 클라이언트에 제공합니다.
-- **Tomcat 네이티브 에러 로그 필터링 (v1.0.3 신규)**: `CentralLogAppender`에서 `requestId`가 없는 Tomcat 자체 에러 로그 (예: `org.apache.catalina...` 로거)는 중앙 로그 서버로 전송하지 않도록 필터링하여 중복 로그를 감소시키고, `requestId`로 추적 가능한 애플리케이션 레벨 에러 로그에 집중하도록 합니다.
+- **Tomcat/Servlet 에러 로그 `requestId` 자동 주입 (v1.0.3 개선)**: Tomcat 등 서블릿 컨테이너 자체에서 발생하는 에러 로그(예: `NullPointerException`으로 인한 `dispatcherServlet` 오류)에 대해, `RequestTimingFilter`가 MDC에 설정한 `requestId`를 `CentralLogAppender`가 감지하여 해당 로그에 자동으로 주입합니다. 이를 통해 별도의 전역 예외 핸들러 없이도 컨테이너 레벨 에러 로그의 추적성을 확보합니다.
 - **비동기 및 배치 전송**: 로그 전송으로 인한 애플리케이션 성능 영향을 최소화하기 위해 비동기 방식과 배치 처리를 사용합니다.
 - **네트워크 장애 대비**: 로그 전송 실패 시 재시도 로직 및 디스크 큐(Disk Queue) 기능으로 로그 유실을 방지합니다.
 - **로그 압축 기능**: 대용량 로그 데이터의 효율적인 전송을 위한 GZIP 압축 지원으로 네트워크 대역폭 사용량을 절감합니다. (서버 설정 필요)
@@ -20,12 +19,12 @@ CHO:LOG는 Spring Boot 애플리케이션을 위한 지능형 로깅 SDK입니�
 
 ## 최신 버전 정보 (v1.0.3)
 
-* **에러 로그 `requestId` 추적 강화**:
-  - `GlobalExceptionHandler` 도입 및 자동 설정을 통해, 애플리케이션 레벨에서 발생하는 예외에 대해 `requestId`를 포함한 상세 에러 로그 기록.
-  - `RequestTimingFilter`에서 생성된 `requestId`를 `HttpServletRequest` attribute에 저장하여 `GlobalExceptionHandler`에서 참조 가능하도록 개선.
-* **Tomcat 네이티브 에러 로그 필터링**:
-  - `CentralLogAppender`에서 `requestId`가 없는 Tomcat 자체 에러 로그 (예: `org.apache.catalina...` 로거)는 중앙 로그 서버로 전송하지 않도록 필터링 기능 추가.
-  - 이를 통해 `requestId`로 추적 가능한 애플리케이션 레벨 에러 로그에 집중하고 중복 로그 감소.
+* **Tomcat 네이티브 에러 로그에 `requestId` 직접 주입**:
+  - `CentralLogAppender`가 `org.apache.catalina...` 등 Tomcat 자체 로거가 발생시키는 에러 로그를 처리할 때, MDC에 존재하는 `requestId`를 해당 로그의 `requestId` 필드에 직접 주입하도록 변경.
+  - 이를 통해 별도의 에러 핸들러 없이 Tomcat 에러 로그에서도 요청 추적이 가능하도록 단순화.
+* **`GlobalExceptionHandler` 및 관련 자동 설정 제거**:
+  - 기존에 Tomcat 에러를 포함한 전역 예외를 처리하고 별도 로그를 생성하던 `GlobalExceptionHandler` 및 이를 등록하던 `ChologLoggerAutoConfiguration` 제거.
+  - 에러 로깅 방식을 단순화하여 Tomcat 에러의 경우, `requestId`가 주입된 Tomcat 자체 로그만 남도록 변경.
 
 전체 버전 기록은 [CHANGELOG.md](CHANGELOG.md)를 참조하세요.
 
@@ -42,7 +41,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.3'
+    implementation 'com.ssafy.lab.s12-final:S12P31B207:1.0.3'
     // 기타 의존성...
 }
 ```

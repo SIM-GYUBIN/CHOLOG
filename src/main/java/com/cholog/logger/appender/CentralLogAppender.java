@@ -36,7 +36,7 @@ import java.util.Objects;
  * - 중앙 서버로의 비동기 전송을 위한 큐 관리
  *
  * @author eddy1219
- * @version 1.8.6
+ * @version 1.0.3
  * @see com.cholog.logger.service.LogSenderService
  * @see ch.qos.logback.core.AppenderBase
  */
@@ -229,6 +229,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
      * Logback에 의해 호출되는 핵심 메소드. 로그 이벤트를 받아 처리합니다.
      * 설정된 로그 레벨({@link LogServerProperties#getLogLevel()}) 이상의 이벤트만 처리하며,
      * 각종 정보를 수집/보강하여 JSON으로 변환 후 {@link LogSenderService#addToQueue(String)}로 전송 요청합니다.
+     * <p>
+     * v1.0.3부터는 {@link com.cholog.logger.filter.RequestTimingFilter}에 의해 MDC에 저장된 `requestId`가 있다면,
+     * 이를 추출하여 모든 로그(Tomcat/Servlet 컨테이너 자체 에러 로그 포함)의 `requestId` 필드에 주입합니다.
      *
      * @param event Logback으로부터 전달받은 로그 이벤트 객체
      */
@@ -238,21 +241,6 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
         if (!isStarted()) {
             return;
         }
-
-        // --- 필터링: Tomcat 자체 에러 로그 (requestId 부재 시) 전송 방지 ---
-        // 목표: GlobalExceptionHandler를 통해 requestId가 포함된 에러 로그를 우선적으로 사용하고,
-        // requestId가 없는 중복적인 Tomcat 네이티브 에러 로그는 중앙 로그 서버로 전송하지 않도록 함.
-        // 이 필터링은 GlobalExceptionHandler가 애플리케이션 레벨에서 예외를 처리하고
-        // requestId를 포함한 로그를 남기는 것을 전제로 합니다.
-        String eventLoggerName = event.getLoggerName();
-        Map<String, String> mdcPropertiesForFilter = event.getMDCPropertyMap();
-
-        if (eventLoggerName != null && eventLoggerName.startsWith("org.apache.catalina") &&
-            (mdcPropertiesForFilter == null || mdcPropertiesForFilter.get(REQUEST_ID_MDC_KEY) == null)) {
-            
-            return; // 이 로그 이벤트를 더 이상 처리하지 않고 반환 (전송 안 함)
-        }
-        // --- 추가된 필터링 로직 끝 ---
 
         // 2. 로그 레벨 필터링
         if (!event.getLevel().isGreaterOrEqual(properties.getLogLevel())) {
@@ -266,7 +254,8 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
             // 4. 기본 로그 정보 추가
             logData.put("timestamp", Instant.ofEpochMilli(event.getTimeStamp()).toString());
             logData.put("level", event.getLevel().toString());
-            logData.put("logger", event.getLoggerName());
+            String eventLoggerName = event.getLoggerName();
+            logData.put("logger", eventLoggerName);
             logData.put("message", event.getFormattedMessage()); // 포맷팅된 메시지 사용
             logData.put("thread", event.getThreadName());
 
@@ -274,7 +263,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
             logData.put("source", "backend");
 
             // 시퀀스 번호 추가 (설정이 활성화된 경우)
-            logData.put("sequence",1);
+            logData.put("sequence", 1L);
 
             // 5. 애플리케이션 정보 추가
             String serviceName = properties.getServiceName();
@@ -328,7 +317,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 Map<String, String> headers = new HashMap<>();
 
                 // 8a. MDC에서 핵심 정보 추출하여 루트 필드로 저장 (중복 방지)
-                String requestId = mdcProperties.get(REQUEST_ID_MDC_KEY);
+                String requestIdFromMDC = mdcProperties.get(REQUEST_ID_MDC_KEY);
                 String requestMethod = mdcProperties.get(REQUEST_METHOD_MDC_KEY);
                 String requestUri = mdcProperties.get(REQUEST_URI_MDC_KEY);
                 String clientIp = mdcProperties.get(REQUEST_CLIENT_IP_MDC_KEY);
@@ -336,7 +325,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 String statusStr = mdcProperties.get(HTTP_STATUS_MDC_KEY);
 
                 // 추출한 핵심 정보를 루트 필드에 추가
-                if (requestId != null) logData.put("requestId", requestId);
+                if (requestIdFromMDC != null) {
+                    logData.put("requestId", requestIdFromMDC);
+                }
                 if (requestMethod != null) logData.put("requestMethod", requestMethod);
                 if (requestUri != null) logData.put("requestUri", requestUri);
                 if (clientIp != null) logData.put("clientIp", clientIp);
@@ -463,13 +454,12 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
             }
 
             // 추가: Tomcat 컨테이너 및 Spring 예외 로그에 HTTP 상태 코드 설정
-            if (event.getLevel().toString().equals("ERROR") && event.getLoggerName() != null) {
+            if (event.getLevel().toString().equals("ERROR") && eventLoggerName != null) {
                 boolean needsStatusCode = false;
-                String loggerName = event.getLoggerName();
                 String message = event.getFormattedMessage();
 
                 // 1. Tomcat 컨테이너 예외 감지
-                if ((loggerName.contains("org.apache.catalina") || loggerName.contains("org.apache.tomcat")) &&
+                if ((eventLoggerName.contains("org.apache.catalina") || eventLoggerName.contains("org.apache.tomcat")) &&
                     message != null &&
                     (message.contains("threw exception") ||
                      message.contains("Servlet.service") ||
@@ -478,9 +468,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 }
 
                 // 2. Spring 프레임워크 예외 감지
-                else if ((loggerName.contains("org.springframework") ||
-                         loggerName.contains("DispatcherServlet") ||
-                         loggerName.contains("HandlerAdapter")) &&
+                else if ((eventLoggerName.contains("org.springframework") ||
+                         eventLoggerName.contains("DispatcherServlet") ||
+                         eventLoggerName.contains("HandlerAdapter")) &&
                         message != null &&
                         (message.contains("Exception") ||
                          message.contains("Error") ||
