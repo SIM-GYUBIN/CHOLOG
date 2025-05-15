@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - 중앙 서버로의 비동기 전송을 위한 큐 관리
  *
  * @author eddy1219
- * @version 1.0.3
+ * @version 1.0.4
  * @see com.cholog.logger.service.LogSenderService
  * @see ch.qos.logback.core.AppenderBase
  */
@@ -340,32 +340,47 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                     requestIdFromMDC = threadRequestIdMap.get(threadName);
                 }
 
-                // 추출한 핵심 정보를 루트 필드에 추가
+                // 추출한 핵심 정보를 추가
                 if (requestIdFromMDC != null) {
                     logData.put("requestId", requestIdFromMDC);
                 }
-                if (requestMethod != null) logData.put("requestMethod", requestMethod);
-                if (requestUri != null) logData.put("requestUri", requestUri);
-                if (clientIp != null) logData.put("clientIp", clientIp);
+                
+                // HTTP 관련 정보를 http 객체로 묶어서 저장
+                Map<String, Object> httpData = new HashMap<>();
+                
+                // HTTP 정보는 http 객체에만 추가 (루트에는 추가하지 않음)
+                if (requestMethod != null) httpData.put("requestMethod", requestMethod);
+                if (requestUri != null) httpData.put("requestUri", requestUri);
+                if (clientIp != null) logData.put("clientIp", clientIp); // clientIp는 루트에 유지
 
                 // HTTP 상태 코드 처리 (숫자로 변환)
                 if (statusStr != null) {
                     try {
-                        logData.put("httpStatus", Integer.parseInt(statusStr));
+                        httpData.put("httpStatus", Integer.parseInt(statusStr));
                     } catch (NumberFormatException e) {
                         addWarn("Could not parse httpStatus from MDC: " + statusStr);
                     }
                 }
 
-                // 요청 시간 추출하여 성능 메트릭에 추가
+                // 요청 시간 추출하여 http 객체에 추가 (performanceMetrics에는 추가하지 않음)
                 String responseTimeStr = mdcProperties.get(RESPONSE_TIME_MDC_KEY);
                 if (responseTimeStr != null) {
                     try {
                         long responseTime = Long.parseLong(responseTimeStr);
-                        systemMetrics.put("responseTime", responseTime);
+                        httpData.put("responseTime", responseTime); // http 객체에만 responseTime 추가
                     } catch (NumberFormatException e) {
                         addWarn("Could not parse responseTime from MDC: " + responseTimeStr);
                     }
+                }
+
+                // HTTP 데이터가 비어있지 않으면 로그에 추가
+                if (!httpData.isEmpty()) {
+                    logData.put("http", httpData);
+                }
+
+                // UserAgent 필드 처리 - 루트 레벨에만 추가
+                if (userAgent != null) {
+                    logData.put("userAgent", userAgent);
                 }
 
                 // 8b. request_headers 처리 - 헤더 객체로 통합, 중복 방지
@@ -464,17 +479,17 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 }
             }
 
-            // 9. 성능 메트릭 추가 (responseTime 포함)
+            // 9. 성능 메트릭 추가 (responseTime 제외 - http 객체로 이동됨)
             if (!systemMetrics.isEmpty()) {
                 logData.put("performanceMetrics", systemMetrics);
             }
-
+            
             // 추가: Tomcat 컨테이너 및 Spring 예외 로그에 HTTP 상태 코드 설정
             if (event.getLevel().toString().equals("ERROR") && eventLoggerName != null) {
                 boolean needsStatusCode = false;
                 String message = event.getFormattedMessage();
                 String threadName = event.getThreadName();
-
+                
                 // 1. Tomcat 컨테이너 예외 감지
                 if ((eventLoggerName.contains("org.apache.catalina") || eventLoggerName.contains("org.apache.tomcat")) &&
                     message != null &&
@@ -489,7 +504,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                         logData.put("requestId", requestIdFromMap);
                     }
                 }
-
+                
                 // 2. Spring 프레임워크 예외 감지
                 else if ((eventLoggerName.contains("org.springframework") ||
                          eventLoggerName.contains("DispatcherServlet") ||
@@ -506,7 +521,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                         logData.put("requestId", requestIdFromMap);
                     }
                 }
-
+                
                 // 3. 일반적인 예외 메시지 패턴 감지
                 else if (message != null &&
                         (message.contains("Exception:") ||
@@ -520,10 +535,21 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                         logData.put("requestId", requestIdFromMap);
                     }
                 }
-
+                
                 // 상태 코드가 필요하고 아직 설정되지 않은 경우 500으로 설정
-                if (needsStatusCode && !logData.containsKey("httpStatus")) {
-                    logData.put("httpStatus", 500);
+                if (needsStatusCode) {
+                    // http 객체가 없으면 생성
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> httpData = (Map<String, Object>) logData.get("http");
+                    if (httpData == null) {
+                        httpData = new HashMap<>();
+                        logData.put("http", httpData);
+                    }
+                    
+                    // http 객체에 상태 코드 추가
+                    if (!httpData.containsKey("httpStatus")) {
+                        httpData.put("httpStatus", 500);
+                    }
                 }
             }
 
@@ -534,11 +560,18 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 throwableData.put("className", throwableProxy.getClassName());
                 throwableData.put("message", throwableProxy.getMessage());
                 
-                // 추가: 예외가 있는 경우 httpStatus가 설정되어 있지 않으면 500으로 설정
-                if (!logData.containsKey("httpStatus")) {
-                    logData.put("httpStatus", 500);
+                // 예외가 있는 경우 httpStatus가 설정되어 있지 않으면 500으로 설정
+                @SuppressWarnings("unchecked")
+                Map<String, Object> httpData = (Map<String, Object>) logData.get("http");
+                if (httpData == null) {
+                    httpData = new HashMap<>();
+                    logData.put("http", httpData);
                 }
                 
+                if (!httpData.containsKey("httpStatus")) {
+                    httpData.put("httpStatus", 500);
+                }
+
                 // 예외 발생 시에도 requestId 체크 (스레드 맵에 있는 경우)
                 if (!logData.containsKey("requestId")) {
                     String requestIdFromMap = threadRequestIdMap.get(event.getThreadName());
@@ -565,7 +598,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                     causeData.put("message", cause.getMessage());
                     throwableData.put("cause", causeData);
                 }
-                logData.put("throwable", throwableData);
+                logData.put("error", throwableData);
             }
 
             // 11. 최종 Map을 JSON 문자열로 변환
