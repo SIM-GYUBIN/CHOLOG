@@ -168,7 +168,7 @@ public class SwaggerConfig {
     private Info apiInfo() {
         return new Info()
                 .title("초록")
-                .description("Api 문서입니다. \n\n **Query Parameter** : Camel Case (ex. `userId`, `documentId`) \n\n **Request Body** : Camel Case (ex. `userId`, `documentId`) \n\n **Response Body** : Snake Case (ex. `user_id`, `document_id`)")
+                .description("Api 문서입니다.")
                 .version("1.0.0");
     }
 }
