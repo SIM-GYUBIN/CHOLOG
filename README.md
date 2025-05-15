@@ -9,7 +9,8 @@ CHO:LOG는 Spring Boot 애플리케이션을 위한 지능형 로깅 SDK입니�
 - **ELK 스택 호환**: 로그를 JSON 형식으로 전송하여 Logstash, Elasticsearch, Kibana (ELK) 스택과 쉽게 연동할 수 있습니다.
 - **서비스 식별 및 다중 사용자 지원**: 각 애플리케이션(서비스)은 고유한 API 키, 서비스 이름, 환경 정보를 설정하여 로그를 식별합니다. 이를 통해 여러 서비스/사용자가 동일한 중앙 로그 서버를 사용하면서도 각자의 로그를 명확히 구분할 수 있습니다.
 - **고유 요청 ID (Trace ID)**: 각 HTTP 요청에 고유한 UUID(또는 프론트엔드 제공 ID)를 부여하여, 분산 환경에서도 특정 요청과 관련된 모든 로그를 쉽게 추적합니다.
-- **자동 예외 캡처 및 로깅**: 처리되지 않은 모든 예외를 감지하여 상세 정보(스택 트레이스 포함)와 함께 로깅합니다. (`GlobalExceptionHandler` 연계)
+- **자동 예외 캡처 및 로깅 (v1.0.3 개선)**: `GlobalExceptionHandler`를 통해 처리되지 않은 모든 예외를 감지하여, `requestId`를 포함한 상세 정보(스택 트레이스 포함)와 함께 로깅하고 표준화된 오류 응답을 클라이언트에 제공합니다.
+- **Tomcat 네이티브 에러 로그 필터링 (v1.0.3 신규)**: `CentralLogAppender`에서 `requestId`가 없는 Tomcat 자체 에러 로그 (예: `org.apache.catalina...` 로거)는 중앙 로그 서버로 전송하지 않도록 필터링하여 중복 로그를 감소시키고, `requestId`로 추적 가능한 애플리케이션 레벨 에러 로그에 집중하도록 합니다.
 - **비동기 및 배치 전송**: 로그 전송으로 인한 애플리케이션 성능 영향을 최소화하기 위해 비동기 방식과 배치 처리를 사용합니다.
 - **네트워크 장애 대비**: 로그 전송 실패 시 재시도 로직 및 디스크 큐(Disk Queue) 기능으로 로그 유실을 방지합니다.
 - **로그 압축 기능**: 대용량 로그 데이터의 효율적인 전송을 위한 GZIP 압축 지원으로 네트워크 대역폭 사용량을 절감합니다. (서버 설정 필요)
@@ -17,14 +18,14 @@ CHO:LOG는 Spring Boot 애플리케이션을 위한 지능형 로깅 SDK입니�
 - **민감 정보 자동 필터링**: `RequestTimingFilter` 및 `LogSenderService`에서 설정된 패턴에 따라 로그에 포함된 민감 정보(예: 비밀번호, API 키 등)를 자동으로 마스킹합니다.
 - **유연한 설정**: `application.properties` 또는 `application.yml`을 통해 다양한 로깅 동작을 상세하게 제어할 수 있습니다.
 
-## 최신 버전 정보 (v1.0.2)
+## 최신 버전 정보 (v1.0.3)
 
-* **민감 파라미터 필터링 강화**:
-    - `RequestTimingFilter`에 민감 파라미터 필터링 로직 추가되어 MDC에 `request_param_*` 형태로 저장되는 파라미터들에 대한 자동 마스킹 처리.
-    - `LogSenderService`에서도 전송 직전 로그 전체에 대해 설정된 민감 패턴으로 필터링 수행.
-    - 사용자 설정 마스킹 문자열(`sensitiveValueReplacement`) 적용.
-* **보안 강화**:
-    - `password`, `ssn`, `token` 등 다양한 민감 파라미터 유형에 대한 자동 마스킹 처리 개선.
+* **에러 로그 `requestId` 추적 강화**:
+  - `GlobalExceptionHandler` 도입 및 자동 설정을 통해, 애플리케이션 레벨에서 발생하는 예외에 대해 `requestId`를 포함한 상세 에러 로그 기록.
+  - `RequestTimingFilter`에서 생성된 `requestId`를 `HttpServletRequest` attribute에 저장하여 `GlobalExceptionHandler`에서 참조 가능하도록 개선.
+* **Tomcat 네이티브 에러 로그 필터링**:
+  - `CentralLogAppender`에서 `requestId`가 없는 Tomcat 자체 에러 로그 (예: `org.apache.catalina...` 로거)는 중앙 로그 서버로 전송하지 않도록 필터링 기능 추가.
+  - 이를 통해 `requestId`로 추적 가능한 애플리케이션 레벨 에러 로그에 집중하고 중복 로그 감소.
 
 전체 버전 기록은 [CHANGELOG.md](CHANGELOG.md)를 참조하세요.
 
@@ -41,7 +42,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.2'
+    implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.3'
     // 기타 의존성...
 }
 ```
@@ -124,7 +125,6 @@ cholog:
     
     # 압축 및 지표 설정 (LogSenderService)
     compress-logs: true                     # 로그 압축 활성화 여부 (LogServerProperties에는 gzip-enabled)
-    # compression-threshold: 1024             # (LogServerProperties에 해당 필드가 있는지 확인 필요)
     metrics-enabled: true                   # 지표 수집 활성화 여부 (LogSenderService 내부 로직)
     metrics-collection-interval: 60000      # 지표 수집 간격(ms)
     expose-metrics-via-jmx: true            # JMX를 통한 지표 노출 여부

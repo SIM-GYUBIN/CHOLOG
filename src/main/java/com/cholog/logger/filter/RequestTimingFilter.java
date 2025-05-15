@@ -25,7 +25,7 @@ import java.util.UUID;
  * X-Request-Id 헤더가 있는 경우 해당 값을 요청 ID로 사용합니다 (프론트엔드-백엔드 통합 추적 지원).
  * 요청의 상세 정보(HTTP Method, URI, Client IP, User-Agent)를 추출합니다.
  * 요청 처리가 완료된 후 최종 HTTP 응답 상태 코드(Status Code)를 가져옵니다.
- * 위에서 수집된 모든 컨텍스트 정보를 SLF4j MDC(Mapped Diagnostic Context)에 저장합니다.
+ * 위에서 수집된 주요 컨텍스트 정보(요청 ID 포함)를 SLF4j MDC(Mapped Diagnostic Context)와 {@link HttpServletRequest} attribute에 저장하여, 후속 처리기(예: com.cholog.logger.config.GlobalExceptionHandler)에서 참조할 수 있도록 합니다.
  * 요청 처리가 완료되는 시점에 INFO 레벨의 로그를 자동으로 기록하여, {@link CentralLogAppender}가 해당 요청의 모든 컨텍스트 정보를 포함한 로그를 중앙 서버로 전송하도록 트리거합니다.
  * 요청 처리가 완전히 끝나면 해당 스레드의 MDC에서 추가했던 모든 정보를 정리합니다.
  * 이 필터는 {@link com.cholog.logger.config.LogAutoConfiguration}에 의해 서블릿 기반 웹 애플리케이션 환경에서
@@ -76,7 +76,7 @@ public class RequestTimingFilter implements Filter {
 
     /**
      * 서블릿 필터의 핵심 로직을 수행하는 메소드입니다.
-     * 요청 시작 시 컨텍스트 정보(ID, HTTP 상세)를 MDC에 설정하고, {@code chain.doFilter}를 호출하여
+     * 요청 시작 시 컨텍스트 정보(ID, HTTP 상세)를 MDC와 {@link HttpServletRequest} attribute에 설정하고, {@code chain.doFilter}를 호출하여
      * 실제 요청 처리를 수행합니다. 요청에 X-Request-Id 헤더가 있는 경우 해당 값을 요청 ID로 사용하고,
      * 없는 경우에만 UUID를 생성하여 사용합니다. 이를 통해 프론트엔드와 백엔드 간 통합 요청 추적이 가능합니다.
      * 요청 처리가 완료되면(성공 또는 예외 발생 무관하게 finally 블록 실행),
@@ -104,6 +104,9 @@ public class RequestTimingFilter implements Filter {
         try {
             // --- 1. 요청 시작 시 MDC 설정 ---
             MDC.put(CentralLogAppender.REQUEST_ID_MDC_KEY, requestId);
+            if (isHttpServletRequest) {
+                ((HttpServletRequest) request).setAttribute(CentralLogAppender.REQUEST_ID_MDC_KEY, requestId);
+            }
             mdcPopulated = true; // 최소한 requestId는 설정됨
 
             String method = null;

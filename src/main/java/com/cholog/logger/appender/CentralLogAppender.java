@@ -238,6 +238,22 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
         if (!isStarted()) {
             return;
         }
+
+        // --- 필터링: Tomcat 자체 에러 로그 (requestId 부재 시) 전송 방지 ---
+        // 목표: GlobalExceptionHandler를 통해 requestId가 포함된 에러 로그를 우선적으로 사용하고,
+        // requestId가 없는 중복적인 Tomcat 네이티브 에러 로그는 중앙 로그 서버로 전송하지 않도록 함.
+        // 이 필터링은 GlobalExceptionHandler가 애플리케이션 레벨에서 예외를 처리하고
+        // requestId를 포함한 로그를 남기는 것을 전제로 합니다.
+        String eventLoggerName = event.getLoggerName();
+        Map<String, String> mdcPropertiesForFilter = event.getMDCPropertyMap();
+
+        if (eventLoggerName != null && eventLoggerName.startsWith("org.apache.catalina") &&
+            (mdcPropertiesForFilter == null || mdcPropertiesForFilter.get(REQUEST_ID_MDC_KEY) == null)) {
+            
+            return; // 이 로그 이벤트를 더 이상 처리하지 않고 반환 (전송 안 함)
+        }
+        // --- 추가된 필터링 로직 끝 ---
+
         // 2. 로그 레벨 필터링
         if (!event.getLevel().isGreaterOrEqual(properties.getLogLevel())) {
             return;
@@ -253,6 +269,10 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
             logData.put("logger", event.getLoggerName());
             logData.put("message", event.getFormattedMessage()); // 포맷팅된 메시지 사용
             logData.put("thread", event.getThreadName());
+
+            // source 추가 (backend)
+            logData.put("source", "backend");
+
             // 시퀀스 번호 추가 (설정이 활성화된 경우)
             logData.put("sequence",1);
 
