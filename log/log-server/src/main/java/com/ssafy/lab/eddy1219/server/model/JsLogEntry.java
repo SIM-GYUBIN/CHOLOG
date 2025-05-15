@@ -41,21 +41,24 @@ public class JsLogEntry {
 
     @Data
     public static class LogHttpInfo {
-        private LogHttpRequestInfo request;
-        private LogHttpResponseInfo response;
-        private Long durationMs; // SDK는 number 타입이므로 Long으로 매핑
-    }
-
-    @Data
-    public static class LogHttpRequestInfo {
+//        private LogHttpRequestInfo request;
+//        private LogHttpResponseInfo response;
         private String method;
-        private String url;
+        private String requestUri;
+        private Integer status;
+        private Long responseTime; // SDK는 number 타입이므로 Long으로 매핑
     }
 
-    @Data
-    public static class LogHttpResponseInfo {
-        private Integer statusCode; // SDK는 number 타입이므로 Integer로 매핑
-    }
+//    @Data
+//    public static class LogHttpRequestInfo {
+//        private String method;
+//        private String url;
+//    }
+
+//    @Data
+//    public static class LogHttpResponseInfo {
+//        private Integer statusCode; // SDK는 number 타입이므로 Integer로 매핑
+//    }
 
     @Data
     public static class LogClientInfo {
