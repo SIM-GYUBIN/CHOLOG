@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import URLGuideModal from './URLGuideModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../store/store';
+import { saveWebhook, updateWebhook } from '../store/slices/webhookSlice';
+import URLGuideModal from './JiraGuideModal';
+import { useParams } from 'react-router-dom';
 
 interface AlarmSettingProps {
   isOpen: boolean;
@@ -9,26 +13,84 @@ interface AlarmSettingProps {
     webhookItem?: {
       id: number;
       mmURL: string;
-      logLevel: string;
+      keywords: string;
       notificationENV: string;
       isEnabled: boolean;
     };
   };
-  onSave: (data: any) => void;
 }
 
 const AlarmSetting: React.FC<AlarmSettingProps> = ({
   isOpen,
   onClose,
   webhookData,
-  onSave,
 }) => {
-  const [mmURL, setMmURL] = useState(webhookData?.webhookItem?.mmURL || '');
-  const [logLevel, setLogLevel] = useState(webhookData?.webhookItem?.logLevel || '');
-  const [notificationENV, setNotificationENV] = useState(webhookData?.webhookItem?.notificationENV || '');
-  const [isEnabled, setIsEnabled] = useState(webhookData?.webhookItem?.isEnabled ?? true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { projectId } = useParams<{ projectId: string }>();
+  
+  // exists 값에 따라 초기값 설정
+  const [mmURL, setMmURL] = useState('');
+  const [keywords, setKeywords] = useState('');
+  const [notificationENV, setNotificationENV] = useState('prod'); // 기본값 설정
+  const [isEnabled, setIsEnabled] = useState(true);
   const [isURLGuideOpen, setIsURLGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'webhook' | 'jira'>('webhook');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 폼 유효성 검사 상태
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [errors, setErrors] = useState({
+    mmURL: '',
+    keywords: ''
+  });
+
+  // webhookData가 변경될 때 폼 데이터 업데이트 및 콘솔 로그 출력
+  useEffect(() => {
+    // API 응답 결과를 콘솔에 출력
+    console.log('웹훅 설정 API 응답 결과:', webhookData);
+    
+    if (webhookData?.exists && webhookData.webhookItem) {
+      setMmURL(webhookData.webhookItem.mmURL || '');
+      setKeywords(webhookData.webhookItem.keywords || '');
+      setNotificationENV(webhookData.webhookItem.notificationENV || 'prod');
+      setIsEnabled(webhookData.webhookItem.isEnabled ?? true);
+    } else {
+      // exists가 false인 경우 초기화
+      setMmURL('');
+      setKeywords('');
+      setNotificationENV('prod');
+      setIsEnabled(true);
+    }
+  }, [webhookData]);
+
+  // 폼 유효성 검사
+  useEffect(() => {
+    const validateForm = () => {
+      const newErrors = {
+        mmURL: '',
+        keywords: ''
+      };
+      
+      // URL 유효성 검사
+      if (!mmURL) {
+        newErrors.mmURL = 'Mattermost URL을 입력해주세요';
+      } else if (!mmURL.startsWith('https://')) {
+        newErrors.mmURL = 'URL은 https://로 시작해야 합니다';
+      }
+      
+      // 키워드 유효성 검사
+      if (!keywords) {
+        newErrors.keywords = '알림 받을 키워드를 입력해주세요';
+      }
+      
+      setErrors(newErrors);
+      
+      // 모든 필수 필드가 유효한지 확인
+      setIsFormValid(!newErrors.mmURL && !newErrors.keywords);
+    };
+    
+    validateForm();
+  }, [mmURL, keywords]);
 
   // isOpen이 false에서 true로 변경될 때 webhook 탭으로 초기화
   useEffect(() => {
@@ -36,6 +98,46 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
       setActiveTab('webhook');
     }
   }, [isOpen]);
+
+  // 폼 제출 핸들러
+  const handleSubmit = async () => {
+    if (!isFormValid || !projectId) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const webhookItem = {
+        mmURL,
+        keywords,
+        notificationENV,
+        isEnabled,
+      };
+      
+      // exists 값에 따라 PUT 또는 POST 요청 보내기
+      if (webhookData?.exists) {
+        // 웹훅 데이터가 존재하면 PUT 요청
+        await dispatch(updateWebhook({
+          projectId: Number(projectId),
+          webhookItem
+        })).unwrap();
+        console.log('웹훅 설정이 성공적으로 수정되었습니다.');
+      } else {
+        // 웹훅 데이터가 존재하지 않으면 POST 요청
+        await dispatch(saveWebhook({
+          projectId: Number(projectId),
+          webhookItem
+        })).unwrap();
+        console.log('웹훅 설정이 성공적으로 생성되었습니다.');
+      }
+      
+      // 성공 시 모달 닫기
+      onClose();
+    } catch (error) {
+      console.error('웹훅 설정 저장 중 오류가 발생했습니다:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -92,9 +194,12 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                     value={mmURL}
                     onChange={(e) => setMmURL(e.target.value)}
                     placeholder="https://meeting.ssafy.com/hooks/$$URL_ADDRESS"
-                    className="w-full px-3 py-2 border rounded-lg border-slate-700 text-[12px]"
+                    className={`w-full px-3 py-2 border rounded-lg ${errors.mmURL ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
                     required
                   />
+                  {errors.mmURL && (
+                    <p className="text-red-500 text-[11px] mt-1">{errors.mmURL}</p>
+                  )}
                 </div>
 
                 <div>
@@ -103,12 +208,16 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                   {/* 키워드 api요청할때 ","포함해서 그냥 텍스트 자체로 보내기!! */}
                   <input
                     type="text"
-                    value={logLevel}
-                    onChange={(e) => setLogLevel(e.target.value)}
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
                     placeholder="Timeout, Unauthorized, Not_found ..."
-                    className="w-full px-3 py-2 border rounded-lg  border-slate-700 text-[12px]"
+                    className={`w-full px-3 py-2 border rounded-lg ${errors.keywords ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
                     required
                   />
+                  {errors.keywords && (
+                    <p className="text-red-500 text-[11px] mt-1">{errors.keywords}</p>
+                  )}
+                  <p className="text-[11px] text-slate-500 mt-1">쉼표(,)로 구분하여 여러 키워드를 입력할 수 있습니다</p>
                 </div>
 
                 <div>
@@ -116,7 +225,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                   <select
                     value={notificationENV}
                     onChange={(e) => setNotificationENV(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg  border-slate-700 text-[12px]"
+                    className="w-full px-3 py-2 border rounded-lg border-slate-700 text-[12px]"
                   >
                     <option value="prod">배포 환경</option>
                     <option value="local">로컬 환경</option>
@@ -158,25 +267,17 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
             <button
               onClick={onClose}
               className="text-[12px] px-4 text-gray-600 hover:text-gray-800"
+              disabled={isSubmitting}
             >
               취소
             </button>
             {activeTab === 'webhook' && (
               <button
-                onClick={() => {
-                  onSave({
-                    webhookItem: {
-                      mmURL,
-                      logLevel,
-                      notificationENV,
-                      isEnabled,
-                    },
-                  });
-                  onClose();
-                }}
-                className="text-[12px] px-3 py-2 bg-lime-600 text-white rounded-lg hover:bg-lime-700"
+                onClick={handleSubmit}
+                disabled={!isFormValid || isSubmitting}
+                className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? 'bg-lime-600 hover:bg-lime-700' : 'bg-lime-300 cursor-not-allowed'} text-white rounded-lg transition-colors`}
               >
-                등록하기
+                {isSubmitting ? '처리 중...' : webhookData?.exists ? '수정하기' : '등록하기'}
               </button>
             )}
           </div>

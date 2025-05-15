@@ -1,12 +1,25 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AlarmSetting from './AlarmSetting';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchWebhook } from '../store/slices/webhookSlice';
+import { AppDispatch, RootState } from '../store/store';
+
 
 export default function ProjectNavBar() {
   const navigate = useNavigate();
   const { projectId } = useParams();
   const [isAlarmSettingOpen, setIsAlarmSettingOpen] = useState(false);
 
+  const dispatch = useDispatch<AppDispatch>();
+  const { webhookData, isLoading } = useSelector((state: RootState) => state.webhook);
+
+  useEffect(() => {
+    if (isAlarmSettingOpen && projectId) {
+      dispatch(fetchWebhook(Number(projectId)));
+    }
+  }, [isAlarmSettingOpen, projectId, dispatch]);
+  
   const isActive = (path: string) => {
     return window.location.pathname.includes(path);
   };
@@ -97,13 +110,11 @@ export default function ProjectNavBar() {
         </button>
       </nav>
   
-  <AlarmSetting
-    isOpen={isAlarmSettingOpen}
-    onClose={() => setIsAlarmSettingOpen(false)}
-    webhookData={undefined}
-    onSave={(data) => {
-      console.log('Webhook data:', data);
-      setIsAlarmSettingOpen(false);
-    }}
-  />
-</div>)}
+      <AlarmSetting
+        isOpen={isAlarmSettingOpen}
+        onClose={() => setIsAlarmSettingOpen(false)}
+        webhookData={webhookData}
+      />
+    </div>
+  );
+}
