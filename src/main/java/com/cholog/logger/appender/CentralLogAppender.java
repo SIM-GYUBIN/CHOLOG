@@ -607,6 +607,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 logData.remove("httpStatus");
                 logData.remove("requestMethod");
                 logData.remove("requestUri");
+                logData.remove("responseTime");
             }
 
             // 11. 최종 Map을 JSON 문자열로 변환
