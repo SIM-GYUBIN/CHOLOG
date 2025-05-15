@@ -600,6 +600,14 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 }
                 logData.put("error", throwableData);
             }
+            
+            // 10.5 중복 필드 제거: HTTP 관련 필드가 루트 레벨에 있고 http 객체도 있다면 루트 레벨 필드를 제거
+            if (logData.containsKey("http")) {
+                // 루트 레벨에서 http 객체로 이동된 필드 제거
+                logData.remove("httpStatus");
+                logData.remove("requestMethod");
+                logData.remove("requestUri");
+            }
 
             // 11. 최종 Map을 JSON 문자열로 변환
             String jsonLog = objectMapper.writeValueAsString(logData);
