@@ -1,16 +1,21 @@
 # CHANGELOG
 
-## [1.0.3] - 2025-05-15
-### 주요 변경 사항
-* **Tomcat 네이티브 에러 로그에 `requestId` 직접 주입**:
-  - `CentralLogAppender`가 `org.apache.catalina...` 등 Tomcat 자체 로거가 발생시키는 에러 로그를 처리할 때, MDC에 존재하는 `requestId`를 해당 로그의 `requestId` 필드에 직접 주입하도록 변경.
-  - 이를 통해 별도의 에러 핸들러 없이 Tomcat 에러 로그에서도 요청 추적이 가능하도록 단순화.
-* **`GlobalExceptionHandler` 및 관련 자동 설정 제거**:
-  - 기존에 Tomcat 에러를 포함한 전역 예외를 처리하고 별도 로그를 생성하던 `GlobalExceptionHandler` 및 이를 등록하던 `ChologLoggerAutoConfiguration` 제거.
-  - 에러 로깅 방식을 단순화하여 Tomcat 에러의 경우, `requestId`가 주입된 Tomcat 자체 로그만 남도록 변경.
-* **코드 주석 및 문서 업데이트**:
-  - 변경된 에러 로깅 방식에 맞춰 관련 클래스(`CentralLogAppender`, `RequestTimingFilter`)의 Javadoc 및 내부 주석 업데이트.
-  - `README.md`의 에러 로깅 관련 설명 수정.
+## [v1.0.3] - 2025-05-15
+### 개선 사항
+* **스레드 기반 requestId 추적 기능 추가**:
+  - 같은 스레드에서 발생하는 모든 로그에 요청 ID를 자동으로 연결
+  - Tomcat 컨테이너 에러 로그와 애플리케이션 로그 간 requestId 연결
+  - 요청 추적 및 디버깅 용이성 개선
+* **CentralLogAppender 기능 개선**:
+  - 스레드별 requestId 캐시를 위한 ConcurrentHashMap 도입
+  - 로그 발생 스레드를 기준으로 requestId 자동 연결
+  - 에러 로그 발생 시 자동으로 캐시된 requestId 적용
+* **스마트 에러 감지 강화**:
+  - Tomcat, Spring 및 일반 에러 패턴에 대한 정교한 감지 알고리즘 개선
+  - 특히 컨테이너 레벨 로그와 애플리케이션 에러 로그 연결성 향상
+* **메모리 관리 최적화**:
+  - 장기 실행 애플리케이션을 위한 캐시 정리 메커니즘 추가
+  - 스레드 맵이 과도하게 커지는 것을 방지하는 정리 로직 구현
 
 ## [v1.0.2] - 2025-05-13
 ### 개선 사항

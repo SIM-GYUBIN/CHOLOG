@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * CHO:LOG Logging Library의 핵심 클래스로, Logback 프레임워크의 Appender 역할을 합니다.
@@ -73,6 +74,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
      */
     public static final String HTTP_STATUS_MDC_KEY = "httpStatus";
     // ------------------------
+
+    // 스레드별 requestId 캐시를 저장하는 ConcurrentHashMap
+    private final ConcurrentHashMap<String, String> threadRequestIdMap = new ConcurrentHashMap<>();
 
     private final LogSenderService logSenderService;
     private final LogServerProperties properties;
@@ -324,6 +328,18 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 String userAgent = mdcProperties.get(REQUEST_USER_AGENT_MDC_KEY);
                 String statusStr = mdcProperties.get(HTTP_STATUS_MDC_KEY);
 
+                // 현재 스레드 이름
+                String threadName = event.getThreadName();
+                
+                // 스레드 기반 requestId 추적 처리
+                if (requestId != null) {
+                    // MDC에 requestId가 있으면 스레드별 맵에 저장
+                    threadRequestIdMap.put(threadName, requestId);
+                } else {
+                    // MDC에 requestId가 없으면 스레드별 맵에서 조회
+                    requestId = threadRequestIdMap.get(threadName);
+                }
+
                 // 추출한 핵심 정보를 루트 필드에 추가
                 if (requestIdFromMDC != null) {
                     logData.put("requestId", requestIdFromMDC);
@@ -457,6 +473,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
             if (event.getLevel().toString().equals("ERROR") && eventLoggerName != null) {
                 boolean needsStatusCode = false;
                 String message = event.getFormattedMessage();
+                String threadName = event.getThreadName();
 
                 // 1. Tomcat 컨테이너 예외 감지
                 if ((eventLoggerName.contains("org.apache.catalina") || eventLoggerName.contains("org.apache.tomcat")) &&
@@ -465,6 +482,12 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                      message.contains("Servlet.service") ||
                      message.contains("Exception processing"))) {
                     needsStatusCode = true;
+                    
+                    // Tomcat 로그에도 requestId 적용 (맵에 있는 경우)
+                    String requestId = threadRequestIdMap.get(threadName);
+                    if (requestId != null && !logData.containsKey("requestId")) {
+                        logData.put("requestId", requestId);
+                    }
                 }
 
                 // 2. Spring 프레임워크 예외 감지
@@ -476,6 +499,12 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                          message.contains("Error") ||
                          message.contains("Failed"))) {
                     needsStatusCode = true;
+                    
+                    // Spring 로그에도 requestId 적용 (맵에 있는 경우)
+                    String requestId = threadRequestIdMap.get(threadName);
+                    if (requestId != null && !logData.containsKey("requestId")) {
+                        logData.put("requestId", requestId);
+                    }
                 }
 
                 // 3. 일반적인 예외 메시지 패턴 감지
@@ -484,6 +513,12 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                          message.contains("Error:") ||
                          message.contains("Throwable:"))) {
                     needsStatusCode = true;
+                    
+                    // 일반 에러 로그에도 requestId 적용 (맵에 있는 경우)
+                    String requestId = threadRequestIdMap.get(threadName);
+                    if (requestId != null && !logData.containsKey("requestId")) {
+                        logData.put("requestId", requestId);
+                    }
                 }
 
                 // 상태 코드가 필요하고 아직 설정되지 않은 경우 500으로 설정
@@ -502,6 +537,14 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 // 추가: 예외가 있는 경우 httpStatus가 설정되어 있지 않으면 500으로 설정
                 if (!logData.containsKey("httpStatus")) {
                     logData.put("httpStatus", 500);
+                }
+                
+                // 예외 발생 시에도 requestId 체크 (스레드 맵에 있는 경우)
+                if (!logData.containsKey("requestId")) {
+                    String requestId = threadRequestIdMap.get(event.getThreadName());
+                    if (requestId != null) {
+                        logData.put("requestId", requestId);
+                    }
                 }
 
                 // 스택 트레이스 (문자열 배열로 변환)
@@ -537,10 +580,17 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
         }
     }
 
+    // 맵 정리를 위한 메서드 (필요 시 주기적으로 호출할 수 있음)
+    private void cleanupRequestIdMap() {
+        if (threadRequestIdMap.size() > 1000) { // 맵 크기가 너무 크면 정리
+            threadRequestIdMap.clear();
+        }
+    }
+
     @Override
     public void stop() {
         addInfo("Stopping CentralLogAppender.");
-        // Appender 중지 시 필요한 작업 (현재는 없음)
+        threadRequestIdMap.clear(); // 맵 정리
         super.stop();
     }
 }
