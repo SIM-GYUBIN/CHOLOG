@@ -332,12 +332,12 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 String threadName = event.getThreadName();
                 
                 // 스레드 기반 requestId 추적 처리
-                if (requestId != null) {
+                if (requestIdFromMDC != null) {
                     // MDC에 requestId가 있으면 스레드별 맵에 저장
-                    threadRequestIdMap.put(threadName, requestId);
+                    threadRequestIdMap.put(threadName, requestIdFromMDC);
                 } else {
                     // MDC에 requestId가 없으면 스레드별 맵에서 조회
-                    requestId = threadRequestIdMap.get(threadName);
+                    requestIdFromMDC = threadRequestIdMap.get(threadName);
                 }
 
                 // 추출한 핵심 정보를 루트 필드에 추가
@@ -484,9 +484,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                     needsStatusCode = true;
                     
                     // Tomcat 로그에도 requestId 적용 (맵에 있는 경우)
-                    String requestId = threadRequestIdMap.get(threadName);
-                    if (requestId != null && !logData.containsKey("requestId")) {
-                        logData.put("requestId", requestId);
+                    String requestIdFromMap = threadRequestIdMap.get(threadName);
+                    if (requestIdFromMap != null && !logData.containsKey("requestId")) {
+                        logData.put("requestId", requestIdFromMap);
                     }
                 }
 
@@ -501,9 +501,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                     needsStatusCode = true;
                     
                     // Spring 로그에도 requestId 적용 (맵에 있는 경우)
-                    String requestId = threadRequestIdMap.get(threadName);
-                    if (requestId != null && !logData.containsKey("requestId")) {
-                        logData.put("requestId", requestId);
+                    String requestIdFromMap = threadRequestIdMap.get(threadName);
+                    if (requestIdFromMap != null && !logData.containsKey("requestId")) {
+                        logData.put("requestId", requestIdFromMap);
                     }
                 }
 
@@ -515,9 +515,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                     needsStatusCode = true;
                     
                     // 일반 에러 로그에도 requestId 적용 (맵에 있는 경우)
-                    String requestId = threadRequestIdMap.get(threadName);
-                    if (requestId != null && !logData.containsKey("requestId")) {
-                        logData.put("requestId", requestId);
+                    String requestIdFromMap = threadRequestIdMap.get(threadName);
+                    if (requestIdFromMap != null && !logData.containsKey("requestId")) {
+                        logData.put("requestId", requestIdFromMap);
                     }
                 }
 
@@ -541,9 +541,9 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 
                 // 예외 발생 시에도 requestId 체크 (스레드 맵에 있는 경우)
                 if (!logData.containsKey("requestId")) {
-                    String requestId = threadRequestIdMap.get(event.getThreadName());
-                    if (requestId != null) {
-                        logData.put("requestId", requestId);
+                    String requestIdFromMap = threadRequestIdMap.get(event.getThreadName());
+                    if (requestIdFromMap != null) {
+                        logData.put("requestId", requestIdFromMap);
                     }
                 }
 
