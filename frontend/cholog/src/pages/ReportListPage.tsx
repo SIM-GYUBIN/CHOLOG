@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
 import { fetchReportList } from '../store/slices/reportSlice';
-import { MOCK_REPORT_LIST } from '../constants/mockData';
 import ProjectNavBar from '../components/projectNavbar';
 
 const ReportListPage = () => {
@@ -12,15 +11,11 @@ const ReportListPage = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { reportList, isLoading, error } = useSelector((state: RootState) => state.report);
 
-    console.log(projectId); // Check if id is being passed correctly t
-
     useEffect(() => {
         if (projectId) {
             dispatch(fetchReportList({ projectId: Number(projectId) }));
         }
     }, [dispatch, projectId]);
-
-    const displayData = error ? MOCK_REPORT_LIST : reportList;
 
     const handleReportClick = (reportId: string) => {
         navigate(`/report/${projectId}/${reportId}`);
@@ -37,18 +32,18 @@ const ReportListPage = () => {
                 <h1 className="text-2xl font-bold mb-6 text-left">리포트 목록</h1>
 
                 {error && (
-                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 text-left">
-                        API 오류가 발생하여 목데이터를 표시합니다.
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 text-left">
+                        리포트 목록을 불러오는 중 오류가 발생했습니다.
                     </div>
                 )}
 
-                {(!displayData?.content || displayData.content.length === 0) ? (
+                {(!reportList?.content || reportList.content.length === 0) ? (
                     <div className="text-left text-gray-500 p-4">
                         생성된 리포트가 없습니다.
                     </div>
                 ) : (
                     <div className="grid gap-6">
-                        {displayData.content.map((report) => (
+                        {reportList.content.map((report) => (
                             <div
                                 key={report.reportId}
                                 className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-blue-200"
@@ -92,14 +87,14 @@ const ReportListPage = () => {
                     </div>
                 )}
 
-                {displayData && (
+                {reportList && (
                     <div className="mt-6 text-sm text-gray-500 bg-gray-50 p-4 rounded-lg flex justify-between items-center">
                         <span className="text-left">
-                            총 <span className="font-semibold">{displayData.totalElements}</span>개의 리포트
+                            총 <span className="font-semibold">{reportList.totalElements}</span>개의 리포트
                         </span>
                         <span>
-                            페이지 <span className="font-semibold">{displayData.pageNumber}</span> / 
-                            <span className="font-semibold ml-1">{displayData.totalPages}</span>
+                            페이지 <span className="font-semibold">{reportList.pageNumber}</span> / 
+                            <span className="font-semibold ml-1">{reportList.totalPages}</span>
                         </span>
                     </div>
                 )}
