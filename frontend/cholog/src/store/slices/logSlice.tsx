@@ -571,7 +571,7 @@ export const archiveLog = createAsyncThunk<
 >("log/archiveLog", async (params, { rejectWithValue }) => {
   try {
     const response = await api.post<ArchiveLogResponse>(
-      `/api/log/${params.projectId}/archive`,
+      `/log/${params.projectId}/archive`,
       {
         logId: params.logId,
         archiveReason: params.archiveReason
@@ -630,7 +630,7 @@ export const fetchArchivedLogs = createAsyncThunk<
     if (params.size) queryParams.append("size", params.size.toString());
 
     const response = await api.get<ArchivedLogsResponse>(
-      `/api/log/${params.projectId}/archive?${queryParams.toString()}`,
+      `/log/${params.projectId}/archive?${queryParams.toString()}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -949,7 +949,47 @@ const logSlice = createSlice({
             code: "INTERNAL_ERROR",
             message: "Trace 로그 조회 중 오류가 발생했습니다.",
           };
-      });
+      })
+      .addCase(fetchArchivedLogs.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.archivedLogs = null;
+      })
+      .addCase(fetchArchivedLogs.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.archivedLogs = action.payload.data; // ✅ 전체 객체 저장
+        state.pagination = {
+          pageNumber: action.payload.data.pageNumber,
+          totalPages: action.payload.data.totalPages,
+          totalElements: action.payload.data.totalElements,
+          pageSize: action.payload.data.pageSize,
+          first: action.payload.data.first,
+          last: action.payload.data.last,
+        };
+        state.error = null;
+      })
+      .addCase(fetchArchivedLogs.rejected, (state, action) => {
+        state.isLoading = false;
+        state.archivedLogs = null;
+        state.pagination = null;
+
+        const payloadError = (action.payload as ArchivedLogsResponse)?.error;
+        state.error = payloadError
+          ? {
+            code: payloadError.code as
+              | "INVALID_REQUEST"
+              | "UNAUTHORIZED"
+              | "NOT_FOUND"
+              | "INTERNAL_ERROR",
+            message: payloadError.message,
+          }
+          : {
+            code: "INTERNAL_ERROR",
+            message: "아카이브된 로그 조회 중 오류가 발생했습니다.",
+          };
+      })
+
+      
   },
 });
 
