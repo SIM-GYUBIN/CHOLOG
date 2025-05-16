@@ -2,7 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
 import { saveWebhook, updateWebhook } from '../store/slices/webhookSlice';
-import URLGuideModal from './JiraGuideModal';
+import { 
+  fetchJiraUserSettings, 
+  createJiraUserSettings, 
+  updateJiraUserSettings,
+  fetchJiraProjectSettings,
+  createJiraProjectSettings,
+  updateJiraProjectSettings
+} from '../store/slices/jiraSlice';
+import URLGuideModal from './URLGuideModal';
+import JiraGuideModal from './JiraGuideModal';
 import { useParams } from 'react-router-dom';
 
 interface AlarmSettingProps {
@@ -34,15 +43,63 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
   const [notificationENV, setNotificationENV] = useState('prod'); // 기본값 설정
   const [isEnabled, setIsEnabled] = useState(true);
   const [isURLGuideOpen, setIsURLGuideOpen] = useState(false);
+  const [isJiraGuideOpen, setIsJiraGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'webhook' | 'jira'>('webhook');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Jira 관련 상태
+  const [jiraUsername, setJiraUsername] = useState('');
+  const [jiraToken, setJiraToken] = useState('');
+  const [jiraInstanceUrl, setJiraInstanceUrl] = useState(''); // 추가: Jira 인스턴스 URL
+  const [jiraProjectKey, setJiraProjectKey] = useState('');
+  const [jiraProjectEnabled, setJiraProjectEnabled] = useState(false);
+  const [jiraActiveSection, setJiraActiveSection] = useState<'personal' | 'project'>('personal');
+  const [jiraUserExists, setJiraUserExists] = useState(false);
+  const [jiraProjectExists, setJiraProjectExists] = useState(false);
+  const [jiraLoading, setJiraLoading] = useState(false);
+  const [jiraError, setJiraError] = useState('');
   
   // 폼 유효성 검사 상태
   const [isFormValid, setIsFormValid] = useState(false);
   const [errors, setErrors] = useState({
     mmURL: '',
-    keywords: ''
+    keywords: '',
+    jiraUsername: '',
+    jiraToken: '',
+    jiraInstanceUrl: '', // 추가: Jira 인스턴스 URL 에러
+    jiraProjectKey: ''
   });
+
+  // Jira 상태 가져오기
+  const jira = useSelector((state: any) => state.jira);
+
+  // Jira 프로젝트 설정 로드
+  useEffect(() => {
+    if (projectId && isOpen && activeTab === 'jira') {
+      dispatch(fetchJiraProjectSettings(Number(projectId)))
+        .unwrap()
+        .then((response) => {
+          // API 응답 로그 출력
+          console.log('Jira 프로젝트 설정 응답:', response);
+          
+          if (response.success && response.data.exists) {
+            // 설정이 존재하면 폼 필드에 값 채우기
+            setJiraInstanceUrl(response.data.instanceUrl || '');
+            setJiraProjectKey(response.data.projectKey || '');
+            setJiraProjectExists(true);
+          } else {
+            // 설정이 존재하지 않으면 초기화
+            setJiraInstanceUrl('');
+            setJiraProjectKey('');
+            setJiraProjectExists(false);
+          }
+        })
+        .catch((error) => {
+          console.error('Jira 프로젝트 설정 로드 중 오류:', error);
+          setJiraError('설정을 불러오는 중 오류가 발생했습니다.');
+        });
+    }
+  }, [projectId, isOpen, activeTab, dispatch]);
 
   // webhookData가 변경될 때 폼 데이터 업데이트 및 콘솔 로그 출력
   useEffect(() => {
@@ -63,12 +120,24 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
     }
   }, [webhookData]);
 
+  // 모달이 열릴 때 기본 탭(webhook)의 데이터만 로드
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('webhook');
+      // webhook 데이터는 이미 props로 받아오고 있으므로 추가 로직 필요 없음
+    }
+  }, [isOpen]);
+
   // 폼 유효성 검사
   useEffect(() => {
     const validateForm = () => {
       const newErrors = {
         mmURL: '',
-        keywords: ''
+        keywords: '',
+        jiraUsername: '',
+        jiraToken: '',
+        jiraInstanceUrl: '', // 추가
+        jiraProjectKey: ''
       };
       
       // URL 유효성 검사
@@ -83,14 +152,49 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
         newErrors.keywords = '알림 받을 키워드를 입력해주세요';
       }
       
+      // Jira 사용자 이름 유효성 검사
+      if (activeTab === 'jira' && jiraActiveSection === 'personal') {
+        if (!jiraUsername) {
+          newErrors.jiraUsername = 'Jira 사용자 이름을 입력해주세요';
+        } else if (!jiraUsername.includes('@')) {
+          newErrors.jiraUsername = '유효한 이메일 형식이 아닙니다';
+        }
+        
+        // Jira 토큰 유효성 검사
+        if (!jiraToken) {
+          newErrors.jiraToken = 'Jira API 토큰을 입력해주세요';
+        }
+      }
+      
+      // Jira 프로젝트 키 유효성 검사
+      if (activeTab === 'jira' && jiraActiveSection === 'project') {
+        if (!jiraInstanceUrl) {
+          newErrors.jiraInstanceUrl = 'Jira 인스턴스 URL을 입력해주세요';
+        } else if (!jiraInstanceUrl.startsWith('https://')) {
+          newErrors.jiraInstanceUrl = 'URL은 https://로 시작해야 합니다';
+        }
+        
+        if (!jiraProjectKey) {
+          newErrors.jiraProjectKey = 'Jira 프로젝트 키를 입력해주세요';
+        }
+      }
+      
       setErrors(newErrors);
       
-      // 모든 필수 필드가 유효한지 확인
-      setIsFormValid(!newErrors.mmURL && !newErrors.keywords);
+      // 활성화된 탭과 섹션에 따라 유효성 검사 결과 설정
+      if (activeTab === 'webhook') {
+        setIsFormValid(!newErrors.mmURL && !newErrors.keywords);
+      } else if (activeTab === 'jira') {
+        if (jiraActiveSection === 'personal') {
+          setIsFormValid(!newErrors.jiraUsername && !newErrors.jiraToken);
+        } else {
+          setIsFormValid(!newErrors.jiraInstanceUrl && !newErrors.jiraProjectKey);
+        }
+      }
     };
     
     validateForm();
-  }, [mmURL, keywords]);
+  }, [mmURL, keywords, activeTab, jiraActiveSection, jiraUsername, jiraToken, jiraInstanceUrl, jiraProjectKey]);
 
   // isOpen이 false에서 true로 변경될 때 webhook 탭으로 초기화
   useEffect(() => {
@@ -99,7 +203,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
     }
   }, [isOpen]);
 
-  // 폼 제출 핸들러
+  // 웹훅 폼 제출 핸들러
   const handleSubmit = async () => {
     if (!isFormValid || !projectId) return;
     
@@ -134,6 +238,108 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
       onClose();
     } catch (error) {
       console.error('웹훅 설정 저장 중 오류가 발생했습니다:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Jira 개인 설정 로드
+  useEffect(() => {
+    if (isOpen && activeTab === 'jira' && jiraActiveSection === 'personal') {
+      dispatch(fetchJiraUserSettings())
+        .unwrap()
+        .then((response) => {
+          // API 응답 로그 출력
+          console.log('Jira 개인 설정 응답:', response);
+          
+          if (response.success && response.data.exists) {
+            // 설정이 존재하면 폼 필드에 값 채우기
+            setJiraUsername(response.data.userName || '');
+            setJiraToken(response.data.jiraToken || '');
+            setJiraUserExists(true);
+          } else {
+            // 설정이 존재하지 않으면 초기화
+            setJiraUsername('');
+            setJiraToken('');
+            setJiraUserExists(false);
+          }
+        })
+        .catch((error) => {
+          console.error('Jira 개인 설정 로드 중 오류:', error);
+          setJiraError('설정을 불러오는 중 오류가 발생했습니다.');
+        });
+    }
+  }, [isOpen, activeTab, jiraActiveSection, dispatch]);
+
+  // Jira 개인 설정 저장 핸들러
+  const handleJiraUserSubmit = async () => {
+    if (!isFormValid) return;
+    
+    setIsSubmitting(true);
+    setJiraError('');
+    
+    try {
+      // 사용자 설정 데이터 준비
+      const jiraUserData = {
+        userName: jiraUsername,
+        jiraToken: jiraToken
+      };
+      
+      // 먼저 사용자 설정이 존재하는지 확인
+      const userSettingsResponse = await dispatch(fetchJiraUserSettings()).unwrap();
+      console.log('Jira 개인 설정 조회 응답:', userSettingsResponse);
+      
+      if (userSettingsResponse.success && userSettingsResponse.data.exists) {
+        // 설정이 존재하면 업데이트
+        const updateResponse = await dispatch(updateJiraUserSettings(jiraUserData)).unwrap();
+        console.log('Jira 개인 설정 수정 응답:', updateResponse);
+        console.log('Jira 개인 설정이 성공적으로 수정되었습니다.');
+      } else {
+        // 설정이 존재하지 않으면 새로 생성
+        const createResponse = await dispatch(createJiraUserSettings(jiraUserData)).unwrap();
+        console.log('Jira 개인 설정 등록 응답:', createResponse);
+        console.log('Jira 개인 설정이 성공적으로 등록되었습니다.');
+        setJiraUserExists(true);
+      }
+    } catch (error: any) {
+      console.error('Jira 개인 설정 저장 중 오류가 발생했습니다:', error);
+      setJiraError(error.message || '알 수 없는 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Jira 프로젝트 설정 저장 핸들러
+  const handleJiraProjectSubmit = async () => {
+    if (!isFormValid || !projectId) return;
+    
+    setIsSubmitting(true);
+    setJiraError('');
+    
+    try {
+      const jiraProjectData = {
+        instanceUrl: jiraInstanceUrl,
+        projectKey: jiraProjectKey
+      };
+      
+      // 기존 설정 존재 여부에 따라 PUT 또는 POST 요청
+      if (jiraProjectExists) {
+        await dispatch(updateJiraProjectSettings({
+          projectId: Number(projectId),
+          settings: jiraProjectData
+        })).unwrap();
+        console.log('Jira 프로젝트 설정이 성공적으로 수정되었습니다.');
+      } else {
+        await dispatch(createJiraProjectSettings({
+          projectId: Number(projectId),
+          settings: jiraProjectData
+        })).unwrap();
+        console.log('Jira 프로젝트 설정이 성공적으로 등록되었습니다.');
+        setJiraProjectExists(true);
+      }
+    } catch (error: any) {
+      console.error('Jira 프로젝트 설정 저장 중 오류가 발생했습니다:', error);
+      setJiraError(error.message || '알 수 없는 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -255,11 +461,165 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
           ) : (
             <>
               <div className="text-[18px] font-[paperlogy6] mb-4">Jira 연동</div>
-              <div className="space-y-4">
-                <div className="text-[14px] text-slate-500">
-                  Jira 연동 기능은 준비 중입니다.
-                </div>
+              
+              {/* Jira 탭 내부 네비게이션 */}
+              <div className="flex border-b border-slate-200 mb-4">
+                <button
+                  onClick={() => setJiraActiveSection('personal')}
+                  className={`py-2 px-4 text-[14px] ${
+                    jiraActiveSection === 'personal'
+                      ? 'border-b-2 border-lime-500 text-lime-600 font-[paperlogy6]'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  개인 설정
+                </button>
+                <button
+                  onClick={() => setJiraActiveSection('project')}
+                  className={`py-2 px-4 text-[14px] ${
+                    jiraActiveSection === 'project'
+                      ? 'border-b-2 border-lime-500 text-lime-600 font-[paperlogy6]'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  프로젝트 설정
+                </button>
               </div>
+              
+              {/* 에러 메시지 표시 */}
+              {jiraError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-md mb-4 text-[12px]">
+                  {jiraError}
+                </div>
+              )}
+              
+              {/* 로딩 표시 */}
+              {jiraLoading && (
+                <div className="flex justify-center items-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-lime-500"></div>
+                </div>
+              )}
+              
+              {/* 개인 설정 섹션 */}
+              {jiraActiveSection === 'personal' && !jiraLoading && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-[14px] mb-2 flex items-center gap-1">
+                      Jira 사용자 이름 (이메일) <span className="text-red-500">*</span>
+                    </div>
+                    <input
+                      type="email"
+                      value={jiraUsername}
+                      onChange={(e) => setJiraUsername(e.target.value)}
+                      placeholder="example@company.com"
+                      className={`w-full px-3 py-2 border rounded-lg ${errors.jiraUsername ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
+                      required
+                    />
+                    {errors.jiraUsername && (
+                      <p className="text-red-500 text-[11px] mt-1">{errors.jiraUsername}</p>
+                    )}
+                    <p className="text-[11px] text-slate-500 mt-1">Jira 계정의 이메일 주소를 입력하세요</p>
+                  </div>
+
+                  <div>
+                    <div className="text-[14px] mb-2 flex items-center gap-1">
+                      Jira API 토큰 <span className="text-red-500">*</span>
+                      <button 
+                        onClick={() => setIsJiraGuideOpen(true)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="darkgray" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <input
+                      type="password"
+                      value={jiraToken}
+                      onChange={(e) => setJiraToken(e.target.value)}
+                      placeholder="Jira API 토큰"
+                      className={`w-full px-3 py-2 border rounded-lg ${errors.jiraToken ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
+                      required
+                    />
+                    {errors.jiraToken && (
+                      <p className="text-red-500 text-[11px] mt-1">{errors.jiraToken}</p>
+                    )}
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      <a 
+                        href="https://id.atlassian.com/manage-profile/security/api-tokens" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-lime-600 hover:underline"
+                      >
+                        Atlassian 계정 설정
+                      </a>
+                      에서 API 토큰을 생성할 수 있습니다
+                    </p>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <button
+                      onClick={handleJiraUserSubmit}
+                      disabled={!isFormValid || isSubmitting}
+                      className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? 'bg-lime-600 hover:bg-lime-700' : 'bg-lime-300 cursor-not-allowed'} text-white rounded-lg transition-colors`}
+                    >
+                      {isSubmitting ? '처리 중...' : jiraUserExists ? '수정하기' : '등록하기'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* 프로젝트 설정 섹션 */}
+              {jiraActiveSection === 'project' && !jiraLoading && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-[14px] mb-2 flex items-center gap-1">
+                      Jira 인스턴스 URL <span className="text-red-500">*</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={jiraInstanceUrl}
+                      onChange={(e) => setJiraInstanceUrl(e.target.value)}
+                      placeholder="https://ssafy.atlassian.net/"
+                      className={`w-full px-3 py-2 border rounded-lg ${errors.jiraInstanceUrl ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
+                      required
+                    />
+                    {errors.jiraInstanceUrl && (
+                      <p className="text-red-500 text-[11px] mt-1">{errors.jiraInstanceUrl}</p>
+                    )}
+                    <p className="text-[11px] text-slate-500 mt-1">Jira 인스턴스의 URL을 입력하세요 (예: https://ssafy.atlassian.net/)</p>
+                  </div>
+
+                  <div>
+                    <div className="text-[14px] mb-2 flex items-center gap-1">
+                      Jira 프로젝트 키 <span className="text-red-500">*</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={jiraProjectKey}
+                      onChange={(e) => setJiraProjectKey(e.target.value)}
+                      placeholder="S12P31B207"
+                      className={`w-full px-3 py-2 border rounded-lg ${errors.jiraProjectKey ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
+                      required
+                    />
+                    {errors.jiraProjectKey && (
+                      <p className="text-red-500 text-[11px] mt-1">{errors.jiraProjectKey}</p>
+                    )}
+                    <p className="text-[11px] text-slate-500 mt-1">Jira 프로젝트의 키를 입력하세요 (예: S12P31B207)</p>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <button
+                      onClick={handleJiraProjectSubmit}
+                      disabled={!isFormValid || isSubmitting}
+                      className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? 'bg-lime-600 hover:bg-lime-700' : 'bg-lime-300 cursor-not-allowed'} text-white rounded-lg transition-colors`}
+                    >
+                      {isSubmitting ? '처리 중...' : jiraProjectExists ? '수정하기' : '등록하기'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -287,6 +647,11 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
         isOpen={isURLGuideOpen}
         onClose={() => setIsURLGuideOpen(false)}
       />
+      <JiraGuideModal 
+        isOpen={isJiraGuideOpen}
+        onClose={() => setIsJiraGuideOpen(false)}
+      />
+
     </div>
   );
 };

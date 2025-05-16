@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import url1 from'@/assets/urlimg/url1.png';
-import url2 from'@/assets/urlimg/url2.png';
-import url3 from'@/assets/urlimg/url3.png';
-import url4 from'@/assets/urlimg/url4.png';
-import url5 from'@/assets/urlimg/url5.png';
+import url1 from'@/assets/jiraimg/token1.png';
+import url2 from'@/assets/jiraimg/token2.png';
+import url3 from'@/assets/jiraimg/token3.png';
+import url4 from'@/assets/jiraimg/token4.png';
+import url5 from'@/assets/jiraimg/token5.png';
+
+
 
 interface URLGuideModalProps {
   isOpen: boolean;
@@ -27,7 +29,7 @@ const URLGuideModal: React.FC<URLGuideModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60]" onClick={onClose}>
       <div className="bg-white rounded-lg p-4 w-[700px] shadow-lg" onClick={e => e.stopPropagation()}>
-        <div className="text-[16px] font-[paperlogy6] mb-3">Mattermost Webhook URL 설정 방법</div>
+        <div className="text-[16px] font-[paperlogy6] mb-3">Jira API 토큰 확인 방법</div>
         <div className="relative">
           <div className="overflow-hidden rounded-lg">
             <div 
