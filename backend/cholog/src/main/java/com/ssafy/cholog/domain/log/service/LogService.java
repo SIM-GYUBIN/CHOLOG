@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class LogService {
 
-    public static final String INDEX_PREFIX = "pjt-";
+    public static final String INDEX_PREFIX = "pjt-*-";
 
     private final ProjectRepository projectRepository;
     private final ProjectUserRepository projectUserRepository;

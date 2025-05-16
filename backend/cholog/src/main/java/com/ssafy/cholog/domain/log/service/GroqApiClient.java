@@ -17,12 +17,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 // Groq API 요청/응답을 위한 내부 DTO
-record GroqMessage(String role, String content) {}
-record GroqChatRequest(List<GroqMessage> messages, String model, Double temperature, Integer max_tokens, Boolean stream) {} // stream: false (일반적으로)
+record GroqMessage(String role, String content) {
+}
 
-record GroqChoice(Integer index, GroqMessage message, GroqMessage delta, String finish_reason, Object logprobs) {} // delta, logprobs는 스트리밍 또는 특정 기능 사용 시
-record GroqUsage(Integer prompt_tokens, Integer completion_tokens, Integer total_tokens) {}
-record GroqChatCompletionResponse(String id, String object, Long created, String model, List<GroqChoice> choices, GroqUsage usage, String system_fingerprint) {}
+record GroqChatRequest(List<GroqMessage> messages, String model, Double temperature, Integer max_tokens,
+                       Boolean stream) {
+} // stream: false (일반적으로)
+
+record GroqChoice(Integer index, GroqMessage message, GroqMessage delta, String finish_reason, Object logprobs) {
+} // delta, logprobs는 스트리밍 또는 특정 기능 사용 시
+
+record GroqUsage(Integer prompt_tokens, Integer completion_tokens, Integer total_tokens) {
+}
+
+record GroqChatCompletionResponse(String id, String object, Long created, String model, List<GroqChoice> choices,
+                                  GroqUsage usage, String system_fingerprint) {
+}
 
 
 @Service
@@ -48,11 +58,11 @@ public class GroqApiClient {
      * Groq LLM을 사용하여 분석을 요청합니다.
      * userPrompt는 이미 포맷팅된 로그 데이터를 포함하고 있다고 가정합니다.
      *
-     * @param model         사용할 LLM 모델
-     * @param systemPrompt  시스템 메시지
-     * @param userPrompt    사용자 메시지 (포맷팅된 로그 데이터 포함)
-     * @param maxTokens     응답 최대 토큰 수
-     * @param temperature   응답 생성 시 무작위성 (0.0 ~ 2.0)
+     * @param model        사용할 LLM 모델
+     * @param systemPrompt 시스템 메시지
+     * @param userPrompt   사용자 메시지 (포맷팅된 로그 데이터 포함)
+     * @param maxTokens    응답 최대 토큰 수
+     * @param temperature  응답 생성 시 무작위성 (0.0 ~ 2.0)
      * @return Groq API 응답을 Mono 형태로 반환
      */
     public Mono<GroqChatCompletionResponse> analyzeWithGroq(String model, String systemPrompt, String userPrompt, int maxTokens, double temperature) {
@@ -145,14 +155,14 @@ public class GroqApiClient {
         }
 
         if (log.getHttp() != null) {
-            if (log.getHttp().getRequest() != null) {
-                simple.setHttpMethod(log.getHttp().getRequest().getMethod());
-                simple.setRequestUrl(log.getHttp().getRequest().getUrl());
+            simple.setHttpMethod(log.getHttp().getMethod());
+            simple.setRequestUrl(log.getHttp().getRequestUri());
+            if (log.getHttp().getStatus() != null) {
+                simple.setStatusCode(log.getHttp().getStatus());
             }
-            if (log.getHttp().getResponse() != null) {
-                simple.setStatusCode(log.getHttp().getResponse().getStatusCode());
+            if (log.getHttp().getResponseTime() != null) {
+                simple.setHttpDurationMs(log.getHttp().getResponseTime());
             }
-            simple.setHttpDurationMs(log.getHttp().getDurationMs());
         }
 
         // 필요한 경우 client, event 정보 등 추가

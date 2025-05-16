@@ -50,8 +50,8 @@ public class LogDocument {
     @Field(name = "environment", type = FieldType.Keyword)
     private String environment;
 
-    @Field(name = "traceId", type = FieldType.Keyword)
-    private String traceId;
+    @Field(name = "requestId", type = FieldType.Keyword)
+    private String requestId;
 
     @Field(name = "logger", type = FieldType.Keyword)
     private String logger;
@@ -96,32 +96,43 @@ public class LogDocument {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class HttpInfo {
-        @Field(name = "request", type = FieldType.Object)
-        private HttpRequestInfo request;
-        @Field(name = "response", type = FieldType.Object)
-        private HttpResponseInfo response;
-        @Field(name = "durationMs", type = FieldType.Long)
-        private Long durationMs;
-    }
-
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class HttpRequestInfo {
+//        @Field(name = "request", type = FieldType.Object)
+//        private HttpRequestInfo request;
+//        @Field(name = "response", type = FieldType.Object)
+//        private HttpResponseInfo response;
+//        @Field(name = "durationMs", type = FieldType.Long)
+//        private Long durationMs;
         @Field(name = "method", type = FieldType.Keyword)
         @Schema(example = "POST")
         private String method;
-        @Field(name = "url", type = FieldType.Text)
+        @Field(name = "requestUri", type = FieldType.Text)
         @Schema(example = "https://example.com/api/v1/resource")
-        private String url;
-    }
-
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class HttpResponseInfo {
+        private String requestUri;
         @Field(name = "statusCode", type = FieldType.Integer)
         @Schema(example = "200")
-        private Integer statusCode;
+        private Integer status;
+        @Field(name = "responseTime", type = FieldType.Long)
+        private Long responseTime;
     }
+
+//    @Data
+//    @JsonIgnoreProperties(ignoreUnknown = true)
+//    public static class HttpRequestInfo {
+//        @Field(name = "method", type = FieldType.Keyword)
+//        @Schema(example = "POST")
+//        private String method;
+//        @Field(name = "url", type = FieldType.Text)
+//        @Schema(example = "https://example.com/api/v1/resource")
+//        private String url;
+//    }
+//
+//    @Data
+//    @JsonIgnoreProperties(ignoreUnknown = true)
+//    public static class HttpResponseInfo {
+//        @Field(name = "statusCode", type = FieldType.Integer)
+//        @Schema(example = "200")
+//        private Integer statusCode;
+//    }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
