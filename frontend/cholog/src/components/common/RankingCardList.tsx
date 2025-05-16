@@ -9,6 +9,7 @@ interface RankingItem {
 
 interface RankingCardListProps {
   items: RankingItem[];
+  renderItem?: (item: RankingItem, index: number) => React.ReactNode;
 }
 
 const RankingCardList: React.FC<RankingCardListProps> = ({ items }) => {
