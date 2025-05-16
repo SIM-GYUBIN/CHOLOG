@@ -126,14 +126,35 @@ public class LogService {
                         .addParameter("projectId", projectId));
 
         String projectToken = project.getProjectToken();
-        String indexName = INDEX_PREFIX + projectToken;
+        // INDEX_PREFIX가 "pjt-*-"라고 가정하면, indexPattern은 "pjt-*-<projectToken>"이 됩니다.
+        // 이 패턴은 search API에 유효합니다.
+        String indexPattern = INDEX_PREFIX + projectToken;
 
-        LogDocument logDocument = elasticsearchOperations.get(logId, LogDocument.class, IndexCoordinates.of(indexName));
-        if (logDocument == null) {
+        // ID로 문서를 검색하는 쿼리 생성
+        co.elastic.clients.elasticsearch._types.query_dsl.Query esQueryDsl = QueryBuilders.ids(iq -> iq
+                .values(logId)
+        );
+
+        Query searchQuery = NativeQuery.builder()
+                .withQuery(esQueryDsl)
+                .withMaxResults(1) // ID는 고유하므로 최대 1개의 결과만 필요
+                .build();
+
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+                searchQuery,
+                LogDocument.class,
+                IndexCoordinates.of(indexPattern) // 와일드카드가 포함된 인덱스 패턴 사용
+        );
+
+        if (searchHits.getTotalHits() == 0 || !searchHits.hasSearchHits()) {
             throw new CustomException(ErrorCode.LOG_NOT_FOUND)
                     .addParameter("projectId", projectId)
                     .addParameter("logId", logId);
         }
+
+        // 첫 번째 검색 결과에서 LogDocument를 가져옵니다.
+        LogDocument logDocument = searchHits.getSearchHit(0).getContent();
+
         return LogEntryResponse.fromLogDocument(logDocument);
     }
 
