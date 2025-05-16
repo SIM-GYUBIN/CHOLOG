@@ -17,13 +17,14 @@ public class LogEntry {
     private String message;
     private String thread;
     private Long sequence;     // 로그 시퀀스 번호
-    private String source;     // 로그 출처 (backend)
+    private String source = "backend"; // 기본값을 "backend"로 명시
 
     // 애플리케이션 정보
     private String serviceName;  // 이전 applicationName
     private String environment;  // Spring 활성 프로필 정보
     private String version;
-    private String apiKey;      // API 인증키
+    private String apiKey;      // API 인증키 (projectKey로 활용 가능)
+    private String projectKey;  // << 명시적으로 projectKey 필드 사용 권장
 
     // 서버 정보
     private String hostName;

@@ -22,42 +22,27 @@ public class LogstashService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${logstash.url:http://localhost:9600}")
-    private String logstashUrl;
+    @Value("${logstash.fe}")
+    private String logstashFeUrl;
+
+    @Value("${logstash.be}")
+    private String logstashBeUrl;
 
     public void sendLogs(List<LogEntry> logEntries) {
         if (logEntries == null || logEntries.isEmpty()) {
             return;
         }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        try {
-            String jsonPayload = objectMapper.writeValueAsString(logEntries);
-            HttpEntity<String> request = new HttpEntity<>(jsonPayload, headers);
-
-            ResponseEntity<String> response = restTemplate.postForEntity(logstashUrl, request, String.class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("Successfully sent " + logEntries.size() + " logs to Logstash.");
-            } else {
-                System.err.println("Failed to send logs to Logstash. Status code: " + response.getStatusCode());
-                System.err.println("Response body: " + response.getBody());
-            }
-
-        } catch (JsonProcessingException e) {
-            System.err.println("Error converting log entries to JSON: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("Error sending logs to Logstash: " + e.getMessage());
-        }
+        sendToLogstashInternal(logEntries, "backend logs", logstashBeUrl);
     }
 
     public void sendJsLogs(List<JsLogEntry> logEntries) {
         if (logEntries == null || logEntries.isEmpty()) {
             return;
         }
+        sendToLogstashInternal(logEntries, "frontend logs", logstashFeUrl);
+    }
 
+    private void sendToLogstashInternal(List<?> logEntries, String logTypeDescription, String logstashUrl) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -65,23 +50,22 @@ public class LogstashService {
             String jsonPayload = objectMapper.writeValueAsString(logEntries);
             HttpEntity<String> request = new HttpEntity<>(jsonPayload, headers);
 
-            // 보내기 전 json 어떻게 생겼는지 출력
-//            System.out.println(jsonPayload);
-
+            // System.out.println("Sending " + logTypeDescription + " to Logstash URL " + logstashUrl + ": " + jsonPayload); // 디버깅용
 
             ResponseEntity<String> response = restTemplate.postForEntity(logstashUrl, request, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("Successfully sent " + logEntries.size() + " logs to Logstash.");
+                System.out.println("Successfully sent " + logEntries.size() + " " + logTypeDescription + " to Logstash.");
             } else {
-                System.err.println("Failed to send logs to Logstash. Status code: " + response.getStatusCode());
+                System.err.println("Failed to send " + logTypeDescription + " to Logstash. Status code: " + response.getStatusCode());
                 System.err.println("Response body: " + response.getBody());
             }
 
         } catch (JsonProcessingException e) {
-            System.err.println("Error converting log entries to JSON: " + e.getMessage());
+            System.err.println("Error converting " + logTypeDescription + " to JSON: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Error sending logs to Logstash: " + e.getMessage());
+            System.err.println("Error sending " + logTypeDescription + " to Logstash: " + e.getMessage());
+            e.printStackTrace(); // 상세 에러 확인
         }
     }
 }

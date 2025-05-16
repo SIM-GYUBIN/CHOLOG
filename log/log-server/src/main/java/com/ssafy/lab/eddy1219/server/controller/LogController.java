@@ -1,6 +1,5 @@
 package com.ssafy.lab.eddy1219.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.lab.eddy1219.server.Service.LogstashService;
 import com.ssafy.lab.eddy1219.server.model.JsLogEntry;
 import com.ssafy.lab.eddy1219.server.model.LogEntry;
@@ -27,13 +26,7 @@ public class LogController {
     private final Queue<LogEntry> recentLogs = new ConcurrentLinkedQueue<>();
     private final Queue<JsLogEntry> recentJsLogs = new ConcurrentLinkedQueue<>();
 
-    /**
-     * 생성자를 통해 ObjectMapper와 LogstashService를 주입받습니다.
-     *
-     * @param objectMapper    Spring 컨텍스트에 등록된 ObjectMapper 빈
-     * @param logstashService Logstash로 로그를 전송하는 서비스 빈
-     */
-    public LogController(ObjectMapper objectMapper, LogstashService logstashService) {
+    public LogController(LogstashService logstashService) {
         this.logstashService = logstashService;
     }
 
@@ -44,7 +37,7 @@ public class LogController {
      * @param logEntries 로그 엔트리 객체 리스트
      * @return 처리 결과 (성공 시 200 OK)
      */
-    @PostMapping
+    @PostMapping("/be")
     public ResponseEntity<Void> receiveLogBatch(@RequestBody List<LogEntry> logEntries) {
 
         if (logEntries == null || logEntries.isEmpty()) {
@@ -57,6 +50,15 @@ public class LogController {
         // 새 로그 추가 및 오래된 로그 제거 (큐 크기 제한) - Logstash 전송과는 별개로 최근 로그를 메모리에 유지
         for (LogEntry entry : logEntries) {
             if (entry != null) { // 리스트 내 null 요소 방지
+                // 1. LogEntry 생성 시 이미 projectKey가 설정된 경우 (예: MDC 통해)
+                // 2. apiKey 필드를 projectKey로 사용 (아래 예시)
+                // 3. 고정된 projectKey 사용 (환경변수/설정파일에서 주입)
+                if (entry.getProjectKey() == null || entry.getProjectKey().trim().isEmpty()) {
+                    if (entry.getApiKey() != null && !entry.getApiKey().isEmpty()) {
+                        // apiKey에 프로젝트 식별자가 포함된 경우 파싱 로직 추가 가능
+                        entry.setProjectKey(entry.getApiKey()); // apiKey를 projectKey로 사용
+                    }
+                }
                 // 큐가 꽉 찼으면 가장 오래된 것 제거
                 while (recentLogs.size() >= MAX_LOG_ENTRIES) {
                     recentLogs.poll();

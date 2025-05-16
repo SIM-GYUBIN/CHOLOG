@@ -7,4 +7,5 @@ spring:
     name: log-server
 
 logstash:
-  url: http://docker-elk-logstash-1:50000
+  fe: http://docker-elk-logstash-1:50000
+  be: http://docker-elk-logstash-1:51000
