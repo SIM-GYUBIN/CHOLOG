@@ -10,7 +10,7 @@ public class JiraUserResponse {
     @Schema(example = "true")
     private final boolean exists;
     @Schema(example = "123@example.com")
-    private final String username;
+    private final String userName;
     @Schema(example = "LSldfmvewladok13eldspdsge-fgqlvnewwo")
     private final String jiraToken;
 }
