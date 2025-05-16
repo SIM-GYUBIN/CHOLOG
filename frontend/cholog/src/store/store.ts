@@ -4,14 +4,18 @@ import projectReducer from './slices/projectSlice';
 import logReducer from './slices/logSlice';
 import extraFeaturesReducer from './slices/extraFeaturesSlice';
 import reportReducer from './slices/reportSlice';
+import webhookReducer from './slices/webhookSlice';
+import jiraReducer from './slices/jiraSlice';
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
     user: userReducer,
     project: projectReducer,
     log: logReducer,
     extraFeatures: extraFeaturesReducer,
     report: reportReducer,
+    webhook: webhookReducer,
+    jira: jiraReducer,
   },
 });
 
