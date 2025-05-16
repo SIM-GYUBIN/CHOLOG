@@ -14,7 +14,7 @@ public class JsLogEntry {
     private String source; // 예: "frontend"
     private String projectKey;
     private String environment;
-    private String traceId;
+    private String requestId;
     private String logger; // 예: "cholog", "console"
     private String logType;    // 예: "general", "error", "network", "event"
 
