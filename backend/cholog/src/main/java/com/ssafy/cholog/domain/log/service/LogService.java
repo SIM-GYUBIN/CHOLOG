@@ -3,7 +3,6 @@ package com.ssafy.cholog.domain.log.service;
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.*;
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
@@ -31,7 +30,6 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -48,6 +46,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class LogService {
+
+    public static final String INDEX_PREFIX = "pjt-";
 
     private final ProjectRepository projectRepository;
     private final ProjectUserRepository projectUserRepository;
@@ -66,7 +66,7 @@ public class LogService {
                         .addParameter("projectId", projectId));
 
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-" + projectToken;
+        String indexName = INDEX_PREFIX + projectToken;
 
         // 1. Elasticsearch Query 객체 생성 (새로운 방식)
         co.elastic.clients.elasticsearch._types.query_dsl.Query esQueryDsl =
@@ -126,7 +126,7 @@ public class LogService {
                         .addParameter("projectId", projectId));
 
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-" + projectToken;
+        String indexName = INDEX_PREFIX + projectToken;
 
         LogDocument logDocument = elasticsearchOperations.get(logId, LogDocument.class, IndexCoordinates.of(indexName));
         if (logDocument == null) {
@@ -149,7 +149,7 @@ public class LogService {
         }
 
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-" + projectToken;
+        String indexName = INDEX_PREFIX + projectToken;
 
         List<SortOptions> sortOptionsList = new ArrayList<>();
         SortOptions timestampSort = SortOptions.of(so -> so
@@ -171,7 +171,7 @@ public class LogService {
 
         Query searchQuery = NativeQuery.builder()
                 .withQuery(QueryBuilders.term(t -> t
-                        .field("traceId.keyword")
+                        .field("requestId.keyword") //!! es에서 requestId로 저장되기로 했음!!!!!
                         .value(traceId)
                 ))
                 .withSort(sortOptionsList)
@@ -198,7 +198,7 @@ public class LogService {
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
                         .addParameter("projectId", projectId));
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-" + projectToken;
+        String indexName = INDEX_PREFIX + projectToken;
 
         String levelCountsAggregationName = "level_counts";
         TermsAggregation esTermsAggregation = TermsAggregation.of(ta -> ta.field("level.keyword"));
@@ -260,7 +260,7 @@ public class LogService {
 
     public void createIndex(String projectToken) {
 
-        String indexName = "pjt-" + projectToken.toLowerCase();
+        String indexName = INDEX_PREFIX + projectToken.toLowerCase();
 
         IndexCoordinates indexCoordinates = IndexCoordinates.of(indexName);
         IndexOperations indexOps = elasticsearchOperations.indexOps(indexCoordinates);
@@ -358,7 +358,7 @@ public class LogService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
                         .addParameter("projectId", projectId));
-        String indexName = "pjt-" + project.getProjectToken();
+        String indexName = INDEX_PREFIX + project.getProjectToken();
         String timestampFieldName = "timestamp";
 
         // Elasticsearch Range Query 생성 (final 변수 사용)
