@@ -394,7 +394,7 @@ const projectSlice = createSlice({
       .addCase(updateProject.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        const updatedId = action.payload.data.id;
+        const updatedId = action.payload.data?.id;
         const updatedName = (action.meta as { arg: UpdateProjectRequest }).arg
           .name;
         const project = state.projects.find((p) => p.id === updatedId);
