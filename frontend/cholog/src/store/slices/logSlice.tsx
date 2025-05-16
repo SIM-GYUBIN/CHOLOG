@@ -152,7 +152,7 @@ export const fetchErrorTimeline = createAsyncThunk<
     if (params.endDate) queryParams.append("endDate", params.endDate);
 
     const response = await api.get<ErrorTimelineResponse>(
-      `/log/${params.projectId}/errors/timeline?${queryParams.toString()}`,
+      `/log/${params.projectId}/timeline?${queryParams.toString()}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -679,8 +679,8 @@ const initialState: LogState = {
   errorTrends: [],
   logs: [],
   traceLogs: [],
-  logDetail: null,
   pagination: null,
+  logDetail: null,
   archiveResult: null,
   archivedLogs: null, // Add this line
 };
@@ -750,6 +750,12 @@ const logSlice = createSlice({
             message: "알 수 없는 오류가 발생했습니다.",
           };
       })
+      .addCase(fetchErrorTimeline.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.errorTimeline = action.payload.data;
+        state.error = null;
+      })
+    
 
       .addCase(fetchErrorTimeline.rejected, (state, action) => {
         state.isLoading = false;
@@ -989,7 +995,7 @@ const logSlice = createSlice({
           };
       })
 
-      
+
   },
 });
 

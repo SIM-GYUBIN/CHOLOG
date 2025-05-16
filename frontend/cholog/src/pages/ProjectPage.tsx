@@ -54,7 +54,7 @@ const ProjectPage = () => {
           <LogSummary />
         </div>
         <div className="col-span-4">
-          <ErrorChart />
+          <ErrorChart projectId={Number(projectId)} />
         </div>
       </div>
       <LogList logs={logs} pagination={pagination} />
