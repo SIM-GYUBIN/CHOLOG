@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * 중앙 로그 서버에서 수신하는 로그 데이터의 구조를 정의하는 DTO 클래스입니다.
  * Lombok의 @Data 어노테이션을 사용하여 Getter, Setter, toString 등을 자동 생성합니다.
- * (수정됨: requestProcessingTime 제거, ThrowableInfo에 cause 추가)
+ * 최신 SDK(v1.0.6) 출력 형식에 맞게 업데이트되었습니다.
  */
 @Data
 public class LogEntry {
@@ -16,12 +16,14 @@ public class LogEntry {
     private String logger;
     private String message;
     private String thread;
+    private Long sequence;     // 로그 시퀀스 번호
+    private String source;     // 로그 출처 (backend)
 
     // 애플리케이션 정보
-    private String applicationName;
-    private String environment;
+    private String serviceName;  // 이전 applicationName
+    private String environment;  // Spring 활성 프로필 정보
     private String version;
-    private String instanceId;
+    private String apiKey;      // API 인증키
 
     // 서버 정보
     private String hostName;
@@ -29,57 +31,36 @@ public class LogEntry {
     private String serverPort;
 
     // 요청 정보 (HTTP 요청인 경우)
-    private String requestId;
-    private String requestMethod;
-    private String requestUri;
-    private String requestQuery; // 쿼리 스트링 (있는 경우)
-    private String requestClientIp;
-    private String requestUserAgent;
-    private Integer httpStatus;
+    private String requestId;    // 추적 ID
+    private String clientIp;     // 이전 requestClientIp
+    private String userAgent;    // 이전 requestUserAgent
+    private Boolean uaMobile;    // 모바일 기기 여부
+    private String uaPlatform;   // 플랫폼 정보 (Windows, MacOS 등)
 
-    // Spring 관련 정보 (있는 경우)
-    private String framework;
-    private Map<String, String> springContext;
+    // HTTP 관련 정보 그룹화
+    private Map<String, Object> http;  // requestMethod, requestUri, httpStatus, responseTime 포함
+
+    // 헤더 정보
+    private Map<String, String> headers;
+    private Map<String, String> responseHeaders;
 
     // MDC 정보
-    private Map<String, String> mdc;
+    private Map<String, Object> mdcContext;  // 이전 mdc
 
     // 예외 정보
-    private ThrowableInfo throwable;
+    private Map<String, Object> error;  // 이전 throwable
 
     // 성능 메트릭
     private PerformanceMetrics performanceMetrics;
 
     /**
-     * 예외 정보를 담는 내부 클래스입니다.
-     * (수정됨: 원인 예외 정보 필드 추가)
-     */
-    @Data
-    public static class ThrowableInfo {
-        private String message;
-        private String className;
-        private Object[] stackTrace; // 스택 트레이스 (문자열 배열 등으로 변환되어 올 수 있음)
-        private CauseInfo cause;      // 원인 예외 정보 (있을 경우)
-    }
-
-    /**
-     * 원인 예외(Cause)의 간략한 정보를 담는 내부 클래스입니다.
-     */
-    @Data
-    public static class CauseInfo {
-        private String message;
-        private String className;
-        // 원인 예외의 스택 트레이스는 보통 생략
-    }
-
-    /**
      * 성능 메트릭 정보를 담는 내부 클래스입니다.
+     * responseTime은 http 객체로 이동되었습니다.
      */
     @Data
     public static class PerformanceMetrics {
-        private Long memoryUsage; // MB 단위
-        private Long cpuUsage;    // % 단위
-        private Long responseTime; // ms 단위
+        private Long memoryUsage;    // MB 단위
+        private Long cpuUsage;       // % 단위
         private Integer activeThreads;
         private Integer totalThreads;
     }
