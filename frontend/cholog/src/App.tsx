@@ -1,19 +1,19 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import './App.css';
-import NavigationBar from './components/NavigationBar';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import ProjectListPage from './pages/ProjectListPage';
-import ProjectPage from './pages/ProjectPage';
-import LogPage from './pages/LogPage';
-import ReportPage from './pages/ReportPage';
-import ProjectSettingPage from './pages/ProjectSettingPage';
-import ArchiveListPage from './pages/ArchiveListPage';
-import ReportListPage from './pages/ReportListPage';
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import "./App.css";
+import NavigationBar from "./components/NavigationBar";
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import ProjectListPage from "./pages/ProjectListPage";
+import ProjectPage from "./pages/ProjectPage";
+import LogPage from "./pages/LogPage";
+import ReportPage from "./pages/ReportPage";
+import ProjectSettingPage from "./pages/ProjectSettingPage";
+import ArchiveListPage from "./pages/ArchiveListPage";
+// import ReportListPage from './pages/ReportListPage';
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname.toLowerCase() === '/projectlist';
+  const hideNavbar = location.pathname.toLowerCase() === "/projectlist";
 
   return (
     <div className="app">
@@ -25,11 +25,18 @@ function AppContent() {
           <Route path="/projectlist" element={<ProjectListPage />} />
           <Route path="/project/:projectId" element={<ProjectPage />} />
           <Route path="/project/:projectId/log/:logId" element={<LogPage />} />
-          <Route path="/report/:projectId/:reportId" element={<ReportPage />} />
-          <Route path="/reportlist/:projectId" element={<ReportListPage />} />
+          <Route path="/report/:projectId" element={<ReportPage />} />
+          {/* <Route path="/report/:projectId/:reportId" element={<ReportPage />} /> */}
+          {/* <Route path="/reportlist/:projectId" element={<ReportListPage />} /> */}
           <Route path="/archive/:projectId" element={<ArchiveListPage />} />
-          <Route path="/projectsetting/:projectId" element={<ProjectSettingPage />} />
-          <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
+          <Route
+            path="/projectsetting/:projectId"
+            element={<ProjectSettingPage />}
+          />
+          <Route
+            path="/project/:projectId/archives"
+            element={<ArchiveListPage />}
+          />
         </Routes>
       </div>
     </div>
