@@ -209,7 +209,14 @@ const ProjectTable = ({ projects, onCopy, isLoading, error }: ProjectTableProps)
                 </div>
               </td>
               <td className="w-1/4 p-4 font-paperlogy4 text-[var(--text)] text-left text-[16px]">
-                {project.createdAt}
+                {new Date(project.createdAt).toLocaleString('ko-KR', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                })}
               </td>
               <td className="w-12 p-4">
                 <button 

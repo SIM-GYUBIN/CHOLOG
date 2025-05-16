@@ -474,19 +474,25 @@ export interface ArchiveLogResponse extends BaseResponse {
  * [#LOG-12]
  * @description 아카이브된 로그 아이템 타입
  * @property {string} logId - 로그 ID
- * @property {string} timestamp - 로그 발생 시간
- * @property {string} apiPath - API 경로
- * @property {string} level - 로그 레벨
- * @property {string} archiveReason - 아카이브 이유
- * @property {string} archivedAt - 아카이브 시간
+ * @property {string} nickname - 아카이브한 사용자 닉네임
+ * @property {string} memo - 아카이브 메모
+ * @property {string} logLevel - 로그 레벨
+ * @property {string} logSource - 로그 소스
+ * @property {string} logType - 로그 타입
+ * @property {string} logEnvironment - 로그 환경
+ * @property {string} logMessage - 로그 메시지
+ * @property {string} logTimestamp - 로그 발생 시간
  */
 export interface ArchivedLogItem {
   logId: string;
-  timestamp: string;
-  apiPath: string;
-  level: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
-  archiveReason: string;
-  archivedAt: string;
+  nickname: string;
+  memo: string;
+  logLevel: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
+  logSource: "frontend" | "backend";
+  logType: string;
+  logEnvironment: string;
+  logMessage: string;
+  logTimestamp: string;
 }
 
 /**
