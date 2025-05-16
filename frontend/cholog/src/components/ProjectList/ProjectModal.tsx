@@ -5,6 +5,7 @@ interface ProjectModalProps {
   setInputValue: (value: string) => void;
   onClose: () => void;
   onSubmit: () => void;
+  isSubmitting?: boolean;
 }
 
 const ProjectModal = ({
@@ -14,6 +15,7 @@ const ProjectModal = ({
   setInputValue,
   onClose,
   onSubmit,
+  isSubmitting = false,
 }: ProjectModalProps) => {
   if (!showModal) return null;
 
@@ -28,20 +30,26 @@ const ProjectModal = ({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder={modalType === "add" ? "프로젝트명" : "프로젝트 ID"}
-          className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-6"
+          className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-6 focus:outline-none focus:border-[#5EA500] focus:ring-1 focus:ring-[#5EA500]"
         />
         <div className="flex justify-between">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={isSubmitting}
           >
             취소
           </button>
           <button
             onClick={onSubmit}
-            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+            className={`px-4 py-2 bg-[#5EA500] text-white rounded-lg ${
+              isSubmitting 
+                ? "opacity-50 cursor-not-allowed" 
+                : "hover:bg-[#4A8400] transition-colors"
+            }`}
+            disabled={isSubmitting}
           >
-            {modalType === "add" ? "생성" : "참가"}
+            {isSubmitting ? "처리 중..." : modalType === "add" ? "생성" : "참가"}
           </button>
         </div>
       </div>
