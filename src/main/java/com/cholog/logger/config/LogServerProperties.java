@@ -45,7 +45,7 @@ public class LogServerProperties {
      * 
      * 예시: http://your-logging-server
      */
-    private String url = "http://cholog.com:8080/api/logs";
+    private String url = "https://cholog-server.shop/api/logs/be";
 
     /**
      * 서버 식별을 위한 API 키입니다.
@@ -63,13 +63,6 @@ public class LogServerProperties {
      * 설정하지 않으면 null이 사용됩니다.
      */
     private String serviceName = null;
-    
-    /**
-     * 서비스가 실행되는 환경을 나타냅니다 (예: "production", "staging", "development", "qa").
-     * 이 정보는 중앙 로그 서버에서 환경별로 로그를 필터링하거나 분석하는 데 유용합니다.
-     * 기본값은 "development"입니다.
-     */
-    private String environment = "development";
 
     /**
      * API 키 검증 활성화 여부를 설정합니다.
@@ -772,22 +765,6 @@ public class LogServerProperties {
      */
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
-    }
-
-    /**
-     * 설정된 환경 정보를 반환합니다.
-     * @return 환경 정보 문자열
-     */
-    public String getEnvironment() {
-        return environment;
-    }
-
-    /**
-     * 환경 정보를 설정합니다.
-     * @param environment 환경 정보 (예: "production", "development")
-     */
-    public void setEnvironment(String environment) {
-        this.environment = environment;
     }
 
     /**

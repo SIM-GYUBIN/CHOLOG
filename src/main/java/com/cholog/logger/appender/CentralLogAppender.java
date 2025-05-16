@@ -278,7 +278,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                 logData.put("serviceName", "unknown-service");
                 addWarn("서비스 이름(service-name)이 설정되지 않았습니다. 'cholog.logger.service-name' 속성을 설정하세요.");
             }
-            logData.put("environment", properties.getEnvironment());
+//            logData.put("environment", properties.getEnvironment());
             
             // 버전 정보 추가
             String version = environment.getProperty("app.version");
@@ -289,14 +289,14 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
             // Spring 활성 프로필 정보 추가
             String[] activeProfiles = environment.getActiveProfiles();
             if (activeProfiles.length > 0) {
-                logData.put("profiles", String.join(",", activeProfiles));
+                logData.put("environment", String.join(",", activeProfiles));
             } else {
                 // 기본 프로필이 사용 중인 경우
                 String[] defaultProfiles = environment.getDefaultProfiles();
                 if (defaultProfiles.length > 0) {
-                    logData.put("profiles", String.join(",", defaultProfiles) + " (default)");
+                    logData.put("environment", String.join(",", defaultProfiles));
                 } else {
-                    logData.put("profiles", "default");
+                    logData.put("environment", "default");
                 }
             }
 

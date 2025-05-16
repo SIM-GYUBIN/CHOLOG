@@ -17,18 +17,20 @@ CHO:LOG는 Spring Boot 애플리케이션을 위한 지능형 로깅 SDK입니�
 - **민감 정보 자동 필터링**: `RequestTimingFilter` 및 `LogSenderService`에서 설정된 패턴에 따라 로그에 포함된 민감 정보(예: 비밀번호, API 키 등)를 자동으로 마스킹합니다.
 - **유연한 설정**: `application.properties` 또는 `application.yml`을 통해 다양한 로깅 동작을 상세하게 제어할 수 있습니다.
 
-## 최신 버전 정보 (v1.0.4)
+## 최신 버전 정보 (v1.0.6)
 
-* **HTTP 관련 필드 그룹화**:
-    - HTTP 관련 필드(requestMethod, requestUri, httpStatus, responseTime)를 `http` 객체로 그룹화
-    - 로그 구조 정리 및 중복 필드 제거
-    - 로그 JSON 형식 일관성 향상
-* **응답 시간 필드 이동**:
-    - `responseTime` 필드를 `performanceMetrics`에서 `http` 객체로 이동
-    - 관련 필드 논리적 그룹화 강화
-* **예외 상태 코드 처리 개선**:
-    - 예외 발생 시 HTTP 상태 코드 설정 로직을 `http` 객체에 적용
-    - 모든 에러 시나리오에서 일관된 로그 형식 제공
+* **예외 정보 필드명 수정**:
+    - 예외 정보를 담는 필드명을 `throwable`에서 `error`로 변경
+    - 필드명 일관성 개선 및 표준화 
+    - 모든 오류 로그에서 일관된 필드명 사용으로 검색 용이성 향상
+* **HTTP 관련 필드 그룹화 버그 수정**:
+    - HTTP 필드가 루트 레벨에 중복해서 남아있는 문제 수정
+    - `responseTime` 필드도 루트 레벨에서 제거하도록 로직 추가
+    - 일관된 로그 포맷 유지를 위한 코드 개선
+* **환경 정보 필드 표준화**:
+    - 기존 `environment` 필드를 제거하고 Spring 활성 프로필 정보를 `environment` 필드로 통합
+    - `profiles` 필드명을 `environment`로 변경하여 명확성 향상
+    - Spring 환경 설정과 로그 필드명 간의 일관성 개선
 
 전체 버전 기록은 [CHANGELOG.md](CHANGELOG.md)를 참조하세요.
 
@@ -45,7 +47,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.4'
+    implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.5'
     // 기타 의존성...
 }
 ```
@@ -282,18 +284,14 @@ Kibana 대시보드에서 `cholog-*` 인덱스 패턴을 생성하여 수집된 
   "thread": "http-nio-8080-exec-5",
   "sequence": 1,
   "serviceName": "order-processing-service",
-  "environment": "production",
   "version": "1.2.5",
-  "profiles": "prod,aws-eu-central-1",
+  "environment": "prod,aws-eu-central-1",
   "hostName": "appserver-prod-01.example.com",
   "ipAddress": "10.0.1.100",
   "serverPort": "8080",
   "apiKey": "[FILTERED]",
   "requestId": "frontend-generated-uuid-789xyz",
-  "requestMethod": "POST",
-  "requestUri": "/api/v1/orders",
   "clientIp": "203.0.113.45",
-  "httpStatus": 201,
   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
   "uaMobile": false,
   "uaPlatform": "Windows",
@@ -320,8 +318,21 @@ Kibana 대시보드에서 `cholog-*` 인덱스 패턴을 생성하여 수집된 
     "cpuUsage": 35,
     "memoryUsage": 768,
     "activeThreads": 25,
-    "totalThreads": 150,
+    "totalThreads": 150
+  },
+  "http": {
+    "requestMethod": "POST",
+    "requestUri": "/api/v1/orders",
+    "httpStatus": 201,
     "responseTime": 125
+  },
+  "error": {
+    "className": "java.lang.NullPointerException",
+    "message": "Cannot invoke \"String.length()\" because \"str\" is null",
+    "stackTrace": [
+      "at com.example.service.OrderService.processOrder(OrderService.java:125)",
+      "at com.example.controller.OrderController.createOrder(OrderController.java:57)"
+    ]
   },
   "filtered": true
 }
