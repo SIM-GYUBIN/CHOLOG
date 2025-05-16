@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../api/axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../api/axios";
 import {
   SignupRequest,
   ApiResponse,
@@ -7,7 +7,7 @@ import {
   LoginResponse,
   LogoutResponse,
   UserState,
-} from '../../types/user.types';
+} from "../../types/user.types";
 
 /**
  * [#USER-1]
@@ -16,12 +16,12 @@ import {
  * @returns ApiResponse 형태의 응답 또는 에러 정보
  */
 export const userSignup = createAsyncThunk<ApiResponse, SignupRequest>(
-  'user/signup',
+  "user/signup",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await api.post<ApiResponse>('/user', userData, {
+      const response = await api.post<ApiResponse>("/user", userData, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
       return response.data;
@@ -30,8 +30,11 @@ export const userSignup = createAsyncThunk<ApiResponse, SignupRequest>(
         success: false,
         data: {},
         error: {
-          code: error.response?.status === 400 ? 'INVALID_REQUEST' : 'INTERNAL_ERROR',
-          message: error.response?.data?.error?.message || 'An error occurred',
+          code:
+            error.response?.status === 400
+              ? "INVALID_REQUEST"
+              : "INTERNAL_ERROR",
+          message: error.response?.data?.error?.message || "An error occurred",
         },
         timestamp: new Date().toISOString(),
       } as ApiResponse);
@@ -46,29 +49,33 @@ export const userSignup = createAsyncThunk<ApiResponse, SignupRequest>(
  * @returns LoginResponse 형태의 응답 또는 에러 정보
  */
 export const userLogin = createAsyncThunk<LoginResponse, LoginRequest>(
-  'user/login',
+  "user/login",
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await api.post<LoginResponse>('/user/login', credentials, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.post<LoginResponse>(
+        "/user/login",
+        credentials,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
+      let errorCode = "INTERNAL_ERROR";
 
-      if (status === 400) errorCode = 'INVALID_REQUEST';
-      else if (status === 401) errorCode = 'INVALID_CREDENTIALS';
-      else if (status === 404) errorCode = 'ACCOUNT_NOT_FOUND';
+      if (status === 400) errorCode = "INVALID_REQUEST";
+      else if (status === 401) errorCode = "INVALID_CREDENTIALS";
+      else if (status === 404) errorCode = "ACCOUNT_NOT_FOUND";
 
       return rejectWithValue({
         success: false,
         data: {},
         error: {
           code: errorCode,
-          message: error.response?.data?.error?.message || 'An error occurred',
+          message: error.response?.data?.error?.message || "An error occurred",
         },
         timestamp: new Date().toISOString(),
       } as ApiResponse);
@@ -82,30 +89,32 @@ export const userLogin = createAsyncThunk<LoginResponse, LoginRequest>(
  * @returns LogoutResponse 형태의 응답 또는 에러 정보
  */
 export const userLogout = createAsyncThunk<LogoutResponse, void>(
-  'user/logout',
+  "user/logout",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.post<LogoutResponse>('/user/logout', null, {
+      const response = await api.post<LogoutResponse>("/user/logout", null, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      localStorage.removeItem('token');
+      localStorage.removeItem("token");
       return response.data;
     } catch (error: any) {
       const status = error.response?.status;
-      let errorCode = 'INTERNAL_ERROR';
+      let errorCode = "INTERNAL_ERROR";
 
-      if (status === 401) errorCode = 'UNAUTHORIZED';
-      else if (status === 403) errorCode = 'FORBIDDEN';
+      if (status === 401) errorCode = "UNAUTHORIZED";
+      else if (status === 403) errorCode = "FORBIDDEN";
 
       return rejectWithValue({
         success: false,
         data: {},
         error: {
           code: errorCode,
-          message: error.response?.data?.error?.message || '로그아웃 중 오류가 발생했습니다.',
+          message:
+            error.response?.data?.error?.message ||
+            "로그아웃 중 오류가 발생했습니다.",
         },
         timestamp: new Date().toISOString(),
       } as ApiResponse);
@@ -130,7 +139,7 @@ const initialState: UserState = {
 
 // userSlice 생성
 const userSlice = createSlice({
-  name: 'user',
+  name: "user",
   initialState,
   reducers: {
     /**
@@ -178,6 +187,7 @@ const userSlice = createSlice({
         state.isLoggedIn = true;
         state.nickname = action.payload.data.nickname;
         state.error = null;
+        localStorage.setItem("token", action.payload.data.token);
       })
       .addCase(userLogin.rejected, (state, action) => {
         state.isLoading = false;

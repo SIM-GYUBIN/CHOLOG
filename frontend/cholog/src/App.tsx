@@ -12,7 +12,7 @@ import ReportListPage from './pages/ReportListPage';
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname.toLowerCase() === '/projectlist';
+  const hideNavbar = location.pathname.toLowerCase() === "/projectlist";
 
   return (
     <div className="app">
@@ -24,8 +24,9 @@ function AppContent() {
           <Route path="/projectlist" element={<ProjectListPage />} />
           <Route path="/project/:projectId" element={<ProjectPage />} />
           <Route path="/project/:projectId/log/:logId" element={<LogPage />} />
-          <Route path="/report/:projectId/:reportId" element={<ReportPage />} />
-          <Route path="/reportlist/:projectId" element={<ReportListPage />} />
+          <Route path="/report/:projectId" element={<ReportPage />} />
+          {/* <Route path="/report/:projectId/:reportId" element={<ReportPage />} /> */}
+          {/* <Route path="/reportlist/:projectId" element={<ReportListPage />} /> */}
           <Route path="/archive/:projectId" element={<ArchiveListPage />} />
           <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
         </Routes>

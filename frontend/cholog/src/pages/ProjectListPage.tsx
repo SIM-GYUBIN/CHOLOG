@@ -13,6 +13,7 @@ const ProjectListPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"add" | "join" | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -34,6 +35,10 @@ const ProjectListPage = () => {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return; // 이미 제출 중이면 중복 제출 방지
+    
+    setIsSubmitting(true);
+    
     if (modalType === "add") {
       try {
         const result = await dispatch(createProject({ name: inputValue, token: "" })).unwrap();
@@ -55,7 +60,9 @@ const ProjectListPage = () => {
         alert(error.message || "프로젝트 참가 중 오류가 발생했습니다.");
       }
     }
+    
     closeModal();
+    setIsSubmitting(false);
   };
 
   // 로딩과 에러 체크 제거
@@ -84,6 +91,7 @@ const ProjectListPage = () => {
         setInputValue={setInputValue}
         onClose={closeModal}
         onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

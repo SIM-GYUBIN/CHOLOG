@@ -10,8 +10,6 @@ import fatalIcon from "@/assets/levelicon/fatal.svg";
 const LogSummary = () => {
   const { stats } = useSelector((state: RootState) => state.log);
 
-  console.log(stats);
-
   const logData = {
     total: stats ? Object.values(stats).reduce((acc, curr) => acc + curr, 0) : 0,
     logs: {

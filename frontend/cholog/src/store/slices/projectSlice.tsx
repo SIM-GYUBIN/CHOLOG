@@ -16,10 +16,7 @@ import {
   LeaveProjectResponse,
 } from "../../types/project.types";
 
-/**
- * api 배포 전 목데이터 활용을 위해.
- */
-import { MOCK_PROJECTS } from "../../constants/mockData";
+// 목데이터 import 제거
 
 /**
  * ============================================
@@ -42,15 +39,21 @@ export const fetchProjects = createAsyncThunk<ProjectListResponse, void>(
       });
       return response.data;
     } catch (error: any) {
-      // 서버 연결 실패 시 목데이터 반환
-      return {
-        success: true,
-        data: {
-          projects: MOCK_PROJECTS
+      // 목데이터 반환 대신 에러 처리
+      const status = error.response?.status;
+      let errorCode = "INTERNAL_ERROR";
+      if (status === 400) errorCode = "INVALID_REQUEST";
+      else if (status === 401) errorCode = "UNAUTHORIZED";
+      
+      return rejectWithValue({
+        success: false,
+        data: { projects: [] },
+        error: {
+          code: errorCode,
+          message: error.response?.data?.error?.message || "프로젝트 목록을 불러오는 중 오류가 발생했습니다.",
         },
-        error: null,
         timestamp: new Date().toISOString(),
-      } as ProjectListResponse;
+      } as ProjectListResponse);
     }
   }
 );
@@ -391,7 +394,7 @@ const projectSlice = createSlice({
       .addCase(updateProject.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        const updatedId = action.payload.data.id;
+        const updatedId = action.payload.data?.id;
         const updatedName = (action.meta as { arg: UpdateProjectRequest }).arg
           .name;
         const project = state.projects.find((p) => p.id === updatedId);

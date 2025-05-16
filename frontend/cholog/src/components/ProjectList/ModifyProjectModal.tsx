@@ -1,7 +1,8 @@
 interface ModifyProjectModalProps {
   showModal: boolean;
   projectName: string;
-  setProjectName: (value: string) => void;
+  projectId?: number;
+  setProjectName: (name: string) => void;
   onClose: () => void;
   onSubmit: () => void;
 }
@@ -9,6 +10,7 @@ interface ModifyProjectModalProps {
 const ModifyProjectModal = ({
   showModal,
   projectName,
+  projectId,
   setProjectName,
   onClose,
   onSubmit,

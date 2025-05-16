@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   AreaChart,
   Area,
@@ -7,24 +8,31 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { AppDispatch, RootState } from "../../store/store";
+import { fetchErrorTimeline } from "../../store/slices/logSlice";
 
-const ErrorCountChart = () => {
+interface ErrorChartProps {
+  projectId?: number;
+}
+
+const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const { errorTimeline } = useSelector((state: RootState) => state.log);
 
-  const mockData = [
-    { period: "8", count: 120 },
-    { period: "9", count: 200 },
-    { period: "10", count: 160 },
-    { period: "11", count: 350 },
-    { period: "12", count: 220 },
-    { period: "13", count: 180 },
-    { period: "14", count: 240 },
-    { period: "15", count: 230 },
-    { period: "16", count: 210 },
-    { period: "17", count: 190 },
-    { period: "18", count: 300 },
-    { period: "19", count: 280 },
-  ];
+
+  useEffect(() => {
+    if (projectId) {
+      dispatch(fetchErrorTimeline({ projectId }));
+    }
+    console.log(errorTimeline[0]);
+  }, [dispatch, projectId]);
+
+  // API 응답 데이터를 차트 데이터 형식으로 변환
+  const chartData = errorTimeline.map(item => ({
+    period: new Date(item.timestamp).getHours().toString(),
+    count: item.errorCount
+  }));
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -69,14 +77,14 @@ const ErrorCountChart = () => {
   return (
     <div className="w-full p-6 bg-white/5 rounded-2xl h-full border border-[var(--line)]">
       <h2 className="text-left text-xl font-semibold text-[var(--text)] mb-4">
-        Daily Log Count
+        시간별 로그 발생량
       </h2>
       <div
         ref={scrollRef}
         className="scroll-hidden overflow-x-auto cursor-grab active:cursor-grabbing"
       >
-        <div style={{ width: `${mockData.length * 60}px`, height: "160px" }}>
-          <AreaChart data={mockData} width={mockData.length * 60} height={160}>
+        <div style={{ width: `${chartData.length * 60}px`, height: "160px", minWidth: "100%" }}>
+          <AreaChart data={chartData} width={chartData.length * 60} height={160}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#9CA3AF" stopOpacity={0.4} />
