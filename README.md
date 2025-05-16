@@ -47,7 +47,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.5'
+    implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.6'
     // 기타 의존성...
 }
 ```
@@ -65,12 +65,10 @@ dependencies {
 ```yaml
 cholog:
   logger:
-    # 중앙 로그 서버 URL (필수)
-    url: http://your-log-server.com/api/logs # 예시 엔드포인트, (기본값 cho:log server)
+    # 중앙 로그 서버 URL (필수, 기본값 CHO:LOG server)
+    url: https://cholog-server.shop/api/logs/be # 예시 엔드포인트
     # API 키 (필수) - 로그 JSON에서 'apiKey' 필드로 출력됨
     api-key: your-api-key
-    # 서비스 식별 이름 (필수) - 로그 JSON에서 'serviceName' 필드로 출력됨
-    service-name: my-awesome-service
 ```
 
 #### 선택적 설정
@@ -80,15 +78,15 @@ cholog:
 ```yaml
 cholog:
   logger:
-    # 환경 설정 (권장) - 기본값은 "development" - 환경별 로그 확인
-    environment: production
+    # 서비스 식별 이름 (권장) - 로그 JSON에서 'serviceName' 필드로 출력됨, default : unknown-service
+    service-name: unknown-service
     
     # 로그 레벨 설정
     log-level: INFO                         # 전송할 최소 로그 레벨 (TRACE, DEBUG, INFO, WARN, ERROR) - Appender 필터링 기준
     
     # 민감 정보 필터링 설정 (LogSenderService 및 RequestTimingFilter에서 사용)
     sensitive-patterns:                     # 민감 정보로 간주하여 필터링할 필드 경로 패턴 목록 (예: ["user.password", "creditCard"])
-      - "password
+      - "password"
       - "ssn"
       - "token"
     sensitive-value-replacement: "[FILTERED]" # 민감 정보 대체 문자열 (기본값: "***")
