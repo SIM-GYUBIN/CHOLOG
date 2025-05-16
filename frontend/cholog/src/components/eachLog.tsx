@@ -26,17 +26,16 @@ export default function EachLog({
 }: LogProps) {
   const formattedTime = timestamp
     ? new Date(timestamp)
-        .toLocaleString("ko-KR", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false, // 24시간 형식으로 표시
-        })
-        .replace(/\/|, /g, "-")
-        .replace(" ", " ") // 날짜 구분자를 변경하고, 공백으로 시간 구분
+      .toLocaleString("ko-KR", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false, // 24시간 형식으로 표시
+      })
+      .replace(/\/|, /g, "-")
+      .replace(" ", " ") // 날짜 구분자를 변경하고, 공백으로 시간 구분
     : "";
 
   const nav = useNavigate();
@@ -47,7 +46,7 @@ export default function EachLog({
       const pathParts = window.location.pathname.split('/');
       const projectIdIndex = pathParts.findIndex(part => part === 'project') + 1;
       const projectId = projectIdIndex > 0 && projectIdIndex < pathParts.length ? pathParts[projectIdIndex] : null;
-      
+
       if (projectId) {
         nav(`/project/${projectId}/log/${id}`);
       } else {

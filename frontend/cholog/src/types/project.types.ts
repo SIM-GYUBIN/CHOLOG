@@ -197,3 +197,18 @@ export interface LeaveProjectRequest {
 export interface LeaveProjectResponse extends BaseResponse {
   data: Record<number, never>;
 }
+
+/**
+ * [#PROJECT-8]
+ * @description 프로젝트 상세 정보 조회 응답 인터페이스
+ * @extends {BaseResponse} 기본 API 응답 형식을 상속
+ * @property {Object} data - 프로젝트 상세 정보
+ * @property {string} data.name - 프로젝트 이름
+ * @property {string} data.projectToken - 프로젝트 토큰
+ */
+export interface ProjectDetailResponse extends BaseResponse {
+  data: {
+    name: string;
+    projectToken: string;
+  };
+}

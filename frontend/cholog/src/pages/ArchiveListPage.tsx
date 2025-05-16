@@ -76,33 +76,49 @@ export default function ArchiveListPage() {
     last: true
   };
 
-  // 아카이브 로그 컨텐츠 추출
+  // 아카이븴 로그 컨텐츠 추출
   const archiveLogs = archivedLogs?.content || [];
 
   return (
     <div className="w-full lg:w-[70vw] mx-auto">
       <ProjectNavBar />
+      <div className="text-[28px] font-[paperlogy6] my-6 text-center">Log Archive</div>
 
-      <div className="text-[28px] font-[paperlogy6] my-6">Log Archive</div>
-
-      {isLoading && <div className="text-center py-8">로딩 중...</div>}
-
-      {error && (
-        <div className="text-red-500 text-center py-4">
-          {error.message} (Code: {error.code})
+      {isLoading ? (
+        <div className="border rounded-xl border-[var(--line)] bg-white/5">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="animate-pulse">
+              <div className={`p-4 ${index !== 0 ? 'border-t border-[var(--line)]' : ''}`}>
+                <div className="h-6 bg-slate-200 rounded w-1/4 mb-2"></div>
+                <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+              </div>
+              <div className="px-8 pb-4">
+                <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+              </div>
+            </div>
+          ))}
         </div>
-      )}
-
-      {!isLoading && !error && (
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-xl border border-[var(--line)]">
+          <div className="text-xl text-red-500 mb-2">오류가 발생했습니다</div>
+          <div className="text-gray-500">{error.message}</div>
+        </div>
+      ) : (
         <>
-          <div className="border rounded-xl border-slate-200">
+          <div className="border rounded-xl border-[var(--line)] bg-white/5">
             {archiveLogs.map((log, index) => (
               <div key={log.logId}>
-                <div className={`flex ${index !== 0 ? 'border-t' : ''} border-slate-200`}>
+                <div className={`flex ${index !== 0 ? 'border-t border-[var(--line)]' : ''}`}>
                   <div className="w-full py-2">
                     <EachLog
                       id={log.logId}
-                      timestamp={log.logTimestamp}
+                      timestamp={new Date(log.logTimestamp).toLocaleString('ko-KR', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }).replace(/\./g, '-')}
                       level={log.logLevel}
                       message={log.logMessage}
                       environment={log.logEnvironment}
@@ -153,8 +169,8 @@ export default function ArchiveListPage() {
                     key={page}
                     onClick={() => handlePageChange(page)}
                     className={`px-3 py-1 rounded-xl ${page === pagination.pageNumber
-                        ? 'bg-[rgba(101,218,94,1)] text-white'
-                        : 'bg-white text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[rgba(101,218,94,1)] text-white'
+                      : 'bg-white text-slate-600 hover:bg-slate-200'
                       }`}
                   >
                     {page}

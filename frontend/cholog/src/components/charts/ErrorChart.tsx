@@ -25,7 +25,6 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
     if (projectId) {
       dispatch(fetchErrorTimeline({ projectId }));
     }
-    console.log(errorTimeline[0]);
   }, [dispatch, projectId]);
 
   // API 응답 데이터를 차트 데이터 형식으로 변환

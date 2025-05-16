@@ -14,6 +14,7 @@ import {
   JoinProjectResponse,
   LeaveProjectRequest,
   LeaveProjectResponse,
+  ProjectDetailResponse, // 이 부분 추가
 } from "../../types/project.types";
 
 // 목데이터 import 제거
@@ -335,6 +336,56 @@ export const leaveProject = createAsyncThunk<
 });
 
 /**
+ * ============================================
+ * [#PROJECT-8]
+ * [GET] /project/:projectId
+ * 프로젝트의 상세 정보를 조회합니다.
+ * --------------------------------------------
+ * @param projectId - 조회할 프로젝트 ID
+ * @returns ProjectDetailResponse
+ * - 프로젝트 이름과 토큰 정보 포함
+ * ============================================
+ */
+export const fetchProjectDetail = createAsyncThunk<
+  ProjectDetailResponse,
+  number
+>("project/fetchProjectDetail", async (projectId, { rejectWithValue }) => {
+  try {
+    const response = await api.get<ProjectDetailResponse>(
+      `/project/${projectId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status;
+    let errorCode = "INTERNAL_ERROR";
+    if (status === 400) errorCode = "INVALID_REQUEST";
+    else if (status === 401) errorCode = "UNAUTHORIZED";
+    else if (status === 404) errorCode = "NOT_FOUND";
+
+    return rejectWithValue({
+      success: false,
+      data: {
+        name: "",
+        projectToken: "",
+      },
+      error: {
+        code: errorCode,
+        message:
+          error.response?.data?.error?.message ||
+          "프로젝트 정보 조회 중 오류가 발생했습니다.",
+      },
+      timestamp: new Date().toISOString(),
+    } as ProjectDetailResponse);
+  }
+});
+
+/**
  * =========================
  * Project Slice & 상태 정의
  * =========================
@@ -466,6 +517,37 @@ const projectSlice = createSlice({
       .addCase(leaveProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as LeaveProjectResponse)?.error ?? {
+          code: "INTERNAL_ERROR",
+          message: "알 수 없는 오류가 발생했습니다.",
+        };
+      })
+      .addCase(fetchProjectDetail.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchProjectDetail.fulfilled, (state, action) => {
+        state.isLoading = false;
+        // Update the project in the existing projects array
+        const projectDetail = {
+          id: Number(action.meta.arg), // projectId from the action
+          name: action.payload.data.name,
+          projectToken: action.payload.data.projectToken,
+          createdAt: new Date().toISOString(), // Since we don't get this from detail API
+          isCreator: true // Since we don't get this from detail API
+        };
+        
+        // Find and update existing project or add as new
+        const existingIndex = state.projects.findIndex(p => p.id === projectDetail.id);
+        if (existingIndex >= 0) {
+          state.projects[existingIndex] = projectDetail;
+        } else {
+          state.projects.push(projectDetail);
+        }
+        state.error = null;
+      })
+      .addCase(fetchProjectDetail.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = (action.payload as ProjectDetailResponse)?.error ?? {
           code: "INTERNAL_ERROR",
           message: "알 수 없는 오류가 발생했습니다.",
         };
