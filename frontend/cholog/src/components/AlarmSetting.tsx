@@ -13,6 +13,8 @@ import {
 import URLGuideModal from './URLGuideModal';
 import JiraGuideModal from './JiraGuideModal';
 import { useParams } from 'react-router-dom';
+import domainhelpimg from "@/assets/jiraimg/domain_projectkey.png";
+import useremailhelpimg from "@/assets/jiraimg/user email.png";
 
 interface AlarmSettingProps {
   isOpen: boolean;
@@ -50,7 +52,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
   // Jira 관련 상태
   const [jiraUsername, setJiraUsername] = useState('');
   const [jiraToken, setJiraToken] = useState('');
-  const [jiraInstanceUrl, setJiraInstanceUrl] = useState(''); // 추가: Jira 인스턴스 URL
+  const [jiraInstanceUrl, setJiraInstanceUrl] = useState(''); // 추가: Jira 도메인 URL
   const [jiraProjectKey, setJiraProjectKey] = useState('');
   const [jiraProjectEnabled, setJiraProjectEnabled] = useState(false);
   const [jiraActiveSection, setJiraActiveSection] = useState<'personal' | 'project'>('personal');
@@ -58,6 +60,24 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
   const [jiraProjectExists, setJiraProjectExists] = useState(false);
   const [jiraLoading, setJiraLoading] = useState(false);
   const [jiraError, setJiraError] = useState('');
+
+  const [isDomainHelpModalOpen, setIsDomainHelpModalOpen] = useState<boolean>(false);
+  const [isEmailHelpModalOpen, setIsEmailHelpModalOpen] = useState<boolean>(false);
+
+  const openDomainHelpModal = () => {
+    setIsDomainHelpModalOpen(true);
+  };
+  
+  const closeDomainHelpModal = () => {
+    setIsDomainHelpModalOpen(false);
+  };
+  const openEmailHelpModal = () => {
+    setIsEmailHelpModalOpen(true);
+  };
+  
+  const closeEmailHelpModal = () => {
+    setIsEmailHelpModalOpen(false);
+  };
   
   // 폼 유효성 검사 상태
   const [isFormValid, setIsFormValid] = useState(false);
@@ -66,7 +86,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
     keywords: '',
     jiraUsername: '',
     jiraToken: '',
-    jiraInstanceUrl: '', // 추가: Jira 인스턴스 URL 에러
+    jiraInstanceUrl: '', // 추가: Jira 도메인 URL 에러
     jiraProjectKey: ''
   });
 
@@ -169,7 +189,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
       // Jira 프로젝트 키 유효성 검사
       if (activeTab === 'jira' && jiraActiveSection === 'project') {
         if (!jiraInstanceUrl) {
-          newErrors.jiraInstanceUrl = 'Jira 인스턴스 URL을 입력해주세요';
+          newErrors.jiraInstanceUrl = 'Jira 도메인 URL을 입력해주세요';
         } else if (!jiraInstanceUrl.startsWith('https://')) {
           newErrors.jiraInstanceUrl = 'URL은 https://로 시작해야 합니다';
         }
@@ -456,6 +476,24 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                     </label>
                   </label>
                 </div>
+                <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={onClose}
+              className="text-[12px] px-4 text-gray-600 hover:text-gray-800"
+              disabled={isSubmitting}
+            >
+              취소
+            </button>
+            {activeTab === 'webhook' && (
+              <button
+                onClick={handleSubmit}
+                disabled={!isFormValid || isSubmitting}
+                className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? 'bg-lime-600 hover:bg-lime-700' : 'bg-lime-300 cursor-not-allowed'} text-white rounded-lg transition-colors`}
+              >
+                {isSubmitting ? '처리 중...' : webhookData?.exists ? '수정하기' : '등록하기'}
+              </button>
+            )}
+          </div>
               </div>
             </>
           ) : (
@@ -506,6 +544,14 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                   <div>
                     <div className="text-[14px] mb-2 flex items-center gap-1">
                       Jira 사용자 이름 (이메일) <span className="text-red-500">*</span>
+                      <button 
+                        onClick={openEmailHelpModal}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="darkgray" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                        </svg>
+                      </button>
                     </div>
                     <input
                       type="email"
@@ -518,27 +564,15 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                     {errors.jiraUsername && (
                       <p className="text-red-500 text-[11px] mt-1">{errors.jiraUsername}</p>
                     )}
-                    <p className="text-[11px] text-slate-500 mt-1">Jira 계정의 이메일 주소를 입력하세요</p>
                   </div>
-
+                  
                   <div>
-                    <div className="text-[14px] mb-2 flex items-center gap-1">
-                      Jira API 토큰 <span className="text-red-500">*</span>
-                      <button 
-                        onClick={() => setIsJiraGuideOpen(true)}
-                        className="text-slate-400 hover:text-slate-600"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="darkgray" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                        </svg>
-                      </button>
-                    </div>
-                    
+                    <div className="text-[14px] mb-2">Jira API 토큰 <span className="text-red-500">*</span></div>
                     <input
                       type="password"
                       value={jiraToken}
                       onChange={(e) => setJiraToken(e.target.value)}
-                      placeholder="Jira API 토큰"
+                      placeholder="Jira API 토큰을 입력하세요"
                       className={`w-full px-3 py-2 border rounded-lg ${errors.jiraToken ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
                       required
                     />
@@ -546,25 +580,30 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                       <p className="text-red-500 text-[11px] mt-1">{errors.jiraToken}</p>
                     )}
                     <p className="text-[11px] text-slate-500 mt-1">
-                      <a 
-                        href="https://id.atlassian.com/manage-profile/security/api-tokens" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-lime-600 hover:underline"
-                      >
-                        Atlassian 계정 설정
+                      <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-lime-600 hover:underline">
+                        Jira API 토큰 생성하기
                       </a>
-                      에서 API 토큰을 생성할 수 있습니다
                     </p>
                   </div>
-                  
-                  <div className="pt-2">
+                  <div className="flex justify-end gap-2 mt-6">
+                    <button
+                      onClick={onClose}
+                      className="text-[12px] px-4 text-gray-600 hover:text-gray-800"
+                      disabled={isSubmitting}
+                    >
+                      취소
+                    </button>
                     <button
                       onClick={handleJiraUserSubmit}
                       disabled={!isFormValid || isSubmitting}
-                      className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? 'bg-lime-600 hover:bg-lime-700' : 'bg-lime-300 cursor-not-allowed'} text-white rounded-lg transition-colors`}
+                      className={`text-[12px] px-3 py-2 rounded-lg text-white ${
+                        !isFormValid || isSubmitting
+                          ? 'bg-slate-300 cursor-not-allowed'
+                          : 'bg-lime-500 hover:bg-lime-600'
+                      }`}
                     >
-                      {isSubmitting ? '처리 중...' : jiraUserExists ? '수정하기' : '등록하기'}
+                      
+                      {isSubmitting ? '저장 중...' : '저장하기'}
                     </button>
                   </div>
                 </div>
@@ -575,47 +614,62 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                 <div className="space-y-4">
                   <div>
                     <div className="text-[14px] mb-2 flex items-center gap-1">
-                      Jira 인스턴스 URL <span className="text-red-500">*</span>
+                      Jira 도메인 URL <span className="text-red-500">*</span>
+                      <button 
+                        onClick={openDomainHelpModal}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="darkgray" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                        </svg>
+                      </button>
                     </div>
                     <input
                       type="text"
                       value={jiraInstanceUrl}
                       onChange={(e) => setJiraInstanceUrl(e.target.value)}
-                      placeholder="https://ssafy.atlassian.net/"
+                      placeholder="https://your-domain.atlassian.net"
                       className={`w-full px-3 py-2 border rounded-lg ${errors.jiraInstanceUrl ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
                       required
                     />
                     {errors.jiraInstanceUrl && (
                       <p className="text-red-500 text-[11px] mt-1">{errors.jiraInstanceUrl}</p>
                     )}
-                    <p className="text-[11px] text-slate-500 mt-1">Jira 인스턴스의 URL을 입력하세요 (예: https://ssafy.atlassian.net/)</p>
                   </div>
-
+                  
                   <div>
-                    <div className="text-[14px] mb-2 flex items-center gap-1">
-                      Jira 프로젝트 키 <span className="text-red-500">*</span>
-                    </div>
+                    <div className="text-[14px] mb-2">Jira 프로젝트 키 <span className="text-red-500">*</span></div>
                     <input
                       type="text"
                       value={jiraProjectKey}
                       onChange={(e) => setJiraProjectKey(e.target.value)}
-                      placeholder="S12P31B207"
+                      placeholder="프로젝트 키를 입력하세요 (예: PROJ)"
                       className={`w-full px-3 py-2 border rounded-lg ${errors.jiraProjectKey ? 'border-red-500' : 'border-slate-700'} text-[12px]`}
                       required
                     />
                     {errors.jiraProjectKey && (
                       <p className="text-red-500 text-[11px] mt-1">{errors.jiraProjectKey}</p>
                     )}
-                    <p className="text-[11px] text-slate-500 mt-1">Jira 프로젝트의 키를 입력하세요 (예: S12P31B207)</p>
                   </div>
                   
-                  <div className="pt-2">
+                  <div className="flex justify-end gap-2 mt-6">
+                    <button
+                      onClick={onClose}
+                      className="text-[12px] px-4 text-gray-600 hover:text-gray-800"
+                      disabled={isSubmitting}
+                    >
+                      취소
+                    </button>
                     <button
                       onClick={handleJiraProjectSubmit}
                       disabled={!isFormValid || isSubmitting}
-                      className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? 'bg-lime-600 hover:bg-lime-700' : 'bg-lime-300 cursor-not-allowed'} text-white rounded-lg transition-colors`}
+                      className={`text-[12px] px-3 py-2 rounded-lg text-white ${
+                        !isFormValid || isSubmitting
+                          ? 'bg-slate-300 cursor-not-allowed'
+                          : 'bg-lime-500 hover:bg-lime-600'
+                      }`}
                     >
-                      {isSubmitting ? '처리 중...' : jiraProjectExists ? '수정하기' : '등록하기'}
+                      {isSubmitting ? '저장 중...' : '저장하기'}
                     </button>
                   </div>
                 </div>
@@ -623,24 +677,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
             </>
           )}
 
-          <div className="flex justify-end gap-2 mt-6">
-            <button
-              onClick={onClose}
-              className="text-[12px] px-4 text-gray-600 hover:text-gray-800"
-              disabled={isSubmitting}
-            >
-              취소
-            </button>
-            {activeTab === 'webhook' && (
-              <button
-                onClick={handleSubmit}
-                disabled={!isFormValid || isSubmitting}
-                className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? 'bg-lime-600 hover:bg-lime-700' : 'bg-lime-300 cursor-not-allowed'} text-white rounded-lg transition-colors`}
-              >
-                {isSubmitting ? '처리 중...' : webhookData?.exists ? '수정하기' : '등록하기'}
-              </button>
-            )}
-          </div>
+
         </div>
       </div>
       <URLGuideModal 
@@ -651,6 +688,57 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
         isOpen={isJiraGuideOpen}
         onClose={() => setIsJiraGuideOpen(false)}
       />
+       {/* 도메인 도움말 이미지 모달 */}
+      {isDomainHelpModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg p-6 w-auto max-w-[90vw] max-h-[90vh] overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-[16px] font-[paperlogy6]">Jira 도메인 URL 안내</h3>
+              <button
+                onClick={closeDomainHelpModal}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex justify-center">
+              <img 
+                src={domainhelpimg} 
+                alt="Jira 도메인 URL 안내" 
+                className="max-w-full h-auto"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 이메일 도움말 이미지 모달 */}
+      {isEmailHelpModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg p-6 w-auto max-w-[90vw] max-h-[90vh] overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-[16px] font-[paperlogy6]">Jira 사용자 이메일 안내</h3>
+              <button
+                onClick={closeEmailHelpModal}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex justify-center">
+              <img 
+                src={useremailhelpimg} 
+                alt="Jira 사용자 이메일 안내" 
+                className="max-w-full h-auto"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -21,6 +21,7 @@ interface JiraProjectSettings {
 }
 
 interface JiraIssueInfo {
+  userNames: any[];
   projectId: number;
   issueTypes?: Array<{
     id: string;
@@ -35,9 +36,10 @@ interface JiraIssueInfo {
 interface JiraIssueCreateRequest {
   projectId: number;
   summary: string;
-  description: string;
-  issueTypeId: string;
-  priorityId?: string;
+  description?: string;
+  issueType: string;
+  reporterName: string;
+  assigneeName?: string;
 }
 
 // 응답 인터페이스
@@ -78,7 +80,6 @@ interface JiraIssueInfoResponse extends BaseResponse {
 
 interface JiraIssueCreateResponse extends BaseResponse {
   data: {
-    issueId: string;
     issueKey: string;
     issueUrl: string;
   };
@@ -90,7 +91,6 @@ interface JiraState {
   projectSettings: JiraProjectSettings | null;
   issueInfo: JiraIssueInfo | null;
   createdIssue: {
-    issueId: string;
     issueKey: string;
     issueUrl: string;
   } | null;
@@ -312,7 +312,7 @@ export const createJiraProjectSettings = createAsyncThunk<
 
 /**
  * ============================================
- * [GET] /jira/issue/{projectId}
+ * [GET] /api/jira/issue/{projectId}
  * JIRA 이슈 생성을 위한 정보 조회
  * ============================================
  */
@@ -343,7 +343,7 @@ export const fetchJiraIssueInfo = createAsyncThunk<JiraIssueInfoResponse, number
 
 /**
  * ============================================
- * [POST] /jira/issue/{projectId}
+ * [POST] /api/jira/issue/{projectId}
  * JIRA 이슈 생성
  * ============================================
  */
@@ -356,8 +356,9 @@ export const createJiraIssue = createAsyncThunk<JiraIssueCreateResponse, JiraIss
         {
           summary: issueData.summary,
           description: issueData.description,
-          issueTypeId: issueData.issueTypeId,
-          priorityId: issueData.priorityId
+          issueType: issueData.issueType,
+          reporterName: issueData.reporterName,
+          assigneeName: issueData.assigneeName
         }, 
         {
           headers: {
@@ -370,7 +371,7 @@ export const createJiraIssue = createAsyncThunk<JiraIssueCreateResponse, JiraIss
     } catch (error: any) {
       return rejectWithValue({
         success: false,
-        data: { issueId: '', issueKey: '', issueUrl: '' },
+        data: { issueKey: '', issueUrl: '' },
         error: {
           code: error.response?.status === 401 ? 'UNAUTHORIZED' : 'INTERNAL_ERROR',
           message: error.response?.data?.error?.message || 'JIRA 이슈 생성 중 오류가 발생했습니다.'
