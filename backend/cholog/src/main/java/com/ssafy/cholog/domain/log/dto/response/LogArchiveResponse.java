@@ -20,7 +20,7 @@ public class LogArchiveResponse {
     private String logLevel;
     @Schema(example = "frontend")
     private String logSource;
-    @Schema(example = "ERROR")
+    @Schema(example = "error")
     private String logType;
     @Schema(example = "production")
     private String logEnvironment;
