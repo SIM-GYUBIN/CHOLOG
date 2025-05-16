@@ -18,6 +18,7 @@ public class LogEntry {
     private String thread;
     private Long sequence;     // 로그 시퀀스 번호
     private String source = "backend"; // 기본값을 "backend"로 명시
+    private String logType; // 서버에서 직접 넣어줄 거야 ! (ex: "general", "error")
 
     // 애플리케이션 정보
     private String serviceName;  // 이전 applicationName

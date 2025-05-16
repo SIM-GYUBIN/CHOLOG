@@ -59,6 +59,14 @@ public class LogController {
                         entry.setProjectKey(entry.getApiKey()); // apiKey를 projectKey로 사용
                     }
                 }
+
+                // logType 설정 로직!!!!!
+                if (entry.getLevel() != null && "ERROR".equalsIgnoreCase(entry.getLevel())) {
+                    entry.setLogType("error");
+                } else {
+                    entry.setLogType("general");
+                }
+
                 // 큐가 꽉 찼으면 가장 오래된 것 제거
                 while (recentLogs.size() >= MAX_LOG_ENTRIES) {
                     recentLogs.poll();
