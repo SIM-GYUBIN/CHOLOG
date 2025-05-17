@@ -32,7 +32,7 @@ app:
     url: https://www.cholog.com
     cors-origins: https://www.cholog.com, http://localhost:5173, http://localhost:5174
   is-local: false
-  cookie-domain: j12b108.p.ssafy.io
+  cookie-domain: www.cholog.com
 
 cholog:
   notification:

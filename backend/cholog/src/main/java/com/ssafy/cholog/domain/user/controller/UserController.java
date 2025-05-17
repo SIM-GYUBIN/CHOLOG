@@ -42,12 +42,12 @@ public class UserController {
         ResponseCookie accessTokenCookie = CookieUtil.makeAccessTokenCookie(loginResult.getAccessToken());
         ResponseCookie refreshTokenCookie = CookieUtil.makeRefreshTokenCookie(loginResult.getRefreshToken());
 
-        return CommonResponse.okWithCookie(accessTokenCookie, refreshTokenCookie);
+        return CommonResponse.redirectWithCookie("https://www.cholog.com", accessTokenCookie, refreshTokenCookie);
     }
 
     @GetMapping("/login/{provider}")
     @Operation(summary = "소셜 로그인 처리", description = "소셜 로그인 인증 후 자동으로 호출되는 API입니다.\n\n이 API는 직접 호출하지 않으며, 소셜 로그인 과정에서 자동으로 호출됩니다.")
-    @ApiErrorCodeExamples({ErrorCode.INVALID_OAUTH_PROVIDER, ErrorCode.OAUTH_SERVER_ERROR})
+    @ApiErrorCodeExamples({ErrorCode.INVALID_OAUTH_PROVIDER, ErrorCode.NOT_OAUTH_USER, ErrorCode.OAUTH_SERVER_ERROR})
     public ResponseEntity<CommonResponse<LoginResponse>> socialLogin(
             @PathVariable String provider,
             @RequestParam String code
