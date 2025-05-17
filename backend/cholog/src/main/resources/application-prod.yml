@@ -31,6 +31,8 @@ app:
   domain:
     url: https://www.cholog.com
     cors-origins: https://www.cholog.com, http://localhost:5173, http://localhost:5174
+  is-local: false
+  cookie-domain: j12b108.p.ssafy.io
 
 cholog:
   notification:
@@ -38,3 +40,7 @@ cholog:
       rate: 60000 # 알림 폴링 주기 (밀리초 단위, 예: 60000 = 1분)
       initialLookbackMinutes: 5 # 첫 폴링 시 또는 lastCheckedTimestamp가 없을 때 조회할 최근 시간 (분 단위)
       queryResultLimit: 100 # 한 번의 폴링 주기 및 알림 설정당 처리할 최대 로그 수
+
+oauth:
+  ssafy:
+    redirect-uri: https://www.cholog.com/api/user/login/ssafy

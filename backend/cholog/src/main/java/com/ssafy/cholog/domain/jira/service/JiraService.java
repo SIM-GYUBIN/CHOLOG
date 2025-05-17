@@ -46,13 +46,13 @@ public class JiraService {
         if(jiraUser == null){
             return JiraUserResponse.builder()
                     .exists(false)
-                    .username(null)
+                    .userName(null)
                     .jiraToken(null)
                     .build();
         }else{
             return JiraUserResponse.builder()
                     .exists(true)
-                    .username(jiraUser.getUserName())
+                    .userName(jiraUser.getUserName())
                     .jiraToken(jiraUser.getJiraToken())
                     .build();
         }

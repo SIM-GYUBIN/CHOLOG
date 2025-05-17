@@ -187,7 +187,7 @@ public class ProjectService {
                         .addParameter("userId", userId)
                         .addParameter("projectId", project.getId()));
 
-        return ProjectDetailResponse.of(project, projectUser.getIsCreator());
+        return ProjectDetailResponse.of(project);
     }
 
     @Transactional
@@ -212,11 +212,4 @@ public class ProjectService {
 
         return null;
     }
-
-//    User user2 = userRepository.findById(userId)
-//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)
-//                    .addParameter("userId", userId)
-//                    .addParameter("userId", userId));
-//    User user3 = userRepository.findById(userId)
-//            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "user가 없어요"));
 }

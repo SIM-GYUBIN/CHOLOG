@@ -12,14 +12,11 @@ public class ProjectDetailResponse {
     private final String name;
     @Schema(example = "143258dkfjwoi100mfvl")
     private final String projectToken;
-    @Schema(example = "false")
-    private final Boolean isCreator;
 
-    public static ProjectDetailResponse of(Project project, Boolean isCreator) {
+    public static ProjectDetailResponse of(Project project) {
         return ProjectDetailResponse.builder()
                 .name(project.getName())
                 .projectToken(project.getProjectToken())
-                .isCreator(isCreator)
                 .build();
     }
 }
