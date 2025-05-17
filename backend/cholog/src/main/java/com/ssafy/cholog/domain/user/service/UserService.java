@@ -82,6 +82,13 @@ public class UserService {
         // 3. 기존 회원인지 확인
         Optional<User> existingUser = userRepository.findByEmail(userInfoFromOAuth.getEmail());
 
+        // UserType이 일반회원이면 exeption 발생. 그 후 null이면 회원가입 진행
+        if (existingUser.isPresent() && existingUser.get().getUserType() == UserType.GENERAL) {
+            throw new CustomException(ErrorCode.NOT_OAUTH_USER)
+                    .addParameter("email", userInfoFromOAuth.getEmail());
+        }
+
+        // 4. 신규 회원이면 회원가입 진행
         User user = existingUser.orElseGet(() -> createOauthUser(userInfoFromOAuth, provider));
         String userId = user.getId().toString();
         UserType userType = user.getUserType();

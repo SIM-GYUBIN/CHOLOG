@@ -27,6 +27,7 @@ public enum ErrorCode {
     OAUTH_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "U004", "OAuth 서버와 통신 중 오류가 발생했습니다"),
     INVALID_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "U005", "지원하지 않는 OAuth 제공자입니다"),
     NOT_GENERAL_USER(HttpStatus.BAD_REQUEST, "U006", "일반회원이 아닙니다. 소셜로그인을 시도하세요."),
+    NOT_OAUTH_USER(HttpStatus.BAD_REQUEST, "U007", "소셜로그인이 아닙니다. 일반회원으로 로그인하세요."),
 
     // Project
     PROJECT_USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "P001", "프로젝트 사용자 정보를 찾을 수 없습니다"),
