@@ -48,8 +48,6 @@ public class WebhookPollingService {
     @Scheduled(fixedRateString = "${cholog.notification.poll.rate}")
     @Transactional
     public void pollAndNotify() {
-        log.info("Starting webhook poll. This service will always run regardless of CHO:LOG server profile.");
-
         List<Webhook> activeWebhooks = webhookRepository.findByIsEnabledTrue();
         if (activeWebhooks.isEmpty()) {
             log.debug("No active webhooks found.");
@@ -73,14 +71,10 @@ public class WebhookPollingService {
         }
 
         if (!webhooksToUpdate.isEmpty()) {
-            log.info("Attempting to batch update {} webhook settings.", webhooksToUpdate.size());
             webhookRepository.saveAll(webhooksToUpdate);
-            log.info("Successfully batch updated {} webhook settings.", webhooksToUpdate.size());
         } else {
             log.info("No webhooks were processed or needed updates in this cycle.");
         }
-
-        log.info("Webhook poll finished.");
     }
 
     protected void processSingleWebhook(Webhook webhookSetting, LocalDateTime currentPollExecutionTime) {
