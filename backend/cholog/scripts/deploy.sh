@@ -11,6 +11,17 @@ DOCKER_APP_NAME=spring-cholog
 # 호스트 머신에서 Nginx가 읽을 upstream 설정 파일 경로
 NGINX_UPSTREAM_CONFIG_HOST_PATH="/data/nginx/current_upstream.conf"
 
+echo "현재 스크립트 실행 사용자: $(whoami)"
+
+echo "NGINX_UPSTREAM_CONFIG_HOST_PATH 변수 값: [${NGINX_UPSTREAM_CONFIG_HOST_PATH}]"
+
+echo "EC2 호스트의 /data/nginx 디렉토리 목록 확인:"
+ls -la /data/nginx/
+
+echo "EC2 호스트의 /data/nginx/current_upstream.conf 파일 상세 정보 확인:"
+ls -l "${NGINX_UPSTREAM_CONFIG_HOST_PATH}" || echo "Warning: ${NGINX_UPSTREAM_CONFIG_HOST_PATH} 파일을 찾을 수 없거나 접근할 수 없습니다."
+
+
 # 실행중인 blue가 있는지 확인
 # 프로젝트의 실행 중인 컨테이너를 확인하고, 해당 컨테이너가 실행 중인지 여부를 EXIST_BLUE 변수에 저장
 EXIST_BLUE=$(docker-compose -p "${DOCKER_APP_NAME}-blue" -f docker-compose.blue.yml ps | grep -E "Up|running")
