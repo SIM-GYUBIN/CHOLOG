@@ -1,4 +1,8 @@
 #!/bin/bash
+set -e
+set -x
+
+
 # 작업 디렉토리를 /var/jenkins_home/custom/cholog로 변경
 cd /var/jenkins_home/custom/cholog
 
