@@ -36,7 +36,7 @@ npm install cholog-sdk
 import Cholog from "cholog-sdk";
 
 Cholog.init({
-  appKey: "YOUR_APPLICATION_KEY", // Cholog 서버에서 발급받은 고유 앱 키를 입력하세요. (필수)
+  projectKey: "YOUR_APPLICATION_KEY", // Cholog 서버에서 발급받은 고유 앱 키를 입력하세요. (필수)
   environment: "development", // 환경을 구분 할 수 있도록 지정해 주세요 ! env를 통해 동적으로 관리하는 것을 권장합니다.
 });
 ```
