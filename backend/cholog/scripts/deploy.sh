@@ -34,9 +34,9 @@ if [ -z "$EXIST_BLUE" ]; then
   if [ -n "$NEW_CONTAINER_STATUS" ]; then
       echo "blue 컨테이너 실행 확인. green 중단 시작 : $(date +%Y)-$(date +%m)-$(date +%d) $(date +%H):$(date +%M):$(date +%S)"
 
-      echo "Nginx upstream 설정을 ${NEW_CONTAINER_NAME}:${APP_CONTAINER_PORT} 으로 변경합니다."
+      echo "Nginx upstream 설정을 변경합니다."
       # 호스트의 Nginx upstream 설정 파일 내용 덮어쓰기
-      sudo bash -c "echo 'server ${NEW_CONTAINER_NAME_FOR_NGINX}:8080;' > ${NGINX_UPSTREAM_CONFIG_HOST_PATH}"
+      echo "server ${NEW_CONTAINER_NAME}:8080;" > "${NGINX_UPSTREAM_CONFIG_HOST_PATH}"
 
       echo "Nginx 설정 리로드 중..."
       docker exec nginx nginx -s reload
@@ -65,9 +65,9 @@ else
   if [ -n "$NEW_CONTAINER_STATUS" ]; then
       echo "green 컨테이너 실행 확인. blue 중단 시작 : $(date +%Y)-$(date +%m)-$(date +%d) $(date +%H):$(date +%M):$(date +%S)"
 
-      echo "Nginx upstream 설정을 ${NEW_CONTAINER_NAME}:${APP_CONTAINER_PORT} 으로 변경합니다."
+      echo "Nginx upstream 설정을 변경합니다."
       # 호스트의 Nginx upstream 설정 파일 내용 덮어쓰기
-      sudo bash -c "echo 'server ${NEW_CONTAINER_NAME_FOR_NGINX}:8080;' > ${NGINX_UPSTREAM_CONFIG_HOST_PATH}"
+      echo "server ${NEW_CONTAINER_NAME}:8080;" > "${NGINX_UPSTREAM_CONFIG_HOST_PATH}"
 
       echo "Nginx 설정 리로드 중..."
       docker exec nginx nginx -s reload
