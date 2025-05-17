@@ -21,6 +21,7 @@ ls -la /data/nginx/
 echo "EC2 호스트의 /data/nginx/current_upstream.conf 파일 상세 정보 확인:"
 ls -l "${NGINX_UPSTREAM_CONFIG_HOST_PATH}" || echo "Warning: ${NGINX_UPSTREAM_CONFIG_HOST_PATH} 파일을 찾을 수 없거나 접근할 수 없습니다."
 
+docker-compose -p ${DOCKER_APP_NAME}-green -f docker-compose.green.yml down
 
 # 실행중인 blue가 있는지 확인
 # 프로젝트의 실행 중인 컨테이너를 확인하고, 해당 컨테이너가 실행 중인지 여부를 EXIST_BLUE 변수에 저장
