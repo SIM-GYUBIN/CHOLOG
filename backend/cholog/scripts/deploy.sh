@@ -1,13 +1,14 @@
 #!/bin/bash
-set -e
-set -x
+set -e # 오류 발생 시 즉시 스크립트 중단
+set -x # 실행되는 모든 명령어와 변수 값을 로그에 출력
 
-# 작업 디렉토리를 /var/jenkins_home/custom/cholog로 변경
-cd /var/jenkins_home/custom/cholog
+echo "--- EC2 호스트에서 deploy.sh 스크립트 실행 시작 ---"
+echo "현재 작업 디렉토리 (EC2 호스트): $(pwd)" # Jenkins 파이프라인에서 cd 한 후의 경로여야 함 (예: /data/jenkins/custom/cholog)
+echo "스크립트 실행 사용자 (EC2 호스트): $(whoami)"
 
-# 환경변수 DOCKER_APP_NAME : 컨테이너 메인 이름
-DOCKER_APP_NAME=spring-cholog
-# 호스트 머신에서 Nginx가 읽을 upstream 설정 파일 경로
+# 환경변수
+DOCKER_APP_NAME="spring-cholog"
+# EC2 호스트 머신에서 Nginx가 읽을 upstream 설정 파일 경로
 NGINX_UPSTREAM_CONFIG_HOST_PATH="/data/nginx/current_upstream.conf"
 
 
