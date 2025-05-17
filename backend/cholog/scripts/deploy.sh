@@ -5,7 +5,7 @@ cd /var/jenkins_home/custom/cholog
 # 환경변수 DOCKER_APP_NAME : 컨테이너 메인 이름
 DOCKER_APP_NAME=spring-cholog
 # 호스트 머신에서 Nginx가 읽을 upstream 설정 파일 경로
-NGINX_UPSTREAM_CONFIG_HOST_PATH="/data/nginx/current_upstream_target.conf"
+NGINX_UPSTREAM_CONFIG_HOST_PATH="/data/nginx/current_upstream.conf"
 
 # 실행중인 blue가 있는지 확인
 # 프로젝트의 실행 중인 컨테이너를 확인하고, 해당 컨테이너가 실행 중인지 여부를 EXIST_BLUE 변수에 저장
