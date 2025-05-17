@@ -151,7 +151,7 @@ public class WebhookPollingService {
         }
 
         // 동적으로 검색할 인덱스 이름 (또는 패턴) 결정
-        String indexName = "pjt-" + project.getProjectToken();
+        String indexName = "pjt-*-" + project.getProjectToken();
 
         org.springframework.data.elasticsearch.core.query.Query searchQuery = NativeQuery.builder()
                 .withQuery(q -> q.bool(boolQueryBuilder.build()))
