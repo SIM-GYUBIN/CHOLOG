@@ -31,6 +31,17 @@ public class LogController {
     }
 
     /**
+     * 서버가 살아있는지 확인하는 헬스 체크 API입니다.
+     * (GET /api/logs/be)
+     *
+     * @return 200
+     */
+    @GetMapping("/be")
+    public ResponseEntity<Void> healthCheck() {
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * 로그 배치를 수신하여 Logstash로 전송합니다.
      * (POST /api/logs)
      *
