@@ -1,14 +1,6 @@
 #!/bin/bash
-set -e # 오류 발생 시 즉시 스크립트 중단
-set -x # 실행되는 모든 명령어와 변수 값을 로그에 출력
 
-echo "--- EC2 호스트에서 deploy.sh 스크립트 실행 시작 ---"
-echo "현재 작업 디렉토리 (EC2 호스트): $(pwd)" # Jenkins 파이프라인에서 cd 한 후의 경로여야 함 (예: /data/jenkins/custom/cholog)
-echo "스크립트 실행 사용자 (EC2 호스트): $(whoami)"
-
-# 환경변수
 DOCKER_APP_NAME="spring-cholog"
-# EC2 호스트 머신에서 Nginx가 읽을 upstream 설정 파일 경로
 NGINX_UPSTREAM_CONFIG_HOST_PATH="/data/nginx/current_upstream.conf"
 
 
@@ -39,8 +31,6 @@ if [ -z "$EXIST_BLUE" ]; then
   if [ -n "$NEW_CONTAINER_STATUS" ]; then
       echo "blue 컨테이너 실행 확인. green 중단 시작 : $(date +%Y)-$(date +%m)-$(date +%d) $(date +%H):$(date +%M):$(date +%S)"
 
-      echo "Nginx upstream 설정을 변경합니다."
-      # 호스트의 Nginx upstream 설정 파일 내용 덮어쓰기
       echo "server ${NEW_CONTAINER_NAME}:8080;" > "${NGINX_UPSTREAM_CONFIG_HOST_PATH}"
 
       echo "Nginx 설정 리로드 중..."
@@ -70,8 +60,6 @@ else
   if [ -n "$NEW_CONTAINER_STATUS" ]; then
       echo "green 컨테이너 실행 확인. blue 중단 시작 : $(date +%Y)-$(date +%m)-$(date +%d) $(date +%H):$(date +%M):$(date +%S)"
 
-      echo "Nginx upstream 설정을 변경합니다."
-      # 호스트의 Nginx upstream 설정 파일 내용 덮어쓰기
       echo "server ${NEW_CONTAINER_NAME}:8080;" > "${NGINX_UPSTREAM_CONFIG_HOST_PATH}"
 
       echo "Nginx 설정 리로드 중..."
