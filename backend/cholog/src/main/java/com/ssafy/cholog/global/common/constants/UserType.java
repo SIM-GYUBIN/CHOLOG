@@ -1,9 +1,15 @@
 package com.ssafy.cholog.global.common.constants;
 
-public enum UserType {
-    USER, ADMIN;
+import com.ssafy.cholog.domain.user.enums.Provider;
 
-    public String getLowerCaseName() {
-        return this.name().toLowerCase();
+public enum UserType {
+    GENERAL, SSAFY;
+
+    public static UserType getUserTypeByProvider (Provider provider) {
+        if (provider == Provider.SSAFY) {
+            return UserType.SSAFY;
+        } else {
+            return UserType.GENERAL;
+        }
     }
 }
