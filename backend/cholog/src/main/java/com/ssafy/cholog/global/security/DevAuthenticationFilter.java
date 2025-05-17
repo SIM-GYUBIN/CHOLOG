@@ -47,7 +47,7 @@ public class DevAuthenticationFilter extends OncePerRequestFilter {
                 // 테스트 사용자 ID로 인증 객체 생성
                 UserPrincipal userPrincipal = UserPrincipal.builder()
                         .id(Integer.parseInt(testUserId))
-                        .authorities(Collections.singletonList(new SimpleGrantedAuthority(SecurityConstants.ROLE_PREFIX + UserType.ADMIN.name())))
+                        .authorities(Collections.singletonList(new SimpleGrantedAuthority(SecurityConstants.ROLE_PREFIX + UserType.GENERAL.name())))
                         .build();
 
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
