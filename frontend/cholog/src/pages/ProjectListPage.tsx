@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
-import { fetchProjects, createProject, joinProject } from "../store/slices/projectSlice";
+import {
+  fetchProjects,
+  createProject,
+  joinProject,
+} from "../store/slices/projectSlice";
 import logo from "@/assets/logo2.svg";
 import ProjectActions from "../components/ProjectList/ProjectActions";
 import ProjectTable from "../components/ProjectList/ProjectTable";
@@ -9,7 +13,9 @@ import ProjectModal from "../components/ProjectList/ProjectModal";
 
 const ProjectListPage = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { projects, isLoading, error } = useSelector((state: RootState) => state.project);
+  const { projects, isLoading, error } = useSelector(
+    (state: RootState) => state.project
+  );
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"add" | "join" | null>(null);
   const [inputValue, setInputValue] = useState("");
@@ -36,12 +42,14 @@ const ProjectListPage = () => {
 
   const handleSubmit = async () => {
     if (isSubmitting) return; // 이미 제출 중이면 중복 제출 방지
-    
+
     setIsSubmitting(true);
-    
+
     if (modalType === "add") {
       try {
-        const result = await dispatch(createProject({ name: inputValue, token: "" })).unwrap();
+        const result = await dispatch(
+          createProject({ name: inputValue, token: "" })
+        ).unwrap();
         if (result.success) {
           dispatch(fetchProjects());
           alert("프로젝트가 성공적으로 생성되었습니다.");
@@ -51,7 +59,9 @@ const ProjectListPage = () => {
       }
     } else if (modalType === "join") {
       try {
-        const result = await dispatch(joinProject({ projectToken: inputValue })).unwrap();
+        const result = await dispatch(
+          joinProject({ projectToken: inputValue })
+        ).unwrap();
         if (result.success) {
           dispatch(fetchProjects());
           alert("프로젝트에 성공적으로 참가했습니다.");
@@ -60,7 +70,7 @@ const ProjectListPage = () => {
         alert(error.message || "프로젝트 참가 중 오류가 발생했습니다.");
       }
     }
-    
+
     closeModal();
     setIsSubmitting(false);
   };

@@ -192,10 +192,10 @@ const ProjectTable = ({ projects, onCopy, isLoading, error }: ProjectTableProps)
               </td>
               <td className="w-1/3 p-4 font-paperlogy4 text-[var(--helpertext)] text-left text-[16px]">
                 <div className="flex items-center gap-2">
-                  <span>{project.projectToken}</span>
+                  <span className="truncate">{project.projectToken}</span>
                   <button
                     onClick={() => handleCopy(project.projectToken)}
-                    className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors"
+                    className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors flex-shrink-0"
                   >
                     <img src={copyIcon} alt="Copy" className="h-4 w-4" />
                   </button>
