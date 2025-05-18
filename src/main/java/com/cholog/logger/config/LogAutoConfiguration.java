@@ -169,20 +169,38 @@ public class LogAutoConfiguration {
      * 
      * @return CORS 필터
      */
+//    @Bean
+//    @ConditionalOnMissingBean(CorsFilter.class)
+//    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+//    @ConditionalOnProperty(prefix = "cholog.logger", name = "cors-enabled", havingValue = "true", matchIfMissing = false)
+//    public CorsFilter corsFilter() {
+//        log.info("CHO:LOG - Initializing default CORS configuration");
+//        CorsConfiguration config = new CorsConfiguration();
+//        config.addAllowedOrigin("*"); // 모든 오리진 허용
+//        config.addAllowedHeader("*"); // 모든 헤더 허용
+//        config.addAllowedMethod("*"); // 모든 HTTP 메소드 허용
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", config); // 모든 경로에 적용
+//
+//        return new CorsFilter(source);
+//    }
+
+    /**
+     * CHO:LOG SDK에서 사용하는 X-Request-Id 헤더를 모든 CORS 설정에 자동으로 추가하기 위한
+     * BeanPostProcessor를 등록합니다.
+     * 이 Processor는 UrlBasedCorsConfigurationSource 타입의 빈을 찾아
+     * X-Request-Id를 허용 및 노출 헤더에 추가합니다.
+     *
+     * @return CorsConfigurationCustomizingBeanPostProcessor 인스턴스
+     */
     @Bean
-    @ConditionalOnMissingBean(CorsFilter.class)
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     @ConditionalOnProperty(prefix = "cholog.logger", name = "cors-enabled", havingValue = "true", matchIfMissing = false)
-    public CorsFilter corsFilter() {
-        log.info("CHO:LOG - Initializing default CORS configuration");
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("*"); // 모든 오리진 허용
-        config.addAllowedHeader("*"); // 모든 헤더 허용
-        config.addAllowedMethod("*"); // 모든 HTTP 메소드 허용
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config); // 모든 경로에 적용
-        
-        return new CorsFilter(source);
+    public static CorsConfigurationCustomizingBeanPostProcessor chologCorsConfigurationCustomizer() {
+        // static @Bean 메소드로 선언하여 BeanFactoryPostProcessor 단계 이후,
+        // 일반 빈들이 초기화되기 전에 이 BeanPostProcessor가 등록되도록 합니다.
+        log.info("CHO:LOG - Registering CorsConfigurationCustomizingBeanPostProcessor to handle X-Request-Id in CORS configurations.");
+        return new CorsConfigurationCustomizingBeanPostProcessor();
     }
 }
