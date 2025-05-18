@@ -3,9 +3,10 @@ import searchIcon from "@/assets/search.svg";
 interface ProjectActionsProps {
   onAdd: () => void;
   onJoin: () => void;
+  onSearch: (term: string) => void;
 }
 
-const ProjectActions = ({ onAdd, onJoin }: ProjectActionsProps) => {
+const ProjectActions = ({ onAdd, onJoin, onSearch }: ProjectActionsProps) => {
   return (
     <div className="flex justify-start gap-4 mb-8">
       <div className="relative flex-1 mx-3">
@@ -18,6 +19,7 @@ const ProjectActions = ({ onAdd, onJoin }: ProjectActionsProps) => {
           type="text"
           placeholder="Search for your project..."
           className="w-full pl-12 pr-4 py-3 text-sm text-[var(--helpertext)] bg-[var(--bg)] border border-[var(--line)] rounded-full focus:outline-none focus:ring-2 focus:ring-lime-500"
+          onChange={(e) => onSearch(e.target.value)}
         />
       </div>
       <button
