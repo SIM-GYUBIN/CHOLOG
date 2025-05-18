@@ -4,6 +4,7 @@ import EachLog from "../components/eachLog";
 import ArchiveModal from "../components/ArchiveModal";
 import ProjectNavBar from "../components/projectNavbar";
 import { useDispatch, useSelector } from "react-redux";
+import { analyzeLLM } from '../store/slices/llmSlice';
 import frogimg from "@/assets/frog.png";
 import { LogDetail } from "../types/log.types";
 import { fetchLogDetail, fetchTraceLog } from "../store/slices/logSlice";
@@ -85,17 +86,17 @@ const LogPage = () => {
     // 필요한 후속 처리
   };
 
-  const [isExplanationLoading, setIsExplanationLoading] = useState(false);
+  const { result: explanation, isLoading: isExplanationLoading, error: explanationError } = useSelector((state: any) => state.llm.analysis);
   const [showExplanation, setShowExplanation] = useState(false);
 
-  const handleExplanationClick = () => {
-    setIsExplanationLoading(true);
-    setShowExplanation(false);
-
-    setTimeout(() => {
-      setIsExplanationLoading(false);
-      setShowExplanation(true);
-    }, 1000);
+  const handleExplanationClick = async () => {
+    if (!projectId || !logDetail?.id) return;
+    
+    setShowExplanation(true);
+    dispatch(analyzeLLM({
+      projectId,
+      logId: logDetail.id
+    }));
   };
 
   return (
@@ -157,18 +158,19 @@ const LogPage = () => {
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               CHO:LOG EXPLANE
             </div>
-            <div
-              className="cursor-pointer"
-              onClick={handleExplanationClick}
-            >
+            <div className="cursor-pointer" onClick={handleExplanationClick}>
               {isExplanationLoading ? (
                 <div className="flex gap-5 h-full px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-xl">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-5 border-lime-600"></div>
-                  <span>분석중...</span>
+                  <span>분석중이다굴~!</span>
                 </div>
               ) : showExplanation ? (
                 <div className="text-[14px] text-left font-[consolaNormal] px-6 py-3 shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-lg">
-                  {logDetail.message}
+                  {explanationError ? (
+                    <span className="text-red-500">{explanationError}</span>
+                  ) : (
+                    explanation || '분석실패했다굴... 너무 어려운 로그 아닌가굴...'
+                  )}
                 </div>
               ) : (
                 <div className="flex justify-end gap-5">
