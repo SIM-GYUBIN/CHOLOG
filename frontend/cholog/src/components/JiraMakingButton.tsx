@@ -24,6 +24,7 @@ const JiraMakingButton: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [users, setUsers] = useState<JiraUser[]>([]);
+  const [successInfo, setSuccessInfo] = useState<{ issueKey: string; issueUrl: string } | null>(null);
   
   // 폼 상태 관리
   const [summary, setSummary] = useState<string>('');
@@ -111,17 +112,19 @@ const JiraMakingButton: React.FC = () => {
         projectId: Number(projectId),
         summary,
         description,
-        issueType: ISSUE_TYPE_MAPPING[issueType], // 매핑된 영문 이슈 타입 사용
+        issueType: ISSUE_TYPE_MAPPING[issueType],
         reporterName,
         assigneeName: assigneeName || undefined
       }));
 
       if (createJiraIssue.fulfilled.match(resultAction)) {
-        // 성공 시 모달 닫기
-        closeModal();
-        // 성공 메시지 표시 (필요시 추가)
+        // 성공 정보 설정
+        setSuccessInfo({
+          issueKey: resultAction.payload.data.issueKey,
+          issueUrl: resultAction.payload.data.issueUrl
+        });
+        // 모달은 닫지 않고 성공 메시지 표시
       } else {
-        // 에러 처리
         setError('이슈 생성에 실패했습니다.');
       }
     } catch (err: any) {
@@ -137,7 +140,7 @@ const JiraMakingButton: React.FC = () => {
       {/* Jira 이슈 생성 버튼 */}
       <button
         onClick={openModal}
-        className="px-4 py-2 text-[14px] text-white bg-[rgba(101,218,94,1)] hover:bg-[rgba(91,196,84,1)] rounded-lg transition-colors"
+        className="px-4 py-2 text-[14px] text-white bg-lime-500 hover:bg-lime-600 rounded-lg transition-colors"
       >
         Jira 이슈 생성
       </button>
@@ -159,6 +162,25 @@ const JiraMakingButton: React.FC = () => {
               </button>
             </div>
 
+            {successInfo && (
+              <div className="bg-lime-50 border-l-4 border-lime-500 text-lime-700 p-4 mb-4 rounded">
+                <div className="flex flex-col gap-2">
+                  <p className="text-[14px] font-semibold">이슈가 성공적으로 생성되었습니다!</p>
+                  <div className="flex justify-center items-center gap-2 text-[12px]">
+                    <span className="">이슈 키: {successInfo.issueKey}</span>
+                    <a 
+                      href={successInfo.issueUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[14px] font-semibold text-lime-700 hover:text-lime-500 underline"
+                    >
+                      이슈 바로가기
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
                 <div className="flex">
@@ -168,7 +190,7 @@ const JiraMakingButton: React.FC = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm">{error}</p>
+                    <p className="text-[14px]">{error}</p>
                   </div>
                 </div>
               </div>
@@ -177,14 +199,14 @@ const JiraMakingButton: React.FC = () => {
             <div className="space-y-4">
               {/* 요약 (Summary) 입력 필드 */}
               <div className="flex flex-col">
-                <label className="text-sm text-gray-700 text-left mb-1">
+                <label className="text-[14px] text-gray-700 text-left mb-1">
                   요약 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 placeholder:text-sm placeholder:text-gray-300"
+                  className="font-[paperlogy4] text-[12px] caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 placeholder:text-[12px] placeholder:text-gray-300"
                   placeholder="이슈 요약을 입력하세요"
                   required
                 />
@@ -192,27 +214,27 @@ const JiraMakingButton: React.FC = () => {
 
               {/* 설명 (Description) 입력 필드 */}
               <div className="flex flex-col">
-                <label className="text-sm text-gray-700 text-left mb-1">
+                <label className="text-[14px] text-gray-700 text-left mb-1">
                   설명
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 placeholder:text-sm placeholder:text-gray-300 resize-none"
+                  className="font-[paperlogy4] text-[12px] caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 placeholder:text-[12px] placeholder:text-gray-300 resize-none"
                   placeholder="이슈에 대한 상세 설명을 입력하세요"
                 />
               </div>
 
               {/* 이슈 타입 (Issue Type) 선택 드롭다운 */}
               <div className="flex flex-col">
-                <label className="text-sm text-gray-700 text-left mb-1">
+                <label className="text-[14px] text-gray-700 text-left mb-1">
                   이슈 타입 <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={issueType}
                   onChange={(e) => setIssueType(e.target.value)}
-                  className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 bg-white"
+                  className="font-[paperlogy4] text-[12px] caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 bg-white"
                 >
                   {ISSUE_TYPES.map((type) => (
                     <option key={type} value={type}>
@@ -224,13 +246,13 @@ const JiraMakingButton: React.FC = () => {
 
               {/* 보고자 (Reporter) 선택 드롭다운 */}
               <div className="flex flex-col">
-                <label className="text-sm text-gray-700 text-left mb-1">
+                <label className="text-[14px] text-gray-700 text-left mb-1">
                   보고자 <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={reporterName}
                   onChange={(e) => setReporterName(e.target.value)}
-                  className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 bg-white"
+                  className="font-[paperlogy4] text-[12px] caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 bg-white"
                   disabled={isLoading || users.length === 0}
                 >
                   {isLoading ? (
@@ -249,13 +271,13 @@ const JiraMakingButton: React.FC = () => {
 
               {/* 담당자 (Assignee) 선택 드롭다운 */}
               <div className="flex flex-col">
-                <label className="text-sm text-gray-700 text-left mb-1">
+                <label className="text-[14px] text-gray-700 text-left mb-1">
                   담당자
                 </label>
                 <select
                   value={assigneeName}
                   onChange={(e) => setAssigneeName(e.target.value)}
-                  className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 bg-white"
+                  className="font-[paperlogy4] text-[12px] caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 bg-white"
                   disabled={isLoading || users.length === 0}
                 >
                   <option value="">담당자 없음</option>
@@ -285,7 +307,7 @@ const JiraMakingButton: React.FC = () => {
                   className={`px-4 py-2 text-[14px] text-white rounded-lg transition-colors ${
                     isSubmitting || !summary || !reporterName
                       ? 'bg-gray-300 cursor-not-allowed'
-                      : 'bg-[rgba(101,218,94,1)] hover:bg-[rgba(91,196,84,1)]'
+                      : 'bg-lime-500 hover:bg-lime-600'
                   }`}
                 >
                   {isSubmitting ? '생성 중...' : '이슈 생성'}
