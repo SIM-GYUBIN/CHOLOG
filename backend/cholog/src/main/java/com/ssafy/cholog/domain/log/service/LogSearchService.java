@@ -54,7 +54,7 @@ public class LogSearchService {
                         .addParameter("projectId", projectId));
 
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-" + projectToken;
+        String indexName = "pjt-*-" + projectToken;
 
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
