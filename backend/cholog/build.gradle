@@ -21,6 +21,8 @@ configurations {
 
 repositories {
 	mavenCentral()
+	//test
+	maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -47,6 +49,9 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
 	implementation 'org.springframework.retry:spring-retry'
+
+	// test
+	implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.6'
 }
 
 tasks.named('test') {

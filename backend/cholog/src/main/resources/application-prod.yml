@@ -35,6 +35,8 @@ app:
   cookie-domain: www.cholog.com
 
 cholog:
+  logger:
+    api-key: f98c78f3-8bea-4ead-a631-3d79bae44c11
   notification:
     poll:
       rate: 60000 # 알림 폴링 주기 (밀리초 단위, 예: 60000 = 1분)

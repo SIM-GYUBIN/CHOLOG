@@ -70,7 +70,8 @@ public class LogService {
 
         // 1. Elasticsearch Query 객체 생성 (새로운 방식)
         co.elastic.clients.elasticsearch._types.query_dsl.Query esQueryDsl =
-                QueryBuilders.matchAll(m -> m); // MatchAllQuery
+                QueryBuilders.exists(e -> e.field("message")); // 필드가 존재하는지 확인하는 쿼리
+//                QueryBuilders.matchAll(m -> m); // MatchAllQuery
 
         // 2. SortOptions 리스트 생성 (새로운 방식)
         List<SortOptions> sortOptionsList = new ArrayList<>();
@@ -189,14 +190,38 @@ public class LogService {
         );
         sortOptionsList.add(timestampSort);
         sortOptionsList.add(sequenceSort);
+//
+//        Query searchQuery = NativeQuery.builder()
+//                .withQuery(QueryBuilders.term(t -> t
+//                        .field("requestId.keyword")
+//                        .value(traceId)
+//                ))
+//                .withSort(sortOptionsList)
+//                .build();
+//
+        // 1. requestId에 대한 term 쿼리
+        co.elastic.clients.elasticsearch._types.query_dsl.Query termQuery = QueryBuilders.term(t -> t
+                .field("requestId.keyword")
+                .value(traceId)
+        );
 
-        Query searchQuery = NativeQuery.builder()
-                .withQuery(QueryBuilders.term(t -> t
-                        .field("requestId.keyword") //!! es에서 requestId로 저장되기로 했음!!!!!
-                        .value(traceId)
-                ))
+        // 2. message 필드 존재 여부 쿼리
+        co.elastic.clients.elasticsearch._types.query_dsl.Query existsQuery = QueryBuilders.exists(e -> e
+                .field("message")
+        );
+
+        // 3. 두 쿼리를 bool 쿼리로 결합 (filter 사용)
+        co.elastic.clients.elasticsearch._types.query_dsl.Query finalQuery = QueryBuilders.bool(b -> b
+                .filter(termQuery)
+                .filter(existsQuery)
+        );
+
+        org.springframework.data.elasticsearch.core.query.Query searchQuery = NativeQuery.builder() // 변수 타입을 명시적으로 변경
+                .withQuery(finalQuery) // 수정된 쿼리 적용
                 .withSort(sortOptionsList)
+                .withMaxResults(20) // Elasticsearch 기본 반환 개수 제한(100) 고려, 필요시 조절
                 .build();
+
         SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
                 LogDocument.class,
@@ -225,7 +250,8 @@ public class LogService {
         TermsAggregation esTermsAggregation = TermsAggregation.of(ta -> ta.field("level.keyword"));
 
         co.elastic.clients.elasticsearch._types.query_dsl.Query esQueryDsl =
-                QueryBuilders.matchAll(m -> m);
+//                QueryBuilders.matchAll(m -> m);
+                QueryBuilders.exists(e -> e.field("message")); // 메시지 없는거 제외
 
         Query searchQuery = NativeQuery.builder()
                 .withQuery(esQueryDsl)
@@ -390,6 +416,17 @@ public class LogService {
                         .lt(JsonData.of(endDateTimeBoundaryUtc.toInstant().toEpochMilli()))
                 )._toQuery();
 
+        // 2. message 필드 존재 여부 쿼리
+        co.elastic.clients.elasticsearch._types.query_dsl.Query existsQuery = QueryBuilders.exists(e -> e
+                .field("message")
+        );
+
+        // 3. 두 쿼리를 bool 쿼리로 결합 (filter 사용)
+        co.elastic.clients.elasticsearch._types.query_dsl.Query finalQuery = QueryBuilders.bool(b -> b
+                .filter(elcRangeQuery)
+                .filter(existsQuery)
+        );
+
         // Date Histogram Aggregation 생성 (final 변수 사용)
         String timelineAggregationName = "log_timeline_by_hour";
         DateHistogramAggregation dateHistogramAgg = DateHistogramAggregation.of(dh -> dh
@@ -407,7 +444,7 @@ public class LogService {
         );
 
         NativeQuery searchQuery = NativeQuery.builder()
-                .withQuery(elcRangeQuery)
+                .withQuery(finalQuery)
                 .withAggregation(timelineAggregationName, co.elastic.clients.elasticsearch._types.aggregations.Aggregation.of(agg -> agg.dateHistogram(dateHistogramAgg)))
                 .withMaxResults(0) // 집계 결과만 필요
                 .build();
