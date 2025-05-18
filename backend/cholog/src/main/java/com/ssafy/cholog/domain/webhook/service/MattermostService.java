@@ -109,7 +109,7 @@ public class MattermostService {
         // 3. `attachments` 필드 구성
         String contextLinkPath = "fallback-link-not-available";
         if (projectId != null) {
-            contextLinkPath = String.format("projects/%d/logs/%s", projectId, logDoc.getId());
+            contextLinkPath = String.format("project/%d/log/%s", projectId, logDoc.getId());
         }
         String fullTitleLink = chologUiBaseUrl + "/" + contextLinkPath;
 
