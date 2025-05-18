@@ -20,6 +20,7 @@ const ProjectListPage = () => {
   const [modalType, setModalType] = useState<"add" | "join" | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     dispatch(fetchProjects());
@@ -28,6 +29,15 @@ const ProjectListPage = () => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
   };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  const filteredProjects = projects?.filter(project => 
+    project?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project?.projectToken?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   const openModal = (type: "add" | "join") => {
     setModalType(type);
@@ -85,10 +95,11 @@ const ProjectListPage = () => {
       <ProjectActions
         onAdd={() => openModal("add")}
         onJoin={() => openModal("join")}
+        onSearch={handleSearch}
       />
       <section className="mt-8">
         <ProjectTable
-          projects={projects}
+          projects={filteredProjects}
           onCopy={handleCopy}
           isLoading={isLoading}
           error={error}
