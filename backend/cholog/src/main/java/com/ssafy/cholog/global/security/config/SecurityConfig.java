@@ -95,7 +95,7 @@ public class SecurityConfig {
                 "Authorization", "Content-Type", "X-Requested-With",
                 "Access-Control-Allow-Credentials", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers",
                 "Accept", "Origin", "Cookie", "Set-Cookie", "X-DEV-USER",
-                "Cache-Control", "Connection"
+                "Cache-Control", "Connection", "x-request-id"
         ));
         configuration.setExposedHeaders(List.of("Set-Cookie"));
         configuration.setAllowCredentials(true);

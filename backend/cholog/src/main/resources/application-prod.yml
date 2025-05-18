@@ -32,9 +32,11 @@ app:
     url: https://www.cholog.com
     cors-origins: https://www.cholog.com, http://localhost:5173, http://localhost:5174
   is-local: false
-  cookie-domain: j12b108.p.ssafy.io
+  cookie-domain: www.cholog.com
 
 cholog:
+  logger:
+    api-key: f98c78f3-8bea-4ead-a631-3d79bae44c11
   notification:
     poll:
       rate: 60000 # 알림 폴링 주기 (밀리초 단위, 예: 60000 = 1분)

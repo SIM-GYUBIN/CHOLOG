@@ -72,7 +72,7 @@ public class ReportService {
         }
 
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-" + projectToken;
+        String indexName = "pjt-*-" + projectToken;
 
         ZoneId reportTimeZone = ZoneId.of("Asia/Seoul");
         ZonedDateTime startDateTimeUtc = parseDateTime(reportRequest.getStartDate(), reportTimeZone, true);
