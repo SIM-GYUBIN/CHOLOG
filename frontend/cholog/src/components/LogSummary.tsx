@@ -11,7 +11,7 @@ const LogSummary = () => {
   const { stats } = useSelector((state: RootState) => state.log);
 
   const logData = {
-    total: stats ? Object.values(stats).reduce((acc, curr) => acc + curr, 0) : 0,
+    total: stats?.total || 0,
     logs: {
       error: stats?.error || 0,
       warn: stats?.warn || 0,
