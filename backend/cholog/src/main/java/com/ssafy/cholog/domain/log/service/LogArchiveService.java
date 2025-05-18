@@ -1,6 +1,7 @@
 package com.ssafy.cholog.domain.log.service;
 
 
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.ssafy.cholog.domain.log.dto.request.archive.LogArchiveRequest;
 import com.ssafy.cholog.domain.log.dto.response.LogArchiveResponse;
 import com.ssafy.cholog.domain.log.entity.LogArchive;
@@ -17,8 +18,11 @@ import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,15 +54,39 @@ public class LogArchiveService {
                         .addParameter("projectId", projectId));
 
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-" + projectToken;
+        String indexName = "pjt-*-" + projectToken;
 
         String logId = logArchiveRequest.getLogId();
-        LogDocument logDocument = elasticsearchOperations.get(logId, LogDocument.class, IndexCoordinates.of(indexName));
-        if (logDocument == null) {
+//        LogDocument logDocument = elasticsearchOperations.get(logId, LogDocument.class, IndexCoordinates.of(indexName));
+//        if (logDocument == null) {
+//            throw new CustomException(ErrorCode.LOG_NOT_FOUND)
+//                    .addParameter("projectId", projectId)
+//                    .addParameter("logId", logId);
+//        }
+
+        co.elastic.clients.elasticsearch._types.query_dsl.Query esQueryDsl = QueryBuilders.ids(iq -> iq
+                .values(logId)
+        );
+
+        Query searchQuery = NativeQuery.builder()
+                .withQuery(esQueryDsl)
+                .withMaxResults(1) // ID는 고유하므로 최대 1개의 결과만 필요
+                .build();
+
+        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+                searchQuery,
+                LogDocument.class,
+                IndexCoordinates.of(indexName) // 와일드카드가 포함된 인덱스 패턴 사용
+        );
+
+        if (searchHits.getTotalHits() == 0 || !searchHits.hasSearchHits()) {
             throw new CustomException(ErrorCode.LOG_NOT_FOUND)
                     .addParameter("projectId", projectId)
                     .addParameter("logId", logId);
         }
+
+        // 첫 번째 검색 결과에서 LogDocument를 가져옵니다.
+        LogDocument logDocument = searchHits.getSearchHit(0).getContent();
 
         LogArchive logArchive = LogArchive.builder()
                 .project(project)

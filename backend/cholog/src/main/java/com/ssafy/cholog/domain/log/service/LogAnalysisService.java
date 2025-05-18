@@ -1,5 +1,6 @@
 package com.ssafy.cholog.domain.log.service;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.ssafy.cholog.domain.log.dto.response.LogAnalysisResponse;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
@@ -10,8 +11,11 @@ import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.Query;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -45,16 +49,39 @@ public class LogAnalysisService {
                     String projectToken = project.getProjectToken(); // project 객체에 getProjectToken() 메서드가 있다고 가정
 
                     // 2. Elasticsearch에서 단일 로그 조회 (블로킹)
-                    String indexName = "pjt-" + projectToken;
-                    LogDocument logDocument = elasticsearchOperations.get(request.getLogId(), LogDocument.class, IndexCoordinates.of(indexName));
+                    String indexName = "pjt-*-" + projectToken;
 
-                    if (logDocument == null) {
-                        // CustomException에 addParameter 메서드가 있다고 가정
+//                    LogDocument logDocument = elasticsearchOperations.get(request.getLogId(), LogDocument.class, IndexCoordinates.of(indexName));
+//
+//                    if (logDocument == null) {
+//                        // CustomException에 addParameter 메서드가 있다고 가정
+//                        throw new CustomException(ErrorCode.LOG_NOT_FOUND)
+//                                .addParameter("projectId", projectId)
+//                                .addParameter("logId", request.getLogId());
+//                    }
+//                    return logDocument; // 다음 단계로 logDocument 전달
+                    co.elastic.clients.elasticsearch._types.query_dsl.Query esQueryDsl = QueryBuilders.ids(iq -> iq
+                            .values(request.getLogId())
+                    );
+
+                    Query searchQuery = NativeQuery.builder()
+                            .withQuery(esQueryDsl)
+                            .withMaxResults(1) // ID는 고유하므로 최대 1개의 결과만 필요
+                            .build();
+
+                    SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+                            searchQuery,
+                            LogDocument.class,
+                            IndexCoordinates.of(indexName) // 와일드카드가 포함된 인덱스 패턴 사용
+                    );
+
+                    if (searchHits.getTotalHits() == 0 || !searchHits.hasSearchHits()) {
                         throw new CustomException(ErrorCode.LOG_NOT_FOUND)
                                 .addParameter("projectId", projectId)
                                 .addParameter("logId", request.getLogId());
                     }
-                    return logDocument; // 다음 단계로 logDocument 전달
+                    // 첫 번째 검색 결과에서 LogDocument를 가져옵니다.
+                    return searchHits.getSearchHit(0).getContent();
                 })
                 .subscribeOn(Schedulers.boundedElastic()) // 블로킹 작업을 별도 스레드 풀에서 실행
                 .flatMap(logDocument -> { // 이전 단계의 결과를 받아 리액티브 체인 계속
@@ -79,6 +106,9 @@ public class LogAnalysisService {
 
                     return groqApiClient.analyzeWithGroq(defaultModel, systemPrompt, userPrompt, defaultMaxTokens, defaultTemperature)
                             .map(groqResponse -> {
+                                // 응답 받은거 로그 출력!
+                                log.info("Groq analysis response: {}", groqResponse.choices().get(0).message().content());
+
                                 String analysisText = "No analysis result from LLM.";
                                 String modelUsed = defaultModel;
 
