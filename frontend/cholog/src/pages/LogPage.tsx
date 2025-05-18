@@ -99,12 +99,12 @@ const LogPage = () => {
   };
 
   return (
-    <div className="w-full lg:w-[80vw] mx-auto">
+    <div className="container mx-auto px-4 max-w-screen-2xl">
       <ProjectNavBar />
 
-      <div className="flex gap-6 max-w-7xl mx-auto text-[var(--text)]">
+      <div className="flex flex-col lg:flex-row gap-6 mx-auto text-[var(--text)]">
         {/* 메인 로그 섹션 */}
-        <div className="flex-1 bg-white/5 rounded-lg p-6 shadow-sm border border-[var(--line)]">
+        <div className="flex-[2] bg-white/5 rounded-lg p-6 shadow-sm border border-[var(--line)]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <img
@@ -186,7 +186,7 @@ const LogPage = () => {
         </div>
 
         {/* 관련 로그 섹션 */}
-        <div className="rounded-lg p-6 shadow-sm bg-white/5 border border-[var(--line)]">
+        <div className="flex-1 rounded-lg p-6 shadow-sm bg-white/5 border border-[var(--line)]">
           <h2 className="text-left text-18px font-[paperlogy6] mb-6">
             Related Log
           </h2>

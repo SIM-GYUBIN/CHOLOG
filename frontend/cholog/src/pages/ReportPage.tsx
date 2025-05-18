@@ -84,16 +84,13 @@ const ReportPage: React.FC = () => {
   const summaryText = `이 리포트는 ${reportData?.periodDescription} 기간 동안 수집된 로그 분석 결과입니다.`;
 
   return (
-    <div className="w-full lg:w-[70vw] mx-auto">
-      <div className="flex flex-col mx-auto">
+    <div className="max-w-[60vw] mx-auto">
+      <div className="flex flex-col">
         <ProjectNavBar />
 
-        <div className="flex flex-row justify-between mb-8">
+        <div className="flex flex-row justify-between mb-4">
           <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
-            <div className="text-[24px] text-[var(--text)]">프로젝트명</div>
-            <div className="text-[20px] text-[var(--helpertext)]">
-              {reportData?.projectId || "-"}
-            </div>
+            <div className="text-[24px] text-slate-500">{"프로젝트명"}</div>
           </div>
         </div>
 

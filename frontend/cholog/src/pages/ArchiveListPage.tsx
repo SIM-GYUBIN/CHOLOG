@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import EachLog from '../components/eachLog';
-import ProjectNavBar from '../components/projectNavbar';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchArchivedLogs } from '../store/slices/logSlice';
-import { RootState, AppDispatch } from '../store/store';
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import EachLog from "../components/eachLog";
+import ProjectNavBar from "../components/projectNavbar";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchArchivedLogs } from "../store/slices/logSlice";
+import { RootState, AppDispatch } from "../store/store";
 
 interface ArchiveLog {
   logId: string;
@@ -44,8 +44,12 @@ interface ApiResponse {
 export default function ArchiveListPage() {
   const { projectId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
-  const { archivedLogs, isLoading, error } = useSelector((state: RootState) => state.log);
-  const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
+  const { archivedLogs, isLoading, error } = useSelector(
+    (state: RootState) => state.log
+  );
+  const [expandedReasons, setExpandedReasons] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (projectId) {
@@ -73,22 +77,29 @@ export default function ArchiveListPage() {
     totalElements: 0,
     pageSize: 10,
     first: true,
-    last: true
+    last: true,
   };
 
   // 아카이븴 로그 컨텐츠 추출
   const archiveLogs = archivedLogs?.content || [];
 
   return (
-    <div className="w-full lg:w-[70vw] mx-auto">
+    <div className="max-w-[60vw] mx-auto">
       <ProjectNavBar />
-      <div className="text-[28px] font-[paperlogy6] my-6 text-center">Log Archive</div>
+
+      <div className="flex flex-row justify-between mb-4">
+        <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
+          <div className="text-[24px] text-slate-500">{"프로젝트명"}</div>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="border rounded-xl border-[var(--line)] bg-white/5">
           {[...Array(3)].map((_, index) => (
             <div key={index} className="animate-pulse">
-              <div className={`p-4 ${index !== 0 ? 'border-t border-[var(--line)]' : ''}`}>
+              <div
+                className={`p-4 ${index !== 0 ? "border-t border-[var(--line)]" : ""}`}
+              >
                 <div className="h-6 bg-slate-200 rounded w-1/4 mb-2"></div>
                 <div className="h-4 bg-slate-200 rounded w-3/4"></div>
               </div>
@@ -107,18 +118,22 @@ export default function ArchiveListPage() {
         <>
           <div className="border rounded-xl border-[var(--line)] bg-white/5">
             {archiveLogs.map((log, index) => (
-              <div key={log.logId}>
-                <div className={`flex ${index !== 0 ? 'border-t border-[var(--line)]' : ''}`}>
-                  <div className="w-full py-2">
+              <div key={log.logId} className="w-full">
+                <div
+                  className={`flex w-full ${index !== 0 ? "border-t border-[var(--line)]" : ""}`}
+                >
+                  <div className="w-full py-2 px-4">
                     <EachLog
                       id={log.logId}
-                      timestamp={new Date(log.logTimestamp).toLocaleString('ko-KR', {
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      }).replace(/\./g, '-')}
+                      timestamp={new Date(log.logTimestamp)
+                        .toLocaleString("ko-KR", {
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        })
+                        .replace(/\./g, "-")}
                       level={log.logLevel}
                       message={log.logMessage}
                       environment={log.logEnvironment}
@@ -127,11 +142,10 @@ export default function ArchiveListPage() {
                     />
                   </div>
                 </div>
-                <div className="p-4 text-[14px] text-slate-600">
-                  <div className="mx-4 text-start p-2">
+                <div className="px-6 py-3 text-[14px] text-slate-600 border-t border-[var(--line)]/10">
+                  <div className="text-start">
                     <div
-                      className={`${!expandedReasons[log.logId] ? 'line-clamp-2' : ''
-                        } break-keep font-[paperlogy4] tracking-wider`}
+                      className={`${!expandedReasons[log.logId] ? "line-clamp-2" : ""} break-keep font-[paperlogy4] tracking-wider`}
                       onClick={() => toggleReason(log.logId)}
                     >
                       {log.memo}
@@ -142,7 +156,7 @@ export default function ArchiveListPage() {
                           onClick={() => toggleReason(log.logId)}
                           className="text-[12px] text-green-600 mt-1 hover:underline cursor-pointer"
                         >
-                          {expandedReasons[log.logId] ? '접기' : '더보기'}
+                          {expandedReasons[log.logId] ? "접기" : "더보기"}
                         </button>
                       )}
                     </div>
@@ -157,21 +171,28 @@ export default function ArchiveListPage() {
               <button
                 onClick={() => handlePageChange(pagination.pageNumber - 1)}
                 disabled={pagination.first}
-                className={`px-3 py-1 rounded-xl ${pagination.first ? 'bg-slate-100 text-slate-400' : 'text-slate-600 hover:bg-slate-200'
-                  }`}
+                className={`px-3 py-1 rounded-xl ${
+                  pagination.first
+                    ? "bg-slate-100 text-slate-400"
+                    : "text-slate-600 hover:bg-slate-200"
+                }`}
               >
                 이전
               </button>
 
               <div className="flex gap-1">
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
+                {Array.from(
+                  { length: pagination.totalPages },
+                  (_, i) => i + 1
+                ).map((page) => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`px-3 py-1 rounded-xl ${page === pagination.pageNumber
-                      ? 'bg-[rgba(101,218,94,1)] text-white'
-                      : 'bg-white text-slate-600 hover:bg-slate-200'
-                      }`}
+                    className={`px-3 py-1 rounded-xl ${
+                      page === pagination.pageNumber
+                        ? "bg-[rgba(101,218,94,1)] text-white"
+                        : "bg-white text-slate-600 hover:bg-slate-200"
+                    }`}
                   >
                     {page}
                   </button>
@@ -181,8 +202,11 @@ export default function ArchiveListPage() {
               <button
                 onClick={() => handlePageChange(pagination.pageNumber + 1)}
                 disabled={pagination.last}
-                className={`px-3 py-1 rounded-xl ${pagination.last ? 'bg-slate-100 text-slate-400' : 'bg-white text-slate-600 hover:bg-slate-200'
-                  }`}
+                className={`px-3 py-1 rounded-xl ${
+                  pagination.last
+                    ? "bg-slate-100 text-slate-400"
+                    : "bg-white text-slate-600 hover:bg-slate-200"
+                }`}
               >
                 다음
               </button>
@@ -191,7 +215,7 @@ export default function ArchiveListPage() {
 
           {archiveLogs.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              아카이브된 로그가 없습니다.
+              아카이븴 로그 컨텐츠 추출 아카이브된 로그가 없습니다.
             </div>
           )}
         </>
