@@ -30,7 +30,9 @@ public class LogDocument {
 //    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
 //    private Instant timestampEs; // ES 표준 타임스탬프
 
-    @Field(name = "timestamp", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") // Elasticsearch 필드 매핑도 일관성을 위해 변경 권장
+//    @Field(name = "timestamp", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") // Elasticsearch 필드 매핑도 일관성을 위해 변경 권장
+//    @Field(name = "timestamp", type = FieldType.Date) // Elasticsearch 필드 매핑도 일관성을 위해 변경 권장
+    @Field(name = "timestamp", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS]'Z'")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Instant timestampOriginal;
 
