@@ -60,6 +60,9 @@ public class LogSearchService {
 
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
+        // message 필드가 반드시 존재(null이 아님)하는 문서만 검색 대상에 포함
+        boolQueryBuilder.must(QueryBuilders.exists(e -> e.field("message")));
+
         if (StringUtils.hasText(level)) {
             boolQueryBuilder.must(QueryBuilders.term(t -> t
                     .field("level")
