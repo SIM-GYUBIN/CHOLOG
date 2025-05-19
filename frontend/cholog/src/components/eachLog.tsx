@@ -58,7 +58,6 @@ export default function EachLog({
     }
   };
 
-  // const formattedTime = timestamp ? new Date(timestamp).toLocaleString() : "";
   const levelBg =
     {
       FATAL: "bg-[rgba(128,0,128,0.04)]", // 보라색 6%
