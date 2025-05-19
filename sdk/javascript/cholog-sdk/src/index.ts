@@ -4,21 +4,57 @@ import { NetworkInterceptor } from "./core/networkInterceptor";
 import { ErrorCatcher } from "./core/errorCatcher";
 import { EventTracker } from "./core/eventTracker";
 import { RequestContext } from "./core/requestContext";
-import { LogPayload } from "./types"; // LogPayload 타입 임포트
+import { LogPayload, ChologConfig } from "./types"; // LogPayload 타입 임포트
 
 export const Cholog = {
-  init: (config: { projectKey: string; environment: string /* 다른 옵션들 */ }) => {
+  init: (config: ChologConfig) => {
     RequestContext.startNewRequest(); // SDK 초기화 자체도 하나의 Trace로 볼 수 있음
 
-    Logger.init(config);
-    NetworkInterceptor.init();
-    ErrorCatcher.init();
-    EventTracker.init(/* eventTracker options */); // 필요시 EventTracker 옵션 전달
+    // config에서 옵션 값 가져오기 (기본값 true 설정)
+    const {
+      apiKey,
+      environment,
+      enableEventTracker = true, // 기본값 true
+      enableErrorCatcher = true, // 기본값 true
+      enableNetworkInterceptor = true, // 기본값 true
+      loggerOptions,
+    } = config;
 
-    // SDK 초기화 성공 로그 (Logger.info는 이제 projectKey, environment를 알고 있음)
+    // Logger 초기화 (항상 필요)
+    Logger.init({
+      apiKey,
+      environment,
+      ...(loggerOptions || {}), // loggerOptions가 있으면 해당 값 사용
+    });
+
+    // 조건부 초기화
+    if (enableNetworkInterceptor) {
+      NetworkInterceptor.init();
+    }
+    if (enableErrorCatcher) {
+      ErrorCatcher.init();
+    }
+    if (enableEventTracker) {
+      EventTracker.init(); // eventTrackerOptions 전달
+    }
+
+    const loggedEnvironment = environment || "default (by Logger)"; // 사용자가 environment를 제공하면 그 값, 아니면 Logger가 기본값을 사용할 것임을 명시
+
+    // SDK 초기화 성공 로그
     Logger.info("Cholog SDK Initialized", {
-      sdk: "cholog-sdk", // 예시 페이로드
-      version: "1.0.5", // SDK 버전 (하드코딩 또는 빌드 시 주입)
+      sdk: "cholog-sdk",
+      version: "1.0.6", // SDK 버전에 맞게 수정하세요.
+      features: {
+        eventTracker: enableEventTracker,
+        errorCatcher: enableErrorCatcher,
+        networkInterceptor: enableNetworkInterceptor,
+      },
+      configApplied: {
+        projectKeyObfuscated: apiKey ? `${apiKey.substring(0, 3)}...` : "NOT_SET", // 실제 키 일부만 표시
+        environment: loggedEnvironment,
+        batchInterval: loggerOptions?.batchInterval || "default (Logger)",
+        maxQueueSize: loggerOptions?.maxQueueSize || "default (Logger)",
+      },
     });
   },
 

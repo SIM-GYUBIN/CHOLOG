@@ -5,7 +5,7 @@ import { LogEntry, LogPayload, LogError, LogHttp, LogClient, LogEvent, LogType, 
 type InternalLogLevel = "info" | "warn" | "error" | "debug" | "trace";
 
 export class Logger {
-  private static projectKey: string = "";
+  private static apiKey: string = "";
   private static environment: string = "default"; // environment 필드 추가
   private static apiEndpoint = "https://cholog-server.shop/api/logs/js";
   private static originalConsole: {
@@ -27,7 +27,7 @@ export class Logger {
    * SDK 초기화
    */
   public static init(config: {
-    projectKey: string;
+    apiKey: string;
     environment?: string;
     batchInterval?: number;
     maxQueueSize?: number;
@@ -38,7 +38,7 @@ export class Logger {
       return;
     }
 
-    this.projectKey = config.projectKey;
+    this.apiKey = config.apiKey;
     if (config.environment) this.environment = config.environment;
     if (config.batchInterval) this.batchInterval = config.batchInterval;
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
@@ -97,7 +97,7 @@ export class Logger {
     directClient?: LogClient,
     directEvent?: LogEvent
   ): void {
-    if (!this.projectKey || !this.environment) {
+    if (!this.apiKey || !this.environment) {
       // 초기화되지 않았으면 원본 콘솔로 경고만 하고 로그 전송은 하지 않음 (무한 루프 방지)
       if (this.originalConsole) {
         this.originalConsole.warn("[CHO:LOG] SDK가 초기화되지 않았습니다. 로그가 전송되지 않습니다.", ...args);
@@ -163,7 +163,7 @@ export class Logger {
       level: level.toUpperCase() as LogLevelType, // LogLevelType으로 캐스팅
       message,
       source: "frontend",
-      projectKey: this.projectKey,
+      projectKey: this.apiKey,
       environment: this.environment,
       requestId: RequestContext.getCurrentRequestId(),
       logger: invokedBy,
@@ -244,7 +244,7 @@ export class Logger {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "App-Key": this.projectKey, // 필요시 서버와 협의된 인증 헤더 사용
+          "App-Key": this.apiKey, // 필요시 서버와 협의된 인증 헤더 사용
         },
         body: JSON.stringify(batch),
       });

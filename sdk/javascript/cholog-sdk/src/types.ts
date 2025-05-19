@@ -51,3 +51,17 @@ export interface LogEntry {
   client?: LogClient;
   event?: LogEvent;
 }
+
+// Cholog SDK 초기화 설정을 위한 인터페이스
+export interface ChologConfig {
+  apiKey: string;
+  environment?: string; // 필수 값으로 유지하거나, Logger처럼 내부 기본값 설정 가능
+  enableEventTracker?: boolean; // 기본값 true
+  enableErrorCatcher?: boolean; // 기본값 true
+  enableNetworkInterceptor?: boolean; // 기본값 true
+  // Logger 관련 상세 설정 (기존 Logger.init의 config와 유사)
+  loggerOptions?: {
+    batchInterval?: number;
+    maxQueueSize?: number;
+  };
+}

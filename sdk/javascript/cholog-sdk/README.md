@@ -1,10 +1,10 @@
 # Cholog SDK / 초록
 
-안녕하세요! Cholog SDK를 사용해주셔서 감사합니다. Cholog는 여러분의 웹 애플리케이션에서 발생하는 로그와 네트워크 요청을 손쉽게 수집하고, 개발자가 운영하는 중앙 로그 서버로 전송하여 통합적인 분석 및 디버깅을 가능하게 하는 로깅 라이브러리입니다.
+Cholog는 여러분의 웹 애플리케이션에서 발생하는 로그와 네트워크 요청을 손쉽게 수집하고, 개발자가 운영하는 중앙 로그 서버로 전송하여 통합적인 분석 및 디버깅을 가능하게 하는 로깅 라이브러리입니다.
 
-Cholog 사이트 : [https://cholog.com](https://cholog.com)
+Cholog 사이트 : [https://www.cholog.com](https://www.cholog.com)
 
-Backend(Springboot)에도 SDK를 추가하여 더 강력한 로깅을 활용해보세요!
+Backend(Springboot)에도 SDK를 추가하면 더 강력한 로그 관리가 가능합니다!
 
 현재 Cholog SDK는 다음과 같은 주요 기능을 제공합니다:
 
@@ -21,6 +21,10 @@ Backend(Springboot)에도 SDK를 추가하여 더 강력한 로깅을 활용해�
 
 ## 설치 및 사용 방법
 
+### 프로젝트 키 발급
+
+[https://www.cholog.com](https://www.cholog.com)에서 가입 후, 프로젝트 등록하여 API Key를 발급받을 수 있습니다.
+
 ### 설치
 
 ```
@@ -36,10 +40,25 @@ npm install cholog-sdk
 import Cholog from "cholog-sdk";
 
 Cholog.init({
-  projectKey: "YOUR_APPLICATION_KEY", // Cholog 서버에서 발급받은 고유 앱 키를 입력하세요. (필수)
-  environment: "development", // 환경을 구분 할 수 있도록 지정해 주세요 ! env를 통해 동적으로 관리하는 것을 권장합니다.
+  apiKey: "YOUR_APPLICATION_KEY", // Cholog 서비스에서 발급받은 고유 앱 키를 입력하세요. (필수)
+  environment: "development", // 환경을 구분 할 수 있도록 지정해 주세요! (없으면 "default"로 지정됩니다) env를 통해 동적으로 관리하는 것을 권장합니다.
 });
 ```
+
+### 초기화 옵션 상세
+
+`Cholog.init()` 호출 시 전달하는 설정 객체에는 다음과 같은 옵션들을 사용할 수 있습니다:
+
+| 옵션 (Option)                 | 타입 (Type) | 필수 (Required) | 기본값 (Default)                   | 설명 (Description)                                                                                                           |
+| ----------------------------- | ----------- | --------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `apiKey`                      | `string`    | Yes             | N/A                                | Cholog 서비스에서 발급받은 고유한 프로젝트 키입니다.                                                                         |
+| `environment`                 | `string`    | No              | `"default"` (Logger 내부 설정)     | 현재 애플리케이션의 실행 환경 (예: "development", "production", "staging")을 지정합니다. 로그 필터링 및 관리에 사용됩니다.   |
+| `enableEventTracker`          | `boolean`   | No              | `true`                             | 사용자 상호작용 이벤트(예: 클릭) 추적 기능 활성화 여부를 설정합니다.                                                         |
+| `enableErrorCatcher`          | `boolean`   | No              | `true`                             | 전역 에러(window.onerror, unhandledrejection) 자동 감지 기능 활성화 여부를 설정합니다.                                       |
+| `enableNetworkInterceptor`    | `boolean`   | No              | `true`                             | 네트워크 요청 자동 로깅 기능 활성화 여부를 설정합니다.                                                                       |
+| `loggerOptions`               | `object`    | No              | (각 하위 옵션의 내부 기본값 사용)  | 로거의 세부 동작(일괄 전송 등)을 설정하는 객체입니다.                                                                        |
+| `loggerOptions.batchInterval` | `number`    | No              | `1000` (1초, Logger 내부 설정)     | 수집된 로그를 서버로 일괄 전송하는 시간 간격 (밀리초 단위)입니다.                                                            |
+| `loggerOptions.maxQueueSize`  | `number`    | No              | `102400` (100KB, Logger 내부 설정) | 로그를 일괄 전송하기 전에 내부 큐에 저장할 수 있는 최대 크기 (바이트 단위)입니다. 이 크기를 초과하면 즉시 전송을 시도합니다. |
 
 ### 수동 로그 전송 (커스텀 로그)
 
