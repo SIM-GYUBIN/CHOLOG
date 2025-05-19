@@ -309,29 +309,41 @@ public class LogService {
 
     public void createIndex(String projectToken) {
 
-        String indexName = INDEX_PREFIX + projectToken.toLowerCase();
+        String lowerCaseToken = projectToken.toLowerCase();
+        String frontIndexName = "pjt-fe-" + lowerCaseToken;
+        String backIndexName = "pjt-be-" + lowerCaseToken;
 
-        IndexCoordinates indexCoordinates = IndexCoordinates.of(indexName);
-        IndexOperations indexOps = elasticsearchOperations.indexOps(indexCoordinates);
+        // 공통으로 사용할 설정
+        Map<String, Object> settings = new HashMap<>();
+        settings.put("index.number_of_shards", "1");
+        settings.put("index.number_of_replicas", "0");
 
         try {
-            if (!indexOps.exists()) {
-                log.info("Elasticsearch index {} 생성 시작", indexName);
+            // --- 프론트엔드 인덱스 처리 ---
+            IndexCoordinates frontIndexCoordinates = IndexCoordinates.of(frontIndexName);
+            IndexOperations frontIndexOps = elasticsearchOperations.indexOps(frontIndexCoordinates);
 
-                Map<String, Object> settings = new HashMap<>();
-                settings.put("index.number_of_shards", "1");
-                settings.put("index.number_of_replicas", "0");
-
-                indexOps.create(settings);
-
-                // LogDocument 클래스의 @Field 어노테이션을 기반으로 매핑 정보 적용
-                indexOps.putMapping(LogDocument.class);
-
+            if (!frontIndexOps.exists()) {
+                frontIndexOps.create(settings);
+                frontIndexOps.putMapping(LogDocument.class);
             } else {
-                log.info("Elasticsearch index {} already exists. Skipping creation.", indexName);
+                log.info("Elasticsearch frontend index {} already exists. Skipping creation.", frontIndexName);
+            }
+
+            // --- 백엔드 인덱스 처리 ---
+            IndexCoordinates backIndexCoordinates = IndexCoordinates.of(backIndexName);
+            IndexOperations backIndexOps = elasticsearchOperations.indexOps(backIndexCoordinates);
+
+            if (!backIndexOps.exists()) {
+                backIndexOps.create(settings);
+                backIndexOps.putMapping(LogDocument.class);
+            } else {
+                log.info("Elasticsearch backend index {} already exists. Skipping creation.", backIndexName);
             }
         } catch (Exception e) {
-            log.error("Failed to create or configure Elasticsearch index {}. Error: {}", indexName, e.getMessage(), e);
+            // 어떤 인덱스에서 오류가 발생했는지 특정하기 어려우므로, projectToken 레벨에서 로깅
+            log.error("Failed during creation/configuration of Elasticsearch indices for project token {}. Error: {}",
+                    projectToken, e.getMessage(), e);
             throw new CustomException(ErrorCode.INDEX_CREATE_FAIL);
         }
     }
