@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { AppDispatch, RootState } from "../../store/store";
 import { fetchErrorTimeline } from "../../store/slices/logSlice";
+import dayjs from "dayjs";
 
 interface ErrorChartProps {
   projectId?: number;
@@ -20,18 +21,29 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { errorTimeline } = useSelector((state: RootState) => state.log);
 
-
   useEffect(() => {
     if (projectId) {
-      dispatch(fetchErrorTimeline({ projectId }));
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      dispatch(
+        fetchErrorTimeline({
+          projectId,
+          startDate: yesterday.toISOString().split("T")[0],
+          endDate: today.toISOString().split("T")[0],
+        })
+      );
     }
   }, [dispatch, projectId]);
 
-  // API 응답 데이터를 차트 데이터 형식으로 변환
-  const chartData = errorTimeline.map(item => ({
-    period: new Date(item.timestamp).getHours().toString(),
-    count: item.errorCount
-  }));
+  // ✅ 0인 데이터 생략
+  const chartData = errorTimeline
+    .filter((item) => item.logCount > 0)
+    .map((item) => ({
+      period: dayjs(item.timestamp).format("MM-DD HH시"),
+      count: item.logCount,
+    }));
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -82,8 +94,18 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
         ref={scrollRef}
         className="scroll-hidden overflow-x-auto cursor-grab active:cursor-grabbing"
       >
-        <div style={{ width: `${chartData.length * 60}px`, height: "160px", minWidth: "100%" }}>
-          <AreaChart data={chartData} width={chartData.length * 60} height={160}>
+        <div
+          style={{
+            width: `${chartData.length * 60}px`,
+            height: "160px",
+            minWidth: "100%",
+          }}
+        >
+          <AreaChart
+            data={chartData}
+            width={chartData.length * 60}
+            height={160}
+          >
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#9CA3AF" stopOpacity={0.4} />
@@ -95,11 +117,17 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
               strokeDasharray="3 3"
               strokeOpacity={0.1}
             />
-            <XAxis dataKey="period" tick={{ fill: "#9CA3AF" }} />
+            <XAxis
+              dataKey="period"
+              tick={{ fill: "#9CA3AF", fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
             <YAxis hide />
             <Tooltip
               formatter={(value: number) => [`${value}`]}
-              labelFormatter={() => ""}
+              labelFormatter={(label) => label}
               contentStyle={{
                 backgroundColor: "#4B5563",
                 borderRadius: "8px",
