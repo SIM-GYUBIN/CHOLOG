@@ -1,7 +1,7 @@
 // src/core/networkInterceptor.ts
-import { TraceContext } from "./traceContext";
+import { RequestContext } from "./requestContext";
 import { Logger } from "./logger";
-import { LogHttp, LogHttpRequest, LogHttpResponse, LogError, LogClient } from "../types";
+import { LogHttp, LogError, LogClient } from "../types";
 
 export class NetworkInterceptor {
   private static isInitialized = false;
@@ -22,49 +22,54 @@ export class NetworkInterceptor {
         return NetworkInterceptor.originalFetch!.call(window, input, init);
       }
 
-      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
+      const requestId = RequestContext.getCurrentRequestId() || RequestContext.startNewRequest();
       const modifiedInit = { ...(init || {}) };
       modifiedInit.headers = new Headers(modifiedInit.headers); // Ensure Headers object
       if (!modifiedInit.headers.has("X-Request-ID")) {
         // 이미 있다면 존중
-        modifiedInit.headers.set("X-Request-ID", traceId);
+        modifiedInit.headers.set("X-Request-ID", requestId);
       }
 
       const startTime = Date.now();
-      const requestDetails: LogHttpRequest = {
+      const requestDetails: LogHttp = {
         method: (
           modifiedInit.method ||
           (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") ||
           "GET"
         ).toUpperCase(),
-        url: requestUrl,
+        requestUri: requestUrl,
       };
 
       // 요청 시작 로그 (선택적, 너무 많은 로그를 유발할 수 있음)
-      // Logger.logHttp(`API Request START: ${requestDetails.method} ${requestDetails.url}`, { request: requestDetails });
+      // Logger.logHttp(`API Request START: ${requestDetails.method} ${requestDetails.requestUri}`, { request: requestDetails });
 
       try {
         const response = await NetworkInterceptor.originalFetch!.call(window, input, modifiedInit);
-        const durationMs = Date.now() - startTime;
-        const responseDetails: LogHttpResponse = { statusCode: response.status };
+        const responseTime = Date.now() - startTime;
 
-        // clientDetails는 Logger가 자동으로 수집. 필요시 여기서 특정 정보 추가 가능.
         Logger.logHttp(
-          `API Call: ${requestDetails.method} ${requestDetails.url} - Status ${response.status}`,
-          { request: requestDetails, response: responseDetails, durationMs },
+          `API Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${response.status}`,
+          {
+            ...requestDetails,
+            status: response.status,
+            responseTime,
+          },
           undefined // clientDetails
         );
         return response;
       } catch (error: any) {
-        const durationMs = Date.now() - startTime;
+        const responseTime = Date.now() - startTime;
         const errorDetails: LogError = {
           type: error?.name || "FetchError",
           message: error?.message || "Network request failed",
           stacktrace: error?.stack,
         };
         Logger.logHttp(
-          `API Call FAILED: ${requestDetails.method} ${requestDetails.url}`,
-          { request: requestDetails, durationMs },
+          `API Call FAILED: ${requestDetails.method} ${requestDetails.requestUri}`,
+          {
+            ...requestDetails,
+            responseTime,
+          },
           undefined, // clientDetails
           errorDetails
         );
@@ -106,39 +111,41 @@ export class NetworkInterceptor {
       };
       xhr._chologStartTime = Date.now();
 
-      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
+      const requestId = RequestContext.getCurrentRequestId() || RequestContext.startNewRequest();
       // X-Request-ID 헤더 설정 (이미 설정되어 있지 않은 경우)
-      this.setRequestHeader("X-Request-ID", traceId);
+      this.setRequestHeader("X-Request-ID", requestId);
 
-      const requestDetails: LogHttpRequest = {
+      const requestDetails: LogHttp = {
         method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
-        url: xhr._chologUrl || "UnknownURL",
+        requestUri: xhr._chologUrl || "UnknownURL",
       };
 
       // 요청 시작 로그 (선택적)
-      // Logger.logHttp(`XHR Request START: ${requestDetails.method} ${requestDetails.url}`, { request: requestDetails });
+      // Logger.logHttp(`XHR Request START: ${requestDetails.method} ${requestDetails.requestUri}`, { request: requestDetails });
 
       const onLoadEnd = () => {
         if (xhr._chologLogged) return; // 이미 로깅된 경우 중복 방지
         xhr._chologLogged = true;
 
-        const durationMs = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : undefined;
-        const responseDetails: LogHttpResponse = { statusCode: xhr.status };
+        const responseTime = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : undefined;
         let errorDetails: LogError | undefined = undefined;
 
         if (xhr.status === 0 || xhr.status >= 400) {
-          // status 0은 네트워크 오류 등 다양한 원인
           errorDetails = {
             type: xhr.statusText || "XHRError",
-            message: `XHR request to ${requestDetails.url} failed with status ${xhr.status || "N/A"}. ReadyState: ${
-              xhr.readyState
-            }`,
+            message: `XHR request to ${requestDetails.requestUri} failed with status ${
+              xhr.status || "N/A"
+            }. ReadyState: ${xhr.readyState}`,
           };
         }
 
         Logger.logHttp(
-          `XHR Call: ${requestDetails.method} ${requestDetails.url} - Status ${xhr.status}`,
-          { request: requestDetails, response: responseDetails, durationMs },
+          `XHR Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${xhr.status}`,
+          {
+            ...requestDetails,
+            status: xhr.status,
+            responseTime,
+          },
           undefined, // clientDetails
           errorDetails
         );

@@ -1,12 +1,12 @@
-// src/core/traceContext.ts (예시)
-export class TraceContext {
-  private static currentTraceId: string | null = null;
+// src/core/requestContext.ts (예시)
+export class RequestContext {
+  private static currentRequestId: string | null = null;
   // private static currentSpanId: string | null = null; // 스팬 개념 도입 시
 
-  public static startNewTrace(): string {
-    this.currentTraceId = this.generateId();
+  public static startNewRequest(): string {
+    this.currentRequestId = this.generateId();
     // this.currentSpanId = null; // 새 트레이스 시작 시 스팬 초기화
-    return this.currentTraceId;
+    return this.currentRequestId;
   }
 
   // 필요시 Span ID도 유사하게 관리
@@ -16,12 +16,12 @@ export class TraceContext {
   //     return this.currentSpanId;
   // }
 
-  public static getCurrentTraceId(): string | null {
-    return this.currentTraceId;
+  public static getCurrentRequestId(): string | null {
+    return this.currentRequestId;
   }
 
-  public static setCurrentTraceId(traceId: string): void {
-    this.currentTraceId = traceId;
+  public static setCurrentRequestId(requestId: string): void {
+    this.currentRequestId = requestId;
   }
 
   private static generateId(): string {
@@ -29,6 +29,6 @@ export class TraceContext {
       return crypto.randomUUID();
     }
     // Fallback for environments without crypto.randomUUID (e.g., older browsers, some test environments)
-    return `trace-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    return `request-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 }

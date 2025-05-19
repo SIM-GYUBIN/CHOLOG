@@ -1,6 +1,6 @@
 // src/core/eventTracker.ts
 import { Logger } from "./logger";
-import { TraceContext } from "./traceContext";
+import { RequestContext } from "./requestContext";
 import {
   LogEvent,
   LogClient, // LogClient는 Logger가 자동 수집하므로 여기서 명시적 전달은 선택적
@@ -31,7 +31,7 @@ export class EventTracker {
         const closestSignificantElement = targetElement.closest(this.config.significantElementSelector);
 
         if (closestSignificantElement) {
-          TraceContext.startNewTrace(); // 클릭 시 새 트레이스 시작은 너무 빈번할 수 있음. 필요시 정책 결정.
+          RequestContext.startNewRequest(); // 클릭 시 새 요청 시작
           const eventDetails: LogEvent = {
             type: "user_interaction_click", // 또는 "significant_click"
             targetSelector: this.getElementPath(closestSignificantElement),
@@ -52,8 +52,8 @@ export class EventTracker {
   }
 
   private static logNavigation(url: string, navigationType: string): void {
-    // 페이지 로드/네비게이션은 새로운 컨텍스트로 간주하여 새 Trace ID 시작
-    TraceContext.startNewTrace();
+    // 페이지 로드/네비게이션은 새로운 컨텍스트로 간주하여 새 Request ID 시작
+    RequestContext.startNewRequest();
     const eventDetails: LogEvent = {
       type: navigationType, // 예: "initial_load", "spa_navigation"
       properties: { currentUrl: url },

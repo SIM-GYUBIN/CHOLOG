@@ -1,5 +1,5 @@
 // src/core/logger.ts
-import { TraceContext } from "./traceContext";
+import { RequestContext } from "./requestContext";
 import { LogEntry, LogPayload, LogError, LogHttp, LogClient, LogEvent, LogType, LogLevelType } from "../types"; // 타입 임포트
 
 type InternalLogLevel = "info" | "warn" | "error" | "debug" | "trace";
@@ -28,7 +28,7 @@ export class Logger {
    */
   public static init(config: {
     projectKey: string;
-    environment: string;
+    environment?: string;
     batchInterval?: number;
     maxQueueSize?: number;
   }): void {
@@ -39,7 +39,7 @@ export class Logger {
     }
 
     this.projectKey = config.projectKey;
-    this.environment = config.environment;
+    if (config.environment) this.environment = config.environment;
     if (config.batchInterval) this.batchInterval = config.batchInterval;
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
 
@@ -165,7 +165,7 @@ export class Logger {
       source: "frontend",
       projectKey: this.projectKey,
       environment: this.environment,
-      traceId: TraceContext.getCurrentTraceId(),
+      requestId: RequestContext.getCurrentRequestId(),
       logger: invokedBy,
       logType: determinedLogType,
       ...otherFields,
@@ -304,7 +304,7 @@ export class Logger {
     errorDetails?: LogError // 네트워크 오류 시 함께 전달 가능
   ): void {
     const level: InternalLogLevel =
-      errorDetails || (httpDetails.response && httpDetails.response.statusCode >= 400) ? "error" : "info";
+      errorDetails || (httpDetails.status && httpDetails.status >= 400) ? "error" : "info";
     this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
 

@@ -3,12 +3,12 @@ import { Logger } from "./core/logger";
 import { NetworkInterceptor } from "./core/networkInterceptor";
 import { ErrorCatcher } from "./core/errorCatcher";
 import { EventTracker } from "./core/eventTracker";
-import { TraceContext } from "./core/traceContext";
+import { RequestContext } from "./core/requestContext";
 import { LogPayload } from "./types"; // LogPayload 타입 임포트
 
 export const Cholog = {
   init: (config: { projectKey: string; environment: string /* 다른 옵션들 */ }) => {
-    TraceContext.startNewTrace(); // SDK 초기화 자체도 하나의 Trace로 볼 수 있음
+    RequestContext.startNewRequest(); // SDK 초기화 자체도 하나의 Trace로 볼 수 있음
 
     Logger.init({
       projectKey: config.projectKey,

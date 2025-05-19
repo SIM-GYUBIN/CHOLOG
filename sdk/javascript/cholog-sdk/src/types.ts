@@ -13,19 +13,11 @@ export interface LogError {
   stacktrace?: string;
 }
 
-export interface LogHttpRequest {
-  method: string;
-  url: string;
-}
-
-export interface LogHttpResponse {
-  statusCode: number;
-}
-
 export interface LogHttp {
-  request: LogHttpRequest;
-  response?: LogHttpResponse; // 응답은 없을 수도 있음 (요청 실패 등)
-  durationMs?: number;
+  method: string;
+  requestUri: string;
+  status?: number;
+  responseTime?: number;
 }
 
 export interface LogClient {
@@ -48,7 +40,7 @@ export interface LogEntry {
   source: "frontend" | "backend";
   projectKey: string;
   environment: string;
-  traceId: string | null;
+  requestId: string | null;
 
   logger: "console" | "cholog";
   logType: LogType;

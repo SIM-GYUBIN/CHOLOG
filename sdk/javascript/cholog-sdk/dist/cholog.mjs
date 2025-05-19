@@ -1,12 +1,12 @@
-// src/core/traceContext.ts
-var TraceContext = class {
+// src/core/requestContext.ts
+var RequestContext = class {
   static {
-    this.currentTraceId = null;
+    this.currentRequestId = null;
   }
   // private static currentSpanId: string | null = null; // 스팬 개념 도입 시
-  static startNewTrace() {
-    this.currentTraceId = this.generateId();
-    return this.currentTraceId;
+  static startNewRequest() {
+    this.currentRequestId = this.generateId();
+    return this.currentRequestId;
   }
   // 필요시 Span ID도 유사하게 관리
   // public static startNewSpan(parentId?: string): string {
@@ -14,17 +14,17 @@ var TraceContext = class {
   //     // parentId를 사용하여 부모-자식 관계 설정 가능
   //     return this.currentSpanId;
   // }
-  static getCurrentTraceId() {
-    return this.currentTraceId;
+  static getCurrentRequestId() {
+    return this.currentRequestId;
   }
-  static setCurrentTraceId(traceId) {
-    this.currentTraceId = traceId;
+  static setCurrentRequestId(requestId) {
+    this.currentRequestId = requestId;
   }
   static generateId() {
     if (typeof crypto !== "undefined" && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-    return `trace-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    return `request-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 };
 
@@ -160,7 +160,7 @@ var Logger = class {
       source: "frontend",
       projectKey: this.projectKey,
       environment: this.environment,
-      traceId: TraceContext.getCurrentTraceId(),
+      requestId: RequestContext.getCurrentRequestId(),
       logger: invokedBy,
       logType: determinedLogType,
       ...otherFields
@@ -267,7 +267,7 @@ var Logger = class {
   }
   // 네트워크 로깅 (NetworkInterceptor에서 사용, logType: "network")
   static logHttp(message, httpDetails, clientDetails, errorDetails) {
-    const level = errorDetails || httpDetails.response && httpDetails.response.statusCode >= 400 ? "error" : "info";
+    const level = errorDetails || httpDetails.status && httpDetails.status >= 400 ? "error" : "info";
     this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
   // 이벤트 로깅 (EventTracker에서 사용, logType: "event")
@@ -299,38 +299,44 @@ var NetworkInterceptor = class _NetworkInterceptor {
       if (requestUrl.startsWith(Logger.getApiEndpoint())) {
         return _NetworkInterceptor.originalFetch.call(window, input, init);
       }
-      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
+      const requestId = RequestContext.getCurrentRequestId() || RequestContext.startNewRequest();
       const modifiedInit = { ...init || {} };
       modifiedInit.headers = new Headers(modifiedInit.headers);
       if (!modifiedInit.headers.has("X-Request-ID")) {
-        modifiedInit.headers.set("X-Request-ID", traceId);
+        modifiedInit.headers.set("X-Request-ID", requestId);
       }
       const startTime = Date.now();
       const requestDetails = {
         method: (modifiedInit.method || (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") || "GET").toUpperCase(),
-        url: requestUrl
+        requestUri: requestUrl
       };
       try {
         const response = await _NetworkInterceptor.originalFetch.call(window, input, modifiedInit);
-        const durationMs = Date.now() - startTime;
-        const responseDetails = { statusCode: response.status };
+        const responseTime = Date.now() - startTime;
         Logger.logHttp(
-          `API Call: ${requestDetails.method} ${requestDetails.url} - Status ${response.status}`,
-          { request: requestDetails, response: responseDetails, durationMs },
+          `API Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${response.status}`,
+          {
+            ...requestDetails,
+            status: response.status,
+            responseTime
+          },
           void 0
           // clientDetails
         );
         return response;
       } catch (error) {
-        const durationMs = Date.now() - startTime;
+        const responseTime = Date.now() - startTime;
         const errorDetails = {
           type: error?.name || "FetchError",
           message: error?.message || "Network request failed",
           stacktrace: error?.stack
         };
         Logger.logHttp(
-          `API Call FAILED: ${requestDetails.method} ${requestDetails.url}`,
-          { request: requestDetails, durationMs },
+          `API Call FAILED: ${requestDetails.method} ${requestDetails.requestUri}`,
+          {
+            ...requestDetails,
+            responseTime
+          },
           void 0,
           // clientDetails
           errorDetails
@@ -358,27 +364,30 @@ var NetworkInterceptor = class _NetworkInterceptor {
       }
       const xhr = this;
       xhr._chologStartTime = Date.now();
-      const traceId = TraceContext.getCurrentTraceId() || TraceContext.startNewTrace();
-      this.setRequestHeader("X-Request-ID", traceId);
+      const requestId = RequestContext.getCurrentRequestId() || RequestContext.startNewRequest();
+      this.setRequestHeader("X-Request-ID", requestId);
       const requestDetails = {
         method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
-        url: xhr._chologUrl || "UnknownURL"
+        requestUri: xhr._chologUrl || "UnknownURL"
       };
       const onLoadEnd = () => {
         if (xhr._chologLogged) return;
         xhr._chologLogged = true;
-        const durationMs = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : void 0;
-        const responseDetails = { statusCode: xhr.status };
+        const responseTime = xhr._chologStartTime ? Date.now() - xhr._chologStartTime : void 0;
         let errorDetails = void 0;
         if (xhr.status === 0 || xhr.status >= 400) {
           errorDetails = {
             type: xhr.statusText || "XHRError",
-            message: `XHR request to ${requestDetails.url} failed with status ${xhr.status || "N/A"}. ReadyState: ${xhr.readyState}`
+            message: `XHR request to ${requestDetails.requestUri} failed with status ${xhr.status || "N/A"}. ReadyState: ${xhr.readyState}`
           };
         }
         Logger.logHttp(
-          `XHR Call: ${requestDetails.method} ${requestDetails.url} - Status ${xhr.status}`,
-          { request: requestDetails, response: responseDetails, durationMs },
+          `XHR Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${xhr.status}`,
+          {
+            ...requestDetails,
+            status: xhr.status,
+            responseTime
+          },
           void 0,
           // clientDetails
           errorDetails
@@ -510,7 +519,7 @@ var EventTracker = class {
         const targetElement = event.target;
         const closestSignificantElement = targetElement.closest(this.config.significantElementSelector);
         if (closestSignificantElement) {
-          TraceContext.startNewTrace();
+          RequestContext.startNewRequest();
           const eventDetails = {
             type: "user_interaction_click",
             // 또는 "significant_click"
@@ -531,7 +540,7 @@ var EventTracker = class {
     );
   }
   static logNavigation(url, navigationType) {
-    TraceContext.startNewTrace();
+    RequestContext.startNewRequest();
     const eventDetails = {
       type: navigationType,
       // 예: "initial_load", "spa_navigation"
@@ -562,7 +571,7 @@ var EventTracker = class {
 // src/index.ts
 var Cholog = {
   init: (config) => {
-    TraceContext.startNewTrace();
+    RequestContext.startNewRequest();
     Logger.init({
       projectKey: config.projectKey,
       environment: config.environment
