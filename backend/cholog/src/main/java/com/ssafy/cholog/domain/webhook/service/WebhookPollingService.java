@@ -213,8 +213,8 @@ public class WebhookPollingService {
                         actuallyMatchedKeywords // 매칭된 키워드 리스트 전달
                 );
 
-                if (logDoc.getTimestampEs() != null) {
-                    LocalDateTime hitTimestamp = LocalDateTime.ofInstant(logDoc.getTimestampEs(), ZoneOffset.UTC);
+                if (logDoc.getTimestampOriginal() != null) {
+                    LocalDateTime hitTimestamp = LocalDateTime.ofInstant(logDoc.getTimestampOriginal(), ZoneOffset.UTC);
                     if (latestLogTimestampForUpdate == null || hitTimestamp.isAfter(latestLogTimestampForUpdate)) {
                         latestLogTimestampForUpdate = hitTimestamp;
                     }

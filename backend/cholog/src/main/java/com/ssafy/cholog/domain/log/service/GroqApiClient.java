@@ -130,7 +130,8 @@ public class GroqApiClient {
      */
     private SimplifiedLogForLlm simplifyLog(LogDocument log) {
         SimplifiedLogForLlm simple = new SimplifiedLogForLlm();
-        simple.setTimestamp(log.getTimestampEs() != null ? log.getTimestampEs() : log.getTimestampOriginal());
+        simple.setTimestamp(log.getTimestampOriginal());
+//        simple.setTimestamp(log.getTimestampEs() != null ? log.getTimestampEs() : log.getTimestampOriginal());
         simple.setLevel(log.getLevel());
         // 메시지가 너무 길 경우 처음 1000자만 사용 (예시)
         if (log.getMessage() != null && log.getMessage().length() > 1000) {

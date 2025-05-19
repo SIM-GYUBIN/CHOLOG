@@ -60,8 +60,8 @@ public class MattermostService {
 
         // --- LogDocument 필드 값 추출 ---
         String timestampStr = "N/A";
-        if (logDoc.getTimestampEs() != null) {
-            Instant eventInstantUtc = logDoc.getTimestampEs();
+        if (logDoc.getTimestampOriginal() != null) {
+            Instant eventInstantUtc = logDoc.getTimestampOriginal();
             // UTC Instant를 한국 시간대(KST, Asia/Seoul)의 ZonedDateTime으로 변환
             ZonedDateTime eventKst = eventInstantUtc.atZone(ZoneId.of("Asia/Seoul"));
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분", Locale.KOREAN);

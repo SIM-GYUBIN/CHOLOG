@@ -24,9 +24,11 @@ public class LogDocument {
     // 로그 예시에서는 배열로 되어 있으나, 일반적으로 단일 값으로 저장됨.
     // 만약 배열로 저장된다면 List<String>으로 받고, 서비스 로직에서 첫번째 값을 사용하거나 전처리 필요.
     // 여기서는 단일 Instant 값으로 가정.
-    @Field(name = "@timestamp", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'") // Elasticsearch 필드 매핑도 일관성을 위해 변경 권장
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
-    private Instant timestampEs; // ES 표준 타임스탬프
+
+//    @Field(name = "@timestamp", type = FieldType.Date) // Elasticsearch 필드 매핑도 일관성을 위해 변경 권장
+//    @Field(name = "@timestamp", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'") // Elasticsearch 필드 매핑도 일관성을 위해 변경 권장
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", timezone = "UTC")
+//    private Instant timestampEs; // ES 표준 타임스탬프
 
     @Field(name = "timestamp", type = FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") // Elasticsearch 필드 매핑도 일관성을 위해 변경 권장
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")

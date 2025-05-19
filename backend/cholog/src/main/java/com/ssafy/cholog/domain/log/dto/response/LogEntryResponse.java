@@ -16,7 +16,7 @@ public class LogEntryResponse {
     @Schema(example = "W46RvpYBzb40v9OYAxOk")
     private String id;
     @Schema(example = "2023-10-01T12:34:56Z")
-    private Instant timestamp; // 주요 타임스탬프 (예: timestampEs)
+    private Instant timestamp; // 주요 타임스탬프
 //    @Schema(example = "3")
 //    private Long sequence;
     @Schema(example = "INFO")
@@ -73,7 +73,8 @@ public class LogEntryResponse {
         return LogEntryResponse.builder()
                 .id(doc.getId())
 //                .timestamp(doc.getTimestampEs() != null ? doc.getTimestampEs() : doc.getTimestampOriginal()) // 기본으로 @timestamp 사용
-                .timestamp(doc.getTimestampOriginal() != null ? doc.getTimestampOriginal() : doc.getTimestampEs()) // 기본으로 timestamp 사용
+//                .timestamp(doc.getTimestampOriginal() != null ? doc.getTimestampOriginal() : doc.getTimestampEs()) // 기본으로 timestamp 사용
+                .timestamp(doc.getTimestampOriginal())
 //                .sequence(doc.getSequence())
                 .level(doc.getLevel())
                 .message(doc.getMessage())
