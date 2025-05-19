@@ -55,7 +55,9 @@ const LogPage = () => {
   
   // 스택트레이스 토글 상태 관리
   const [showStacktrace, setShowStacktrace] = useState(false);
-
+  // 메시지 토글 상태 관리 추가
+  const [showFullMessage, setShowFullMessage] = useState(false);
+  
   useEffect(() => {
     if (logId && projectId) {
       dispatch(fetchLogDetail({
@@ -85,6 +87,8 @@ const LogPage = () => {
     if (id && projectId) {
       // LLM 분석 결과 초기화
       setShowExplanation(false);
+      setShowFullMessage(false);
+      setShowStacktrace(false);
       nav(`/project/${projectId}/log/${id}`);
     }
   };
@@ -161,7 +165,7 @@ const LogPage = () => {
           </div>
           
           {/* 기본 로그 정보 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="w-full max-w-[550px] grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 overflow-x-auto">
             <div className="text-left">
               <span className="text-[12px] text-slate-500">타임스탬프</span>
               <div className="font-[paperlogy4]">
@@ -213,11 +217,38 @@ const LogPage = () => {
 
           {/* 로그 메세지 섹션 */}
           <div className="mb-6">
-            <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+            <div className="text-left p-4 text-[18px] font-[paperlogy6] ">
               MESSAGE
             </div>
-            <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
-              {logDetail?.message}
+            <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              {logDetail?.message && logDetail.message.length > 150 && !showFullMessage 
+                ? logDetail.message.substring(0, 150) + '...'
+                : logDetail?.message}
+              
+              {logDetail?.message && logDetail.message.length > 150 && (
+                <div 
+                  className="flex items-center gap-2 cursor-pointer mt-2 text-lime-600" 
+                  onClick={() => setShowFullMessage(!showFullMessage)}
+                >
+                  <span className="font-bold text-[12px]">
+                    {showFullMessage ? '접기' : '더보기'}
+                  </span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className={`transition-transform ${showFullMessage ? 'rotate-180' : ''}`}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+              )}
             </div>
           </div>
 
@@ -271,7 +302,7 @@ const LogPage = () => {
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               CLIENT & HTTP INFO
             </div>
-            <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+            <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {logDetail?.client?.url && (
                   <div>
@@ -348,7 +379,7 @@ const LogPage = () => {
               <div className="text-left p-4 text-[18px] font-[paperlogy6]">
                 EVENT INFO
               </div>
-              <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                   {logDetail.event.type && (
                     <div>
@@ -380,7 +411,7 @@ const LogPage = () => {
               <div className="text-left p-4 text-[18px] font-[paperlogy6]">
                 PAYLOAD
               </div>
-              <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
                 {renderJsonObject(logDetail.payload)}
               </div>
             </div>
