@@ -23,7 +23,7 @@ public class LogListResponse {
     @Schema(example = "dev")
     private String environment;
 
-    public static LogListResponse fromLogDocument(LogListDocument doc) {
+    public static LogListResponse fromLogListDocument(LogListDocument doc) {
         return LogListResponse.builder()
                 .id(doc.getId())
                 .timestamp(doc.getTimestampOriginal())

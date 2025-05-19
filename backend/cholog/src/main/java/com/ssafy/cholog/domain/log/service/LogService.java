@@ -115,7 +115,7 @@ public class LogService {
 
         List<LogListResponse> logEntries = searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .map(LogListResponse::fromLogDocument)
+                .map(LogListResponse::fromLogListDocument)
                 .collect(Collectors.toList());
 
         Page<LogListResponse> page = new PageImpl<>(logEntries, pageable, searchHits.getTotalHits());

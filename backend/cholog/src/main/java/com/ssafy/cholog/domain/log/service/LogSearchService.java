@@ -4,8 +4,8 @@ import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
-import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
-import com.ssafy.cholog.domain.log.entity.LogDocument;
+import com.ssafy.cholog.domain.log.dto.response.LogListResponse;
+import com.ssafy.cholog.domain.log.entity.LogListDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
 import com.ssafy.cholog.domain.project.repository.ProjectRepository;
 import com.ssafy.cholog.domain.project.repository.ProjectUserRepository;
@@ -41,7 +41,7 @@ public class LogSearchService {
     private final ProjectUserRepository projectUserRepository;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    public CustomPage<LogEntryResponse> searchLog(Integer userId, Integer projectId, String level, String apiPath, String message, Pageable pageable) {
+    public CustomPage<LogListResponse> searchLog(Integer userId, Integer projectId, String level, String apiPath, String message, String source, Pageable pageable) {
 
         if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
             throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
@@ -78,6 +78,13 @@ public class LogSearchService {
             ));
         }
 
+        if (StringUtils.hasText(source)) {
+            boolQueryBuilder.must(QueryBuilders.match(m -> m
+                    .field("source")
+                    .query(source)
+            ));
+        }
+
         List<SortOptions> sortOptionsList = new ArrayList<>();
         pageable.getSort().forEach(order -> {
             final String finalProperty = order.getProperty(); // for lambda
@@ -97,18 +104,18 @@ public class LogSearchService {
                 .withSort(sortOptionsList)
                 .build();
 
-        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+        SearchHits<LogListDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
-                LogDocument.class,
+                LogListDocument.class,
                 IndexCoordinates.of(indexName)
         );
 
-        List<LogEntryResponse> logEntries = searchHits.getSearchHits().stream()
+        List<LogListResponse> logEntries = searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .map(LogEntryResponse::fromLogDocument)
+                .map(LogListResponse::fromLogListDocument)
                 .collect(Collectors.toList());
 
-        Page<LogEntryResponse> page = new PageImpl<>(logEntries, pageable, searchHits.getTotalHits());
+        Page<LogListResponse> page = new PageImpl<>(logEntries, pageable, searchHits.getTotalHits());
         return new CustomPage<>(page);
     }
 }

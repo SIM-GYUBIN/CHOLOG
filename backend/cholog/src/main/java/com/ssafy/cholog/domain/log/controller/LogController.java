@@ -88,16 +88,17 @@ public class LogController {
     @Operation(summary = "로그 검색", description = "로그 검색 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
-    public ResponseEntity<CommonResponse<CustomPage<LogEntryResponse>>> searchLog(
+    public ResponseEntity<CommonResponse<CustomPage<LogListResponse>>> searchLog(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Integer projectId,
             @RequestParam(required = false) String level,
             @RequestParam(required = false) String apiPath,
             @RequestParam(required = false) String message,
+            @RequestParam(required = false) String source,
             @PageableDefault(size = 20, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
-        CustomPage<LogEntryResponse> logs = logSearchService.searchLog(userId, projectId, level, apiPath, message, pageable);
+        CustomPage<LogListResponse> logs = logSearchService.searchLog(userId, projectId, level, apiPath, message, source, pageable);
         return CommonResponse.ok(logs);
     }
 
