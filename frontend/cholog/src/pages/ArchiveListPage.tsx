@@ -47,15 +47,17 @@ export default function ArchiveListPage() {
   const { archivedLogs, isLoading, error } = useSelector(
     (state: RootState) => state.log
   );
-  const [expandedReasons, setExpandedReasons] = useState<
-    Record<string, boolean>
-  >({});
+  const { projects } = useSelector((state: RootState) => state.project);
+  const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (projectId) {
       dispatch(fetchArchivedLogs({ projectId, page: 1, size: 10 }));
     }
   }, [projectId, dispatch]);
+
+  // 현재 프로젝트 찾기
+  const currentProject = projects.find(p => p.id === Number(projectId));
 
   const handlePageChange = (newPage: number) => {
     if (projectId) {
@@ -89,7 +91,9 @@ export default function ArchiveListPage() {
 
       <div className="flex flex-row justify-between mb-4">
         <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
-          <div className="text-[24px] text-slate-500">{"프로젝트명"}</div>
+          <div className="text-[24px] text-slate-500">
+            {currentProject?.name || "프로젝트를 찾을 수 없습니다"}
+          </div>
         </div>
       </div>
 
@@ -214,8 +218,9 @@ export default function ArchiveListPage() {
           )}
 
           {archiveLogs.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              아카이븴 로그 컨텐츠 추출 아카이브된 로그가 없습니다.
+            <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-2xl border border-[var(--line)]">
+              <div className="text-lg sm:text-xl text-[#5EA500] mb-2">아카이브된 로그가 없습니다</div>
+              <div className="text-sm sm:text-base text-gray-500">아직 아카이브된 로그가 없습니다.</div>
             </div>
           )}
         </>
