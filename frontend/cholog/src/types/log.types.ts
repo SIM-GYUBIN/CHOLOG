@@ -320,6 +320,7 @@ export interface LogSearchRequest {
   message?: string;
   traceId?: string;
   spanId?: string;
+  source?: "frontend" | "backend"; // 개발 환경 필터 추가
 }
 
 /**

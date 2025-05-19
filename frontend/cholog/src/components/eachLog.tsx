@@ -10,7 +10,7 @@ type LogProps = {
   timestamp: string;
   level: string;
   message: string;
-  source: 'frontend' | 'backend';
+  source: "frontend" | "backend";
   environment: string;
   islevelBg?: boolean;
 };
@@ -26,16 +26,16 @@ export default function EachLog({
 }: LogProps) {
   const formattedTime = timestamp
     ? new Date(timestamp)
-      .toLocaleString("ko-KR", {
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false, // 24시간 형식으로 표시
-      })
-      .replace(/\/|, /g, "-")
-      .replace(" ", " ") // 날짜 구분자를 변경하고, 공백으로 시간 구분
+        .toLocaleString("ko-KR", {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false, // 24시간 형식으로 표시
+        })
+        .replace(/\/|, /g, "-")
+        .replace(" ", " ") // 날짜 구분자를 변경하고, 공백으로 시간 구분
     : "";
 
   const nav = useNavigate();
@@ -43,15 +43,19 @@ export default function EachLog({
   const handleclick = () => {
     if (id) {
       // URL에서 projectId 추출
-      const pathParts = window.location.pathname.split('/');
-      const projectIdIndex = pathParts.findIndex(part => part === 'project') + 1;
-      const projectId = projectIdIndex > 0 && projectIdIndex < pathParts.length ? pathParts[projectIdIndex] : null;
+      const pathParts = window.location.pathname.split("/");
+      const projectIdIndex =
+        pathParts.findIndex((part) => part === "project") + 1;
+      const projectId =
+        projectIdIndex > 0 && projectIdIndex < pathParts.length
+          ? pathParts[projectIdIndex]
+          : null;
 
       if (projectId) {
         nav(`/project/${projectId}/log/${id}`);
       } else {
         // 프로젝트 ID를 찾을 수 없는 경우 처리
-        console.error('프로젝트 ID를 찾을 수 없습니다.');
+        console.error("프로젝트 ID를 찾을 수 없습니다.");
       }
     }
   };
@@ -93,9 +97,15 @@ export default function EachLog({
         <div className="flex flex-row items-start col-span-7 gap-10">
           <div className="items-center grid grid-cols-10 gap-10 w-full">
             <div className="col-span-2 shrink-0 min-w-0 truncate">{source}</div>
-            <div className="col-span-2 shrink-0 min-w-0 truncate">{environment}</div>
-            <div className="col-span-4 text-start min-w-0 truncate">{message}</div>
-            <div className="col-span-2 min-w-0 shrink-0 text-start">{formattedTime}</div>
+            <div className="col-span-2 shrink-0 min-w-0 truncate">
+              {environment}
+            </div>
+            <div className="col-span-3 text-start min-w-0 truncate">
+              {message}
+            </div>
+            <div className="col-span-3 min-w-0 shrink-0 text-start">
+              {formattedTime}
+            </div>
           </div>
         </div>
       </div>
