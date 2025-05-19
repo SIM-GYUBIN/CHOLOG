@@ -42,7 +42,8 @@ public class UserController {
         ResponseCookie accessTokenCookie = CookieUtil.makeAccessTokenCookie(loginResult.getAccessToken());
         ResponseCookie refreshTokenCookie = CookieUtil.makeRefreshTokenCookie(loginResult.getRefreshToken());
 
-        return CommonResponse.redirectWithCookie("https://www.cholog.com", accessTokenCookie, refreshTokenCookie);
+        return CommonResponse.okWithCookie(accessTokenCookie, refreshTokenCookie);
+//        return CommonResponse.redirectWithCookie("https://www.cholog.com", accessTokenCookie, refreshTokenCookie);
     }
 
     @GetMapping("/login/{provider}")
