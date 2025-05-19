@@ -448,14 +448,13 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
 
                 <div>
                   <div className="text-[14px] mb-2">알림 받을 개발 환경</div>
-                  <select
+                  <input
+                    type="text"
                     value={notificationENV}
                     onChange={(e) => setNotificationENV(e.target.value)}
+                    placeholder="ex) local, prod"
                     className="w-full px-3 py-2 border rounded-lg border-slate-700 text-[12px]"
-                  >
-                    <option value="prod">배포 환경</option>
-                    <option value="local">로컬 환경</option>
-                  </select>
+                  />
                 </div>
 
                 <div>
