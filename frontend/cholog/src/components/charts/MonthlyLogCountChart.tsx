@@ -61,14 +61,8 @@ const MonthlyLogCountChart: React.FC<MonthlyLogCountChartProps> = ({
 
         setData(parsed);
       } catch (err) {
-        console.error("Failed to fetch log data, using mock data", err);
-
-        const mock = Array.from({ length: 31 }, (_, i) => ({
-          day: (i + 1).toString(),
-          count: Math.floor(Math.random() * 300),
-        }));
-
-        setData(mock);
+        console.error("Failed to fetch log data", err);
+        setData([]);
       }
     };
 
