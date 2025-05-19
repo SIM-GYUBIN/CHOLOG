@@ -1,13 +1,30 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import "./App.css";
-import NavigationBar from "./components/NavigationBar";
-import LandingPage from "./pages/LandingPage";
-import LoginPage from "./pages/LoginPage";
-import ProjectListPage from "./pages/ProjectListPage";
-import ProjectPage from "./pages/ProjectPage";
-import LogPage from "./pages/LogPage";
-import ReportPage from "./pages/ReportPage";
-import ArchiveListPage from "./pages/ArchiveListPage";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import './App.css';
+import NavigationBar from './components/NavigationBar';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import ProjectListPage from './pages/ProjectListPage';
+import ProjectPage from './pages/ProjectPage';
+import LogPage from './pages/LogPage';
+import ReportPage from './pages/ReportPage';
+import ArchiveListPage from './pages/ArchiveListPage';
+
+
+function NotFoundPage() {
+  return (
+    <div className="flex flex-col items-center justify-center h-[80vh]">
+      <div className="text-4xl font-bold text-[#5EA500] mb-4">404</div>
+      <div className="text-xl text-slate-600 mb-6">페이지를 찾을 수 없습니다</div>
+      <div className="text-slate-500 mb-8">요청하신 페이지가 존재하지 않거나 삭제되었습니다</div>
+      <button 
+        onClick={() => window.history.back()} 
+        className="px-6 py-2 bg-[#5EA500] text-white rounded-xl hover:bg-[#4A8400] transition-colors"
+      >
+        이전 페이지로 돌아가기
+      </button>
+    </div>
+  );
+}
 
 function AppContent() {
   const location = useLocation();
@@ -24,13 +41,9 @@ function AppContent() {
           <Route path="/project/:projectId" element={<ProjectPage />} />
           <Route path="/project/:projectId/log/:logId" element={<LogPage />} />
           <Route path="/report/:projectId" element={<ReportPage />} />
-          {/* <Route path="/report/:projectId/:reportId" element={<ReportPage />} /> */}
-          {/* <Route path="/reportlist/:projectId" element={<ReportListPage />} /> */}
           <Route path="/archive/:projectId" element={<ArchiveListPage />} />
-          <Route
-            path="/project/:projectId/archives"
-            element={<ArchiveListPage />}
-          />
+          <Route path="/project/:projectId/archives" element={<ArchiveListPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>
     </div>

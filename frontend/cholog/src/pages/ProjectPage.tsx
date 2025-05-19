@@ -83,10 +83,10 @@ const ProjectPage = () => {
           <div className="text-[20px] sm:text-[24px] text-slate-500">
             {currentProject?.name || "프로젝트를 찾을 수 없습니다"}
           </div>
-          <div className="text-[16px] sm:text-[20px] text-slate-300">{projectId}</div>
+          <div className="text-[16px] sm:text-[20px] text-slate-300">{currentProject?.projectToken}</div>
           <div
             className="rounded-sm p-1 cursor-pointer hover:bg-gray-200"
-            onClick={() => handleCopyClipBoard(projectId || "")}
+            onClick={() => handleCopyClipBoard(currentProject?.projectToken || "")}
           >
             <img src={copy} alt="복사" className="w-4 sm:w-5 h-4 sm:h-5" />
           </div>
