@@ -7,7 +7,7 @@ import "./index.css";
 import Cholog from "cholog-sdk";
 
 Cholog.init({
-  projectKey: "f98c78f3-8bea-4ead-a631-3d79bae44c11",
+  apiKey: "f98c78f3-8bea-4ead-a631-3d79bae44c11",
   environment: "prod",
 });
 
