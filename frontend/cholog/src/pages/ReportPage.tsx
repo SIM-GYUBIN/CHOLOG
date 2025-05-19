@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import DonutChart from "../components/charts/DonutChart";
 import ErrorCountChart from "../components/charts/MonthlyLogCountChart";
@@ -17,45 +17,6 @@ const levelColors: Record<string, string> = {
   FATAL: "#AD46FF",
 };
 
-// const mockReportData = {
-//   projectId: "1",
-//   periodDescription: "2025년 05월 01일 ~ 2025년 05월 15일",
-//   generatedAt: "2025-05-15T08:27:12.7916876Z",
-//   totalLogCounts: {
-//     overallTotal: 13,
-//     frontendTotal: 13,
-//     backendTotal: 0,
-//   },
-//   logLevelDistribution: {
-//     distribution: [
-//       { level: "INFO", count: 8, percentage: 61.53 },
-//       { level: "ERROR", count: 3, percentage: 23.08 },
-//       { level: "DEBUG", count: 1, percentage: 7.69 },
-//       { level: "WARN", count: 1, percentage: 7.69 },
-//       { level: "FATAL", count: 1, percentage: 7.69 },
-//     ],
-//     totalLogsInDistribution: 13,
-//   },
-//   topErrors: [
-//     {
-//       rank: 1,
-//       errorIdentifier: "XHRError",
-//       occurrenceCount: 1,
-//       sourceOrigin: "frontend",
-//     },
-//   ],
-//   slowBackendApis: [
-//     {
-//       rank: 1,
-//       httpMethod: "POST",
-//       requestPath: "http://localhost:8080/test",
-//       averageResponseTimeMs: 2336,
-//       maxResponseTimeMs: 2336,
-//       totalRequests: 1,
-//     },
-//   ],
-// };
-
 // 이번 달의 시작일과 종료일 구하기
 const getCurrentMonthRange = (): { startDate: string; endDate: string } => {
   const now = new Date();
@@ -66,6 +27,7 @@ const getCurrentMonthRange = (): { startDate: string; endDate: string } => {
     endDate: end.toISOString().split("T")[0],
   };
 };
+const todayString = new Date().toISOString().split("T")[0];
 
 const ReportPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -77,19 +39,23 @@ const ReportPage: React.FC = () => {
     state.project.projects.find((p) => p.id === Number(projectId))
   );
 
-  useEffect(() => {
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const handleGenerateReport = () => {
     if (!projectId) return;
 
-    const { startDate, endDate } = getCurrentMonthRange();
+    const { startDate: defaultStart, endDate: defaultEnd } =
+      getCurrentMonthRange();
 
     dispatch(
       fetchReportDetail({
         projectId: parseInt(projectId, 10),
-        startDate,
-        endDate,
+        startDate: startDate || defaultStart,
+        endDate: endDate || defaultEnd,
       })
     );
-  }, [projectId, dispatch]);
+  };
 
   const logData =
     reportData?.logLevelDistribution.distribution.map((item) => ({
@@ -126,10 +92,35 @@ const ReportPage: React.FC = () => {
 
         <div className="flex flex-row justify-between mb-4">
           <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
-            <div className="text-[24px] text-slate-500">
+            <div className="text-[24px] text-[var(--helpertext)]">
               {currentProject?.name ?? "프로젝트명 미확인"}
             </div>
           </div>
+        </div>
+
+        {/* 날짜 선택 & 리포트 생성 버튼 */}
+        <div className="flex items-center gap-4 mb-6">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            max={todayString}
+            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+          />
+          <span className="text-[var(--text)]">~</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            max={todayString}
+            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+          />
+          <button
+            onClick={handleGenerateReport}
+            className="px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors"
+          >
+            리포트 생성
+          </button>
         </div>
 
         {/* 총 로그 개요 */}
