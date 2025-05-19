@@ -5,6 +5,7 @@ import EachLog from "./eachLog";
 import { LogDetail } from "../types/log.types";
 import { fetchLogs, searchLogs } from "../store/slices/logSlice";
 import { AppDispatch } from "../store/store";
+import changeIcon from "../assets/change.svg";
 
 interface LogListProps {
   logs: LogDetail[];
@@ -27,6 +28,9 @@ const LogList = ({ logs, pagination }: LogListProps) => {
   const [selectedLevel, setSelectedLevel] = useState<string>("");
   const [selectedSource, setSelectedSource] = useState<string>("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchType, setSearchType] = useState<"message" | "apiPath">(
+    "message"
+  );
 
   useEffect(() => {
     if (pagination) {
@@ -42,7 +46,8 @@ const LogList = ({ logs, pagination }: LogListProps) => {
           page: currentPage,
           size: pageSize,
           sort: "timestamp,desc",
-          message: searchTerm,
+          message: searchType === "message" ? searchTerm : undefined,
+          apiPath: searchType === "apiPath" ? searchTerm : undefined,
           level: selectedLevel as
             | "TRACE"
             | "DEBUG"
@@ -59,48 +64,45 @@ const LogList = ({ logs, pagination }: LogListProps) => {
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    if (projectId) {
-      if (searchTerm || selectedLevel || selectedSource) {
-        dispatch(
-          searchLogs({
-            projectId: Number(projectId),
-            page: pageNumber,
-            size: pageSize,
-            sort: "timestamp,desc",
-            message: searchTerm,
-            level: selectedLevel as
-              | "TRACE"
-              | "DEBUG"
-              | "INFO"
-              | "WARN"
-              | "ERROR"
-              | "FATAL"
-              | undefined,
-            source: selectedSource as "frontend" | "backend" | undefined,
-          })
-        );
-      } else {
-        dispatch(
-          fetchLogs({
-            projectId: Number(projectId),
-            page: pageNumber,
-            size: pageSize,
-            sort: "timestamp,desc",
-          })
-        );
-      }
+    if (!projectId) return;
+
+    const basePayload = {
+      projectId: Number(projectId),
+      page: pageNumber,
+      size: pageSize,
+      sort: "timestamp,desc",
+    };
+
+    const hasSearchFilters =
+      !!searchTerm || !!selectedLevel || !!selectedSource;
+
+    if (hasSearchFilters) {
+      dispatch(
+        searchLogs({
+          ...basePayload,
+          message: searchType === "message" ? searchTerm : undefined,
+          apiPath: searchType === "apiPath" ? searchTerm : undefined,
+          level: selectedLevel as
+            | "TRACE"
+            | "DEBUG"
+            | "INFO"
+            | "WARN"
+            | "ERROR"
+            | "FATAL"
+            | undefined,
+          source: selectedSource as "frontend" | "backend" | undefined,
+        })
+      );
+    } else {
+      dispatch(fetchLogs(basePayload));
     }
   };
 
   return (
-    <div className="rounded-[24px]">
-      <div className="font-[paperlogy6] text-start mx-3 text-[24px] text-[var(--text)] mb-2">
-        Log ({pagination?.totalElements || 0})
-      </div>
-
-      {/* 검색 및 필터 섹션 */}
+    <div className="rounded-[24px] border border-[var(--line)]">
       <div className="flex items-center gap-4 p-6 border-b border-[var(--line)] bg-white/5 rounded-t-2xl">
-        <div className="relative flex-1">
+        {/* 검색창 */}
+        <div className="relative flex-1 h-11">
           <input
             type="text"
             value={searchTerm}
@@ -108,9 +110,32 @@ const LogList = ({ logs, pagination }: LogListProps) => {
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
-            placeholder="메시지로 검색..."
-            className={`w-full px-4 py-2.5 rounded-xl border ${isSearchFocused ? "border-[#5EA500] ring-1 ring-[#5EA500]" : "border-[var(--line)]"} bg-transparent text-[var(--text)] transition-all duration-200 focus:outline-none hover:border-[#5EA500]`}
+            placeholder={
+              searchType === "message"
+                ? "메시지로 검색..."
+                : "API 경로로 검색..."
+            }
+            className={`w-full h-full px-4 pr-28 rounded-xl border ${
+              isSearchFocused
+                ? "border-lime-500 ring-1 ring-lime-500"
+                : "border-[var(--line)]"
+            } bg-transparent text-[var(--text)] transition-all duration-200 focus:outline-none hover:border-lime-500`}
           />
+
+          {/* 토글 버튼 */}
+          <button
+            onClick={() =>
+              setSearchType((prev) =>
+                prev === "message" ? "apiPath" : "message"
+              )
+            }
+            className="absolute right-11 top-1/2 -translate-y-1/2 flex flex-row items-center gap-1 text-xs text-lime-500 border border-lime-500 rounded-md px-2 py-0.5 hover:bg-[#5EA50015] transition-colors"
+          >
+            <img src={changeIcon} alt="변경" className="w-4 h-4" />
+            {searchType === "message" ? "API" : "MSG"}
+          </button>
+
+          {/* 검색 아이콘 */}
           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -129,12 +154,13 @@ const LogList = ({ logs, pagination }: LogListProps) => {
           </div>
         </div>
 
+        {/* 레벨 셀렉터 */}
         <select
           value={selectedLevel}
           onChange={(e) => setSelectedLevel(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-transparent text-[var(--text)] hover:border-[#5EA500] transition-all duration-200 focus:outline-none focus:border-[#5EA500] focus:ring-1 focus:ring-[#5EA500]"
+          className="h-11 w-24 text-sm px-2 rounded-xl border border-[var(--line)] bg-transparent text-[var(--text)] hover:border-lime-500 focus:outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500"
         >
-          <option value="">레벨 선택</option>
+          <option value="">레벨</option>
           <option value="TRACE">TRACE</option>
           <option value="DEBUG">DEBUG</option>
           <option value="INFO">INFO</option>
@@ -143,19 +169,21 @@ const LogList = ({ logs, pagination }: LogListProps) => {
           <option value="FATAL">FATAL</option>
         </select>
 
+        {/* 소스 셀렉터 */}
         <select
           value={selectedSource}
           onChange={(e) => setSelectedSource(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-[var(--line)] bg-transparent text-[var(--text)] hover:border-[#5EA500] transition-all duration-200 focus:outline-none focus:border-[#5EA500] focus:ring-1 focus:ring-[#5EA500]"
+          className="h-11 w-24 text-sm px-2 rounded-xl border border-[var(--line)] bg-transparent text-[var(--text)] hover:border-lime-500 focus:outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500"
         >
-          <option value="">소스 선택</option>
+          <option value="">소스</option>
           <option value="frontend">Frontend</option>
           <option value="backend">Backend</option>
         </select>
 
+        {/* 검색 버튼 */}
         <button
           onClick={handleSearch}
-          className="px-6 py-2.5 bg-[#5EA500] text-white rounded-xl hover:bg-[#4A8300] transition-all duration-200 font-medium min-w-[80px] hover:shadow-lg active:transform active:scale-95"
+          className="h-11 px-6 bg-lime-500 text-white rounded-xl hover:bg-[#4A8300] transition-all font-medium min-w-[80px] hover:shadow-lg active:transform active:scale-95"
         >
           검색
         </button>
@@ -199,7 +227,7 @@ const LogList = ({ logs, pagination }: LogListProps) => {
             ))
           ) : (
             <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-2xl mt-4 border border-[var(--line)]">
-              <div className="text-lg sm:text-xl text-[#5EA500] mb-2">
+              <div className="text-lg sm:text-xl text-lime-500 mb-2">
                 검색 결과가 없습니다
               </div>
               <div className="text-sm sm:text-base text-gray-500">
@@ -224,30 +252,30 @@ const LogList = ({ logs, pagination }: LogListProps) => {
               const totalPages = pagination.totalPages;
               const currentPageNum = currentPage;
               const pageNumbers = [];
-              
+
               // 항상 최대 5개의 페이지 번호를 표시
               let startPage = Math.max(1, currentPageNum - 2);
               let endPage = Math.min(totalPages, startPage + 4);
-              
+
               // 끝 페이지가 전체 페이지 수를 초과하지 않도록 조정
               if (endPage - startPage < 4) {
                 startPage = Math.max(1, endPage - 4);
               }
-              
+
               for (let i = startPage; i <= endPage; i++) {
                 pageNumbers.push(i);
               }
-              
+
               return pageNumbers.map((number) => (
                 <button
                   key={number}
                   onClick={() => handlePageChange(number)}
-                  className={`px-3 py-1 rounded-lg ${currentPageNum === number ? "bg-[#5EA500] text-white" : "text-[var(--text)] hover:bg-[#5EA50015]"}`}
+                  className={`px-3 py-1 rounded-xl ${currentPageNum === number ? "bg-lime-500 text-white" : "text-[var(--text)] hover:bg-[#5EA50015]"}`}
                 >
                   {number}
                 </button>
               ));
-            })()} 
+            })()}
 
             <button
               onClick={() => handlePageChange(currentPage + 1)}
