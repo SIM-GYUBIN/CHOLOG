@@ -54,7 +54,9 @@ public class LogSearchService {
                         .addParameter("projectId", projectId));
 
         String projectToken = project.getProjectToken();
-        String indexName = "pjt-*-" + projectToken;
+        String frontendIndexName = "pjt-fe-" + projectToken;
+        String backendIndexName = "pjt-be-" + projectToken;
+        String[] targetIndices = {frontendIndexName, backendIndexName};
 
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
@@ -107,7 +109,7 @@ public class LogSearchService {
         SearchHits<LogListDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
                 LogListDocument.class,
-                IndexCoordinates.of(indexName)
+                IndexCoordinates.of(targetIndices)
         );
 
         List<LogListResponse> logEntries = searchHits.getSearchHits().stream()
