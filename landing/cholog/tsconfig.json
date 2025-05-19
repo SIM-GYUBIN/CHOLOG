@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noUnusedLocals": false,  // 사용되지 않는 변수에 대한 경고 끄기
+    "noImplicitAny": false,   // 암시적 any 타입에 대한 경고 끄기
+    "strict": false            // 전체적인 엄격한 체크를 비활성화
+  },
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
