@@ -224,7 +224,7 @@ export interface LogDetail {
   timestamp: string;
   level: string;
   message: string;
-  source: string;
+  source: "frontend" | "backend";
   projectKey: string;
   environment: string;
   traceId: string;
