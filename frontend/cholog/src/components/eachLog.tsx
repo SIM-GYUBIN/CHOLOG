@@ -82,11 +82,11 @@ export default function EachLog({
     }[level] || "bg-white";
 
   // islevelBg가 true면 levelBg 적용, 아니면 배경색 없음
-  const containerClass = `border-b border-b-[1.5px] border-b-slate-200 px-4 py-3 cursor-pointer hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1),0_-4px_12px_-2px_rgba(0,0,0,0.1)] transition-shadow ${islevelBg ? levelBg : ""}`;
+  const containerClass = `border-b border-b-[1.5px] border-b-[var(--helpertext)] px-4 py-3 cursor-pointer hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1),0_-4px_12px_-2px_rgba(0,0,0,0.1)] transition-shadow ${islevelBg ? levelBg : ""}`;
 
   return (
     <div className={containerClass} onClick={handleclick}>
-      <div className="grid grid-cols-8 text-[14px] text-slate-600">
+      <div className="grid grid-cols-8 text-[14px] text-[var(--text)]">
         {/* 로그 레벨 */}
         <div className="col-span-1 flex flex-row justify-start items-center shrink-0 w-20 gap-2">
           <div className={`${levelCircle} w-4 h-4 rounded-full`}></div>
