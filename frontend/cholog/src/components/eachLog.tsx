@@ -25,17 +25,15 @@ export default function EachLog({
   islevelBg,
 }: LogProps) {
   const formattedTime = timestamp
-    ? new Date(timestamp)
-        .toLocaleString("ko-KR", {
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false, // 24시간 형식으로 표시
-        })
-        .replace(/\/|, /g, "-")
-        .replace(" ", " ") // 날짜 구분자를 변경하고, 공백으로 시간 구분
+    ? (() => {
+        const date = new Date(timestamp);
+        const MM = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const HH = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+        const ss = String(date.getSeconds()).padStart(2, "0");
+        return `${MM}-${dd} ${HH}:${mm}:${ss}`;
+      })()
     : "";
 
   const nav = useNavigate();
