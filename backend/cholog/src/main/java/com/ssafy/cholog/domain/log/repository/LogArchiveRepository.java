@@ -11,5 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface LogArchiveRepository extends JpaRepository<LogArchive, Integer> {
 
     @EntityGraph(attributePaths = {"user"})
-    Page<LogArchive> findAllArchiveLogByProjectId(Integer projectId, Pageable pageable);
+    Page<LogArchive> findAllArchiveLogByProjectIdOrderByCreatedAtDesc(Integer projectId, Pageable pageable);
 }

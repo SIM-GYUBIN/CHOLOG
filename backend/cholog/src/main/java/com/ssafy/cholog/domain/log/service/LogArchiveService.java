@@ -112,7 +112,9 @@ public class LogArchiveService {
                     .addParameter("projectId", projectId);
         }
 
-        Page<LogArchive> logArchiveList = logArchiveRepository.findAllArchiveLogByProjectId(projectId, pageable);
+        // 아카이브의 정렬 순서
+
+        Page<LogArchive> logArchiveList = logArchiveRepository.findAllArchiveLogByProjectIdOrderByCreatedAtDesc(projectId, pageable);
 
         return new CustomPage<>(logArchiveList.map(LogArchiveResponse::of));
     }
