@@ -93,7 +93,7 @@ export interface ErrorStatsResponse extends BaseResponse {
  */
 export interface ErrorTimelineItem {
   timestamp: string;
-  errorCount: number;
+  logCount: number;
 }
 
 /**
@@ -207,7 +207,7 @@ export interface LogDetailRequest {
  * @description 로그 상세 정보 타입
  * @property {string} id - 로그 고유 식별자 - 필수
  * @property {string} timestamp - 로그 발생 시간 - 필수
- * @property {string} level - 로그 레벨 - 필수 
+ * @property {string} level - 로그 레벨 - 필수
  * @property {string} message - 로그 메시지 - 필수
  * @property {string} source - 로그 소스 - 필수
  * @property {string} projectKey - 프로젝트 키 - 필수
@@ -483,7 +483,6 @@ export interface ArchiveLogResponseData {
 export interface ArchiveLogResponse extends BaseResponse {
   data: ArchiveLogResponseData;
 }
-
 
 /**
  * [#LOG-12]

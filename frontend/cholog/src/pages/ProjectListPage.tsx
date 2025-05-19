@@ -34,10 +34,12 @@ const ProjectListPage = () => {
     setSearchTerm(term);
   };
 
-  const filteredProjects = projects?.filter(project => 
-    project?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project?.projectToken?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredProjects =
+    projects?.filter(
+      (project) =>
+        project?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project?.projectToken?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   const openModal = (type: "add" | "join") => {
     setModalType(type);
@@ -87,7 +89,7 @@ const ProjectListPage = () => {
 
   // 로딩과 에러 체크 제거
   return (
-    <div className="max-w-[60vw] mx-auto">
+    <div className="max-w-[65vw] mx-auto">
       <div className="text-center my-18">
         <img src={logo} alt="Cholog logo" className="h-12 mx-auto" />
       </div>
