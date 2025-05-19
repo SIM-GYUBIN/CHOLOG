@@ -13,10 +13,15 @@ import { fetchProjectDetail } from "../store/slices/projectSlice";
 const ProjectPage = () => {
   const { projectId } = useParams();
   const dispatch = useDispatch<AppDispatch>();
-  const { logs, isLoading: logsLoading, error: logsError, pagination } = useSelector(
-    (state: RootState) => state.log
+  const {
+    logs,
+    isLoading: logsLoading,
+    error: logsError,
+    pagination,
+  } = useSelector((state: RootState) => state.log);
+  const { projects, isLoading: projectLoading } = useSelector(
+    (state: RootState) => state.project
   );
-  const { projects, isLoading: projectLoading } = useSelector((state: RootState) => state.project);
 
   useEffect(() => {
     if (projectId) {
@@ -27,7 +32,7 @@ const ProjectPage = () => {
   }, [dispatch, projectId]);
 
   // 현재 프로젝트 찾기
-  const currentProject = projects.find(p => p.id === Number(projectId));
+  const currentProject = projects.find((p) => p.id === Number(projectId));
 
   const handleCopyClipBoard = async (text: string) => {
     try {
@@ -83,10 +88,14 @@ const ProjectPage = () => {
           <div className="text-[20px] sm:text-[24px] text-slate-500">
             {currentProject?.name || "프로젝트를 찾을 수 없습니다"}
           </div>
-          <div className="text-[16px] sm:text-[20px] text-slate-300">{currentProject?.projectToken}</div>
+          <div className="text-[16px] sm:text-[20px] text-slate-300">
+            {currentProject?.projectToken}
+          </div>
           <div
             className="rounded-sm p-1 cursor-pointer hover:bg-gray-200"
-            onClick={() => handleCopyClipBoard(currentProject?.projectToken || "")}
+            onClick={() =>
+              handleCopyClipBoard(currentProject?.projectToken || "")
+            }
           >
             <img src={copy} alt="복사" className="w-4 sm:w-5 h-4 sm:h-5" />
           </div>
@@ -100,14 +109,7 @@ const ProjectPage = () => {
           <ErrorChart projectId={Number(projectId)} />
         </div>
       </div>
-      {logs.length > 0 ? (
-        <LogList logs={logs} pagination={pagination} />
-      ) : (
-        <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-2xl border border-[var(--line)]">
-          <div className="text-lg sm:text-xl text-[#5EA500] mb-2">로그가 없습니다</div>
-          <div className="text-sm sm:text-base text-gray-500">아직 수집된 로그가 없습니다.</div>
-        </div>
-      )}
+      <LogList logs={logs} pagination={pagination} />
     </div>
   );
 };
