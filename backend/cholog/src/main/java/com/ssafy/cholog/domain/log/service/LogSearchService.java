@@ -66,13 +66,13 @@ public class LogSearchService {
         }
         if (StringUtils.hasText(apiPath)) {
             boolQueryBuilder.must(QueryBuilders.wildcard(w -> w
-                    .field("http.request.url.keyword")
+                    .field("http.requestUri")
                     .value("*" + apiPath + "*") // 성능 모니터링 필요
                     .caseInsensitive(true)
             ));
         }
         if (StringUtils.hasText(message)) {
-            boolQueryBuilder.must(QueryBuilders.match(m -> m
+            boolQueryBuilder.must(QueryBuilders.matchPhrasePrefix(m -> m
                     .field("message")
                     .query(message)
             ));
