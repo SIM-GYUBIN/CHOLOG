@@ -50,8 +50,13 @@ public class UserController {
     @ApiErrorCodeExamples({ErrorCode.INVALID_OAUTH_PROVIDER, ErrorCode.NOT_OAUTH_USER, ErrorCode.OAUTH_SERVER_ERROR})
     public ResponseEntity<CommonResponse<LoginResponse>> socialLogin(
             @PathVariable String provider,
-            @RequestParam String code
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String error
     ) {
+        if (error != null) {
+            return CommonResponse.redirect("https://www.cholog.com/login");
+        }
+
         Provider socialProvider = Provider.valueOf(provider.toUpperCase());
         LoginResult loginResult = userService.handleOAuthLogin(socialProvider, code);
 

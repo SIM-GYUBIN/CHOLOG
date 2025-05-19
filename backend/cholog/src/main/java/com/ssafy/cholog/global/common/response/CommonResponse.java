@@ -1,6 +1,7 @@
 package com.ssafy.cholog.global.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.ssafy.cholog.domain.user.dto.response.LoginResponse;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -192,6 +193,22 @@ public class CommonResponse<T> {
     public static <T> ResponseEntity<CommonResponse<T>> found(String location) {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.LOCATION, location);
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .headers(headers)
+                .body(new CommonResponse<>(true, null, null));
+    }
+
+    /**
+     * 리다이렉션 URL을 사용하여 응답을 생성합니다.
+     *
+     * @param location 리다이렉션할 URL
+     * @return API 응답을 포함하는 ResponseEntity
+     */
+    public static ResponseEntity<CommonResponse<LoginResponse>> redirect(String location) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.LOCATION, location);
+
         return ResponseEntity
                 .status(HttpStatus.FOUND)
                 .headers(headers)
