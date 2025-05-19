@@ -34,7 +34,7 @@ var Logger = class {
     this.projectKey = "";
   }
   static {
-    this.environment = "";
+    this.environment = "default";
   }
   static {
     // environment 필드 추가
@@ -68,11 +68,11 @@ var Logger = class {
    */
   static init(config) {
     if (this.originalConsole !== null) {
-      console.warn("Cholog: Logger already initialized.");
+      console.warn("[CHO:LOG] \uC774\uBBF8 \uCD08\uAE30\uD654\uB41C \uC0C1\uD0DC\uC785\uB2C8\uB2E4..");
       return;
     }
     this.projectKey = config.projectKey;
-    this.environment = config.environment;
+    if (config.environment) this.environment = config.environment;
     if (config.batchInterval) this.batchInterval = config.batchInterval;
     if (config.maxQueueSize) this.maxQueueSize = config.maxQueueSize;
     this.overrideConsoleMethods();
@@ -88,7 +88,7 @@ var Logger = class {
       warn: console.warn.bind(console),
       error: console.error.bind(console),
       debug: console.debug.bind(console),
-      trace: console.trace.bind(console)
+      trace: console.trace.bind(console),
     };
     console.log = (...args) => this.queueAndPrint("info", "console", ...args);
     console.info = (...args) => this.queueAndPrint("info", "console", ...args);
@@ -113,9 +113,15 @@ var Logger = class {
   static prepareAndQueueLog(level, invokedBy, args, directError, directHttp, directClient, directEvent) {
     if (!this.projectKey || !this.environment) {
       if (this.originalConsole) {
-        this.originalConsole.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+        this.originalConsole.warn(
+          "[CHO:LOG] SDK\uAC00 \uCD08\uAE30\uD654\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uADF8\uAC00 \uC804\uC1A1\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+          ...args
+        );
       } else {
-        console.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+        console.warn(
+          "[CHO:LOG] SDK\uAC00 \uCD08\uAE30\uD654\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. \uB85C\uADF8\uAC00 \uC804\uC1A1\uB418\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+          ...args
+        );
       }
       return;
     }
@@ -130,10 +136,15 @@ var Logger = class {
             payload = { ...args[1] };
           }
         } else if (args.length > 1) {
-          message += " " + args.slice(1).map((arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)).join(" ");
+          message +=
+            " " +
+            args
+              .slice(1)
+              .map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg)))
+              .join(" ");
         }
       } else {
-        message = args.map((arg) => typeof arg === "object" ? JSON.stringify(arg) : String(arg)).join(" ");
+        message = args.map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))).join(" ");
       }
     }
     let determinedLogType;
@@ -152,7 +163,7 @@ var Logger = class {
     if (directEvent) otherFields.event = directEvent;
     const currentSequence = this.logSequenceCounter++;
     const entry = {
-      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      timestamp: /* @__PURE__ */ new Date().toISOString(),
       sequence: currentSequence,
       level: level.toUpperCase(),
       // LogLevelType으로 캐스팅
@@ -163,7 +174,7 @@ var Logger = class {
       requestId: RequestContext.getCurrentRequestId(),
       logger: invokedBy,
       logType: determinedLogType,
-      ...otherFields
+      ...otherFields,
     };
     if (Object.keys(payload).length > 0) {
       entry.payload = payload;
@@ -186,7 +197,10 @@ var Logger = class {
         this.scheduleBatch();
       }
     } catch (e) {
-      this.originalConsole?.error?.("Cholog: Error calculating log size, falling back to count-based queue.", e);
+      this.originalConsole?.error?.(
+        "[CHO:LOG] \uB85C\uADF8 \uD06C\uAE30 \uACC4\uC0B0 \uC911 \uC624\uB958 \uBC1C\uC0DD, \uAC1C\uC218 \uAE30\uBC18 \uB300\uAE30\uC5F4\uB85C \uC804\uD658\uD569\uB2C8\uB2E4.",
+        e
+      );
       this.logQueue.push(entry);
       if (this.logQueue.length > 20) {
         this.sendBatch();
@@ -222,10 +236,10 @@ var Logger = class {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "App-Key": this.projectKey
+          "App-Key": this.projectKey,
           // 필요시 서버와 협의된 인증 헤더 사용
         },
-        body: JSON.stringify(batch)
+        body: JSON.stringify(batch),
       });
       if (!res.ok) {
         const errorText = await res.text();
@@ -233,9 +247,12 @@ var Logger = class {
       }
     } catch (err) {
       if (this.originalConsole) {
-        this.originalConsole.error("Cholog: Logger sendBatch error:", err);
+        this.originalConsole.error("[CHO:LOG] \uB85C\uAC70 \uBC30\uCE58 \uC804\uC1A1 \uC624\uB958:", err);
       } else {
-        console.error("Cholog: Logger sendBatch error (original console unavailable):", err);
+        console.error(
+          "[CHO:LOG] \uB85C\uAC70 \uBC30\uCE58 \uC804\uC1A1 \uC624\uB958 (\uC6D0\uBCF8 \uCF58\uC194 \uC0AC\uC6A9 \uBD88\uAC00):",
+          err
+        );
       }
     }
   }
@@ -267,7 +284,7 @@ var Logger = class {
   }
   // 네트워크 로깅 (NetworkInterceptor에서 사용, logType: "network")
   static logHttp(message, httpDetails, clientDetails, errorDetails) {
-    const level = errorDetails || httpDetails.status && httpDetails.status >= 400 ? "error" : "info";
+    const level = errorDetails || (httpDetails.status && httpDetails.status >= 400) ? "error" : "info";
     this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
   // 이벤트 로깅 (EventTracker에서 사용, logType: "event")
@@ -300,25 +317,29 @@ var NetworkInterceptor = class _NetworkInterceptor {
         return _NetworkInterceptor.originalFetch.call(window, input, init);
       }
       const requestId = RequestContext.getCurrentRequestId() || RequestContext.startNewRequest();
-      const modifiedInit = { ...init || {} };
+      const modifiedInit = { ...(init || {}) };
       modifiedInit.headers = new Headers(modifiedInit.headers);
       if (!modifiedInit.headers.has("X-Request-ID")) {
         modifiedInit.headers.set("X-Request-ID", requestId);
       }
       const startTime = Date.now();
       const requestDetails = {
-        method: (modifiedInit.method || (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") || "GET").toUpperCase(),
-        requestUri: requestUrl
+        method: (
+          modifiedInit.method ||
+          (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") ||
+          "GET"
+        ).toUpperCase(),
+        requestUri: requestUrl,
       };
       try {
         const response = await _NetworkInterceptor.originalFetch.call(window, input, modifiedInit);
         const responseTime = Date.now() - startTime;
         Logger.logHttp(
-          `API Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${response.status}`,
+          `Fetch \uC694\uCCAD => ${requestDetails.method} ${requestDetails.requestUri} - \uC0C1\uD0DC => ${response.status}`,
           {
             ...requestDetails,
             status: response.status,
-            responseTime
+            responseTime,
           },
           void 0
           // clientDetails
@@ -329,13 +350,13 @@ var NetworkInterceptor = class _NetworkInterceptor {
         const errorDetails = {
           type: error?.name || "FetchError",
           message: error?.message || "Network request failed",
-          stacktrace: error?.stack
+          stacktrace: error?.stack,
         };
         Logger.logHttp(
-          `API Call FAILED: ${requestDetails.method} ${requestDetails.requestUri}`,
+          `Fetch \uC624\uB958 => ${requestDetails.method} ${requestDetails.requestUri}`,
           {
             ...requestDetails,
-            responseTime
+            responseTime,
           },
           void 0,
           // clientDetails
@@ -350,7 +371,7 @@ var NetworkInterceptor = class _NetworkInterceptor {
     this.originalXhrOpen = XMLHttpRequest.prototype.open;
     this.originalXhrSend = XMLHttpRequest.prototype.send;
     const self = this;
-    XMLHttpRequest.prototype.open = function(method, url) {
+    XMLHttpRequest.prototype.open = function (method, url) {
       this._chologMethod = method;
       this._chologUrl = typeof url === "string" ? url : url.toString();
       if (this._chologUrl.startsWith(Logger.getApiEndpoint())) {
@@ -358,7 +379,7 @@ var NetworkInterceptor = class _NetworkInterceptor {
       }
       self.originalXhrOpen.apply(this, arguments);
     };
-    XMLHttpRequest.prototype.send = function(body) {
+    XMLHttpRequest.prototype.send = function (body) {
       if (this._chologSkip) {
         return self.originalXhrSend.apply(this, arguments);
       }
@@ -368,7 +389,7 @@ var NetworkInterceptor = class _NetworkInterceptor {
       this.setRequestHeader("X-Request-ID", requestId);
       const requestDetails = {
         method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
-        requestUri: xhr._chologUrl || "UnknownURL"
+        requestUri: xhr._chologUrl || "UnknownURL",
       };
       const onLoadEnd = () => {
         if (xhr._chologLogged) return;
@@ -378,15 +399,17 @@ var NetworkInterceptor = class _NetworkInterceptor {
         if (xhr.status === 0 || xhr.status >= 400) {
           errorDetails = {
             type: xhr.statusText || "XHRError",
-            message: `XHR request to ${requestDetails.requestUri} failed with status ${xhr.status || "N/A"}. ReadyState: ${xhr.readyState}`
+            message: `XHR \uC624\uB958 => ${requestDetails.requestUri} - \uC0C1\uD0DC => ${
+              xhr.status || "N/A"
+            }. ReadyState: ${xhr.readyState}`,
           };
         }
         Logger.logHttp(
-          `XHR Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${xhr.status}`,
+          `XHR \uC694\uCCAD => ${requestDetails.method} ${requestDetails.requestUri} - \uC0C1\uD0DC => ${xhr.status}`,
           {
             ...requestDetails,
             status: xhr.status,
-            responseTime
+            responseTime,
           },
           void 0,
           // clientDetails
@@ -405,7 +428,10 @@ var NetworkInterceptor = class _NetworkInterceptor {
       this.patchXMLHttpRequest();
       this.isInitialized = true;
     } catch (error) {
-      console.error("Cholog SDK: Failed to initialize NetworkInterceptor.", error);
+      console.error(
+        "[CHO:LOG] SDK: NetworkInterceptor \uCD08\uAE30\uD654\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
+        error
+      );
     }
   }
 };
@@ -419,13 +445,16 @@ var ErrorCatcher = class {
     // handleGlobalError 및 handleUnhandledRejection 메서드는 거의 동일하게 유지 가능
     // Logger.logError 호출 부분이 이미 새로운 시그니처와 잘 맞음
     this.handleGlobalError = (eventOrMessage, source, lineno, colno, errorObj) => {
-      let logMessage = "Unhandled global error";
+      let logMessage = "\uCC98\uB9AC\uB418\uC9C0 \uC54A\uC740 \uC804\uC5ED \uC624\uB958";
       const errorDetails = { type: "UnknownError", message: "" };
       const clientDetails = {};
       let actualError = errorObj;
       if (eventOrMessage instanceof ErrorEvent && eventOrMessage.error) {
         actualError = eventOrMessage.error;
-        logMessage = eventOrMessage.message || actualError?.message || "Error message not available";
+        logMessage =
+          eventOrMessage.message ||
+          actualError?.message ||
+          "\uC624\uB958 \uBA54\uC2DC\uC9C0\uB97C \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC74C";
         errorDetails.type = actualError?.name || "ErrorEvent";
         errorDetails.message = actualError?.message || logMessage;
         if (actualError?.stack) errorDetails.stacktrace = actualError.stack;
@@ -446,7 +475,10 @@ var ErrorCatcher = class {
         if (actualError.stack) errorDetails.stacktrace = actualError.stack;
       }
       if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
-        console.warn("Cholog SDK: Suppressed potential recursive error log.", logMessage);
+        console.warn(
+          "[CHO:LOG] SDK \uB0B4\uBD80\uC5D0\uC11C \uBC1C\uC0DD\uD55C \uC7A0\uC7AC\uC801 \uC7AC\uADC0 \uC624\uB958\uB97C \uCC28\uB2E8\uD588\uC2B5\uB2C8\uB2E4.",
+          logMessage
+        );
         return;
       }
       if (typeof window !== "undefined") {
@@ -458,24 +490,28 @@ var ErrorCatcher = class {
   static {
     this.handleUnhandledRejection = (event) => {
       let reason = event.reason;
-      let logMessage = "Unhandled promise rejection";
+      let logMessage = "\uCC98\uB9AC\uB418\uC9C0 \uC54A\uC740 \uD504\uB85C\uBBF8\uC2A4 \uAC70\uBD80";
       const errorDetails = { type: "UnhandledRejection", message: "" };
       const clientDetails = {};
       if (reason instanceof Error) {
-        logMessage = reason.message || "Promise rejected with an Error";
+        logMessage =
+          reason.message || "\uD504\uB85C\uBBF8\uC2A4\uAC00 \uC624\uB958\uC640 \uD568\uAED8 \uAC70\uBD80\uB428";
         errorDetails.type = reason.name || "UnhandledRejectionError";
         errorDetails.message = reason.message;
         if (reason.stack) errorDetails.stacktrace = reason.stack;
       } else {
         try {
-          errorDetails.message = `Reason: ${JSON.stringify(reason)}`;
+          errorDetails.message = `\uC6D0\uC778: ${JSON.stringify(reason)}`;
         } catch {
-          errorDetails.message = `Reason: [Non-serializable]`;
+          errorDetails.message = `\uC6D0\uC778: [\uC9C1\uB82C\uD654 \uBD88\uAC00\uB2A5]`;
         }
         logMessage = `Unhandled promise rejection: ${errorDetails.message}`;
       }
       if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
-        console.warn("Cholog SDK: Suppressed potential recursive error log.", logMessage);
+        console.warn(
+          "[CHO:LOG] SDK \uB0B4\uBD80\uC5D0\uC11C \uBC1C\uC0DD\uD55C \uC7A0\uC7AC\uC801 \uC7AC\uADC0 \uC624\uB958\uB97C \uCC28\uB2E8\uD588\uC2B5\uB2C8\uB2E4.",
+          logMessage
+        );
         return;
       }
       if (typeof window !== "undefined") {
@@ -493,7 +529,10 @@ var ErrorCatcher = class {
       window.addEventListener("unhandledrejection", this.handleUnhandledRejection);
       this.isInitialized = true;
     } catch (error) {
-      console.error("Cholog SDK: Failed to initialize ErrorCatcher.", error);
+      console.error(
+        "[CHO:LOG] SDK: ErrorCatcher \uCD08\uAE30\uD654\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
+        error
+      );
     }
   }
 };
@@ -502,7 +541,7 @@ var ErrorCatcher = class {
 var EventTracker = class {
   static {
     this.config = {
-      significantElementSelector: 'button, a, [role="button"], input[type="submit"], [data-cholog-action]'
+      significantElementSelector: 'button, a, [role="button"], input[type="submit"], [data-cholog-action]',
     };
   }
   static init(options) {
@@ -529,10 +568,10 @@ var EventTracker = class {
               // elementText: closestSignificantElement.textContent?.trim().substring(0, 50) || "",
               elementType: closestSignificantElement.tagName.toLowerCase(),
               elementId: closestSignificantElement.id || void 0,
-              elementClasses: closestSignificantElement.className || void 0
-            }
+              elementClasses: closestSignificantElement.className || void 0,
+            },
           };
-          Logger.logEvent(`User clicked on ${eventDetails.targetSelector}`, eventDetails);
+          Logger.logEvent(`\uD074\uB9AD \uC774\uBCA4\uD2B8 => ${eventDetails.targetSelector}`, eventDetails);
         }
       },
       true
@@ -544,9 +583,9 @@ var EventTracker = class {
     const eventDetails = {
       type: navigationType,
       // 예: "initial_load", "spa_navigation"
-      properties: { currentUrl: url }
+      properties: { currentUrl: url },
     };
-    Logger.logEvent(`Navigation event: ${navigationType} to ${url}`, eventDetails);
+    Logger.logEvent(`\uB124\uBE44\uAC8C\uC774\uC158 \uC774\uBCA4\uD2B8 => ${navigationType} to ${url}`, eventDetails);
   }
   static getElementPath(element) {
     const parts = [];
@@ -572,19 +611,17 @@ var EventTracker = class {
 var Cholog = {
   init: (config) => {
     RequestContext.startNewRequest();
-    Logger.init({
-      projectKey: config.projectKey,
-      environment: config.environment
-    });
+    Logger.init(config);
     NetworkInterceptor.init();
     ErrorCatcher.init();
-    EventTracker.init(
+    EventTracker
+      .init
       /* eventTracker options */
-    );
+      ();
     Logger.info("Cholog SDK Initialized", {
-      sdk: "cholog-js",
+      sdk: "cholog-sdk",
       // 예시 페이로드
-      version: "0.1.0-dev"
+      version: "1.0.5",
       // SDK 버전 (하드코딩 또는 빌드 시 주입)
     });
   },
@@ -597,13 +634,10 @@ var Cholog = {
     Logger.error(message, payload);
   },
   debug: (message, payload) => Logger.debug(message, payload),
-  trace: (message, payload) => Logger.trace(message, payload)
+  trace: (message, payload) => Logger.trace(message, payload),
   // 필요하다면 TraceContext의 메서드도 일부 노출 가능
   // startNewTrace: () => TraceContext.startNewTrace(),
   // getCurrentTraceId: () => TraceContext.getCurrentTraceId(),
 };
 var index_default = Cholog;
-export {
-  Cholog,
-  index_default as default
-};
+export { Cholog, index_default as default };

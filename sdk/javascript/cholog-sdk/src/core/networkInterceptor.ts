@@ -48,7 +48,7 @@ export class NetworkInterceptor {
         const responseTime = Date.now() - startTime;
 
         Logger.logHttp(
-          `API Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${response.status}`,
+          `Fetch 요청 => ${requestDetails.method} ${requestDetails.requestUri} - 상태 => ${response.status}`,
           {
             ...requestDetails,
             status: response.status,
@@ -65,7 +65,7 @@ export class NetworkInterceptor {
           stacktrace: error?.stack,
         };
         Logger.logHttp(
-          `API Call FAILED: ${requestDetails.method} ${requestDetails.requestUri}`,
+          `Fetch 오류 => ${requestDetails.method} ${requestDetails.requestUri}`,
           {
             ...requestDetails,
             responseTime,
@@ -133,14 +133,14 @@ export class NetworkInterceptor {
         if (xhr.status === 0 || xhr.status >= 400) {
           errorDetails = {
             type: xhr.statusText || "XHRError",
-            message: `XHR request to ${requestDetails.requestUri} failed with status ${
-              xhr.status || "N/A"
-            }. ReadyState: ${xhr.readyState}`,
+            message: `XHR 오류 => ${requestDetails.requestUri} - 상태 => ${xhr.status || "N/A"}. ReadyState: ${
+              xhr.readyState
+            }`,
           };
         }
 
         Logger.logHttp(
-          `XHR Call: ${requestDetails.method} ${requestDetails.requestUri} - Status ${xhr.status}`,
+          `XHR 요청 => ${requestDetails.method} ${requestDetails.requestUri} - 상태 => ${xhr.status}`,
           {
             ...requestDetails,
             status: xhr.status,
@@ -171,7 +171,7 @@ export class NetworkInterceptor {
       this.patchXMLHttpRequest();
       this.isInitialized = true;
     } catch (error) {
-      console.error("Cholog SDK: Failed to initialize NetworkInterceptor.", error);
+      console.error("[CHO:LOG] SDK: NetworkInterceptor 초기화에 실패했습니다.", error);
     }
   }
 }

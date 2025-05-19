@@ -6,7 +6,7 @@ type InternalLogLevel = "info" | "warn" | "error" | "debug" | "trace";
 
 export class Logger {
   private static projectKey: string = "";
-  private static environment: string = ""; // environment 필드 추가
+  private static environment: string = "default"; // environment 필드 추가
   private static apiEndpoint = "https://cholog-server.shop/api/logs/js";
   private static originalConsole: {
     log: Console["log"];
@@ -34,7 +34,7 @@ export class Logger {
   }): void {
     // 중복 초기화 방지
     if (this.originalConsole !== null) {
-      console.warn("Cholog: Logger already initialized.");
+      console.warn("[CHO:LOG] 이미 초기화된 상태입니다..");
       return;
     }
 
@@ -100,9 +100,9 @@ export class Logger {
     if (!this.projectKey || !this.environment) {
       // 초기화되지 않았으면 원본 콘솔로 경고만 하고 로그 전송은 하지 않음 (무한 루프 방지)
       if (this.originalConsole) {
-        this.originalConsole.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+        this.originalConsole.warn("[CHO:LOG] SDK가 초기화되지 않았습니다. 로그가 전송되지 않습니다.", ...args);
       } else {
-        console.warn("Cholog: SDK not initialized. Log not sent.", ...args);
+        console.warn("[CHO:LOG] SDK가 초기화되지 않았습니다. 로그가 전송되지 않습니다.", ...args);
       }
       return;
     }
@@ -199,7 +199,7 @@ export class Logger {
     } catch (e) {
       // Blob 생성 실패 또는 기타 이유로 에러 발생 시 (예: Node.js 환경 테스트)
       // 단순 푸시 및 개수 기반 관리로 fallback (선택적)
-      this.originalConsole?.error?.("Cholog: Error calculating log size, falling back to count-based queue.", e);
+      this.originalConsole?.error?.("[CHO:LOG] 로그 크기 계산 중 오류 발생, 개수 기반 대기열로 전환합니다.", e);
       this.logQueue.push(entry);
       if (this.logQueue.length > 20) {
         // 예시: 개수 기반 fallback 최대치
@@ -256,9 +256,9 @@ export class Logger {
       }
     } catch (err) {
       if (this.originalConsole) {
-        this.originalConsole.error("Cholog: Logger sendBatch error:", err);
+        this.originalConsole.error("[CHO:LOG] 로거 배치 전송 오류:", err);
       } else {
-        console.error("Cholog: Logger sendBatch error (original console unavailable):", err);
+        console.error("[CHO:LOG] 로거 배치 전송 오류 (원본 콘솔 사용 불가):", err);
       }
       // 전송 실패한 batch를 다시 큐에 넣는 로직 (선택적, 신중하게)
       // this.logQueue.unshift(...batch);

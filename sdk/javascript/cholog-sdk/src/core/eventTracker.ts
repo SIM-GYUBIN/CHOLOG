@@ -44,7 +44,7 @@ export class EventTracker {
             },
           };
           // Logger.logEvent 호출 시 clientDetails는 Logger가 자동 수집
-          Logger.logEvent(`User clicked on ${eventDetails.targetSelector}`, eventDetails);
+          Logger.logEvent(`클릭 이벤트 => ${eventDetails.targetSelector}`, eventDetails);
         }
       },
       true // Use capture phase
@@ -58,7 +58,7 @@ export class EventTracker {
       type: navigationType, // 예: "initial_load", "spa_navigation"
       properties: { currentUrl: url },
     };
-    Logger.logEvent(`Navigation event: ${navigationType} to ${url}`, eventDetails);
+    Logger.logEvent(`네비게이션 이벤트 => ${navigationType} to ${url}`, eventDetails);
   }
 
   private static getElementPath(element: Element): string {

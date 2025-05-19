@@ -10,18 +10,15 @@ export const Cholog = {
   init: (config: { projectKey: string; environment: string /* 다른 옵션들 */ }) => {
     RequestContext.startNewRequest(); // SDK 초기화 자체도 하나의 Trace로 볼 수 있음
 
-    Logger.init({
-      projectKey: config.projectKey,
-      environment: config.environment,
-    });
+    Logger.init(config);
     NetworkInterceptor.init();
     ErrorCatcher.init();
     EventTracker.init(/* eventTracker options */); // 필요시 EventTracker 옵션 전달
 
     // SDK 초기화 성공 로그 (Logger.info는 이제 projectKey, environment를 알고 있음)
     Logger.info("Cholog SDK Initialized", {
-      sdk: "cholog-js", // 예시 페이로드
-      version: "0.1.0-dev", // SDK 버전 (하드코딩 또는 빌드 시 주입)
+      sdk: "cholog-sdk", // 예시 페이로드
+      version: "1.0.5", // SDK 버전 (하드코딩 또는 빌드 시 주입)
     });
   },
 

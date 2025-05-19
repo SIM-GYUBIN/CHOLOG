@@ -14,7 +14,7 @@ export class ErrorCatcher {
     colno?: number,
     errorObj?: Error // window.onerror의 마지막 인자
   ): void => {
-    let logMessage: string = "Unhandled global error";
+    let logMessage: string = "처리되지 않은 전역 오류";
     const errorDetails: LogError = { type: "UnknownError", message: "" };
     const clientDetails: Partial<LogClient> = {}; // Logger가 기본 수집
 
@@ -22,7 +22,7 @@ export class ErrorCatcher {
 
     if (eventOrMessage instanceof ErrorEvent && eventOrMessage.error) {
       actualError = eventOrMessage.error;
-      logMessage = eventOrMessage.message || actualError?.message || "Error message not available";
+      logMessage = eventOrMessage.message || actualError?.message || "오류 메시지를 사용할 수 없음";
       errorDetails.type = actualError?.name || "ErrorEvent";
       errorDetails.message = actualError?.message || logMessage;
       if (actualError?.stack) errorDetails.stacktrace = actualError.stack;
@@ -54,7 +54,7 @@ export class ErrorCatcher {
     // SDK 내부 오류 재귀 방지 (간단 체크)
     if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
       // Logger가 초기화되지 않았을 수 있으므로 console 직접 사용
-      console.warn("Cholog SDK: Suppressed potential recursive error log.", logMessage);
+      console.warn("[CHO:LOG] SDK 내부에서 발생한 잠재적 재귀 오류를 차단했습니다.", logMessage);
       return;
     }
 
@@ -69,26 +69,26 @@ export class ErrorCatcher {
 
   private static handleUnhandledRejection = (event: PromiseRejectionEvent): void => {
     let reason = event.reason;
-    let logMessage: string = "Unhandled promise rejection";
+    let logMessage: string = "처리되지 않은 프로미스 거부";
     const errorDetails: LogError = { type: "UnhandledRejection", message: "" };
     const clientDetails: Partial<LogClient> = {};
 
     if (reason instanceof Error) {
-      logMessage = reason.message || "Promise rejected with an Error";
+      logMessage = reason.message || "프로미스가 오류와 함께 거부됨";
       errorDetails.type = reason.name || "UnhandledRejectionError";
       errorDetails.message = reason.message;
       if (reason.stack) errorDetails.stacktrace = reason.stack;
     } else {
       try {
-        errorDetails.message = `Reason: ${JSON.stringify(reason)}`;
+        errorDetails.message = `원인: ${JSON.stringify(reason)}`;
       } catch {
-        errorDetails.message = `Reason: [Non-serializable]`;
+        errorDetails.message = `원인: [직렬화 불가능]`;
       }
       logMessage = `Unhandled promise rejection: ${errorDetails.message}`;
     }
 
     if (errorDetails.stacktrace?.includes("cholog") || logMessage?.includes("Cholog SDK")) {
-      console.warn("Cholog SDK: Suppressed potential recursive error log.", logMessage);
+      console.warn("[CHO:LOG] SDK 내부에서 발생한 잠재적 재귀 오류를 차단했습니다.", logMessage);
       return;
     }
 
@@ -107,7 +107,7 @@ export class ErrorCatcher {
       window.addEventListener("unhandledrejection", this.handleUnhandledRejection);
       this.isInitialized = true;
     } catch (error) {
-      console.error("Cholog SDK: Failed to initialize ErrorCatcher.", error);
+      console.error("[CHO:LOG] SDK: ErrorCatcher 초기화에 실패했습니다.", error);
     }
   }
 }
