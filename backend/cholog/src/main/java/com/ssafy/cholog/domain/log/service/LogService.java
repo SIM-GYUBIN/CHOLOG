@@ -6,9 +6,11 @@ import co.elastic.clients.elasticsearch._types.aggregations.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
+import com.ssafy.cholog.domain.log.dto.response.LogListResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
 import com.ssafy.cholog.domain.log.dto.response.LogTimelineResponse;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
+import com.ssafy.cholog.domain.log.entity.LogListDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
 import com.ssafy.cholog.domain.project.repository.ProjectRepository;
 import com.ssafy.cholog.domain.project.repository.ProjectUserRepository;
@@ -53,7 +55,7 @@ public class LogService {
     private final ProjectUserRepository projectUserRepository;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    public CustomPage<LogEntryResponse> getProjectAllLog(Integer userId, Integer projectId, Pageable pageable) {
+    public CustomPage<LogListResponse> getProjectAllLog(Integer userId, Integer projectId, Pageable pageable) {
 
         if (!projectUserRepository.existsByProjectIdAndUserId(projectId, userId)) {
             throw new CustomException(ErrorCode.PROJECT_USER_NOT_FOUND)
@@ -105,18 +107,18 @@ public class LogService {
                 // 필요하다면 .withTrackTotalHits(true) 등을 추가할 수 있습니다. (기본적으로 true일 수 있음)
                 .build();
 
-        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+        SearchHits<LogListDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
-                LogDocument.class,
+                LogListDocument.class,
                 IndexCoordinates.of(indexName)
         );
 
-        List<LogEntryResponse> logEntries = searchHits.getSearchHits().stream()
+        List<LogListResponse> logEntries = searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .map(LogEntryResponse::fromLogDocument)
+                .map(LogListResponse::fromLogDocument)
                 .collect(Collectors.toList());
 
-        Page<LogEntryResponse> page = new PageImpl<>(logEntries, pageable, searchHits.getTotalHits());
+        Page<LogListResponse> page = new PageImpl<>(logEntries, pageable, searchHits.getTotalHits());
         return new CustomPage<>(page);
     }
 

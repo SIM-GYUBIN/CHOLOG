@@ -1,9 +1,6 @@
 package com.ssafy.cholog.domain.log.controller;
 
-import com.ssafy.cholog.domain.log.dto.response.LogAnalysisResponse;
-import com.ssafy.cholog.domain.log.dto.response.LogEntryResponse;
-import com.ssafy.cholog.domain.log.dto.response.LogStatsResponse;
-import com.ssafy.cholog.domain.log.dto.response.LogTimelineResponse;
+import com.ssafy.cholog.domain.log.dto.response.*;
 import com.ssafy.cholog.domain.log.service.LogAnalysisService;
 import com.ssafy.cholog.domain.log.service.LogSearchService;
 import com.ssafy.cholog.domain.log.service.LogService;
@@ -51,17 +48,13 @@ public class LogController {
     @Operation(summary = "프로젝트 로그 전체 조회", description = "프로젝트 로그 전체 조회 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
-    public ResponseEntity<CommonResponse<CustomPage<LogEntryResponse>>> getProjectAllLog(
+    public ResponseEntity<CommonResponse<CustomPage<LogListResponse>>> getProjectAllLog(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Integer projectId,
-            // PageableDefault의 sort 필드를 ES의 실제 타임스탬프 필드명(@timestamp) 또는
-            // LogService에서 매핑 처리할 이름("createdAt")으로 지정.
-            // 여기서는 LogService에서 "createdAt" -> "@timestamp" 매핑을 하므로 "createdAt" 유지 가능.
-            // 또는 명확하게 "@timestamp"로 지정.
             @PageableDefault(size = 20, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
-        CustomPage<LogEntryResponse> logs = logService.getProjectAllLog(userId, projectId, pageable);
+        CustomPage<LogListResponse> logs = logService.getProjectAllLog(userId, projectId, pageable);
         return CommonResponse.ok(logs);
     }
 
