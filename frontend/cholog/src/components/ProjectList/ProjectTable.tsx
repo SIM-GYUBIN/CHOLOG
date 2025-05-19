@@ -57,8 +57,6 @@ const ProjectTable = ({
   const handleModifySubmit = async () => {
     const projectId = selectedProject?.id;
 
-    console.log(selectedProject.id);
-
     if (!projectId) {
       console.error(
         "선택된 프로젝트가 없거나 프로젝트 ID가 유효하지 않습니다."
@@ -257,7 +255,7 @@ const ProjectTable = ({
                 {new Date(project.createdAt).toLocaleString("ko-KR", {
                   year: "numeric",
                   month: "2-digit",
-                  day: "2-digit"
+                  day: "2-digit",
                 })}
               </td>
               <td className="w-1/4">

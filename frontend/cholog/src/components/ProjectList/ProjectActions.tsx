@@ -17,7 +17,7 @@ const ProjectActions = ({ onAdd, onJoin, onSearch }: ProjectActionsProps) => {
         />
         <input
           type="text"
-          placeholder="Search for your project..."
+          placeholder="프로젝트를 검색해보세요."
           className="w-full pl-12 pr-4 py-3 text-sm text-[var(--helpertext)] bg-[var(--bg)] border border-[var(--line)] rounded-full focus:outline-none focus:ring-2 focus:ring-lime-500"
           onChange={(e) => onSearch(e.target.value)}
         />
