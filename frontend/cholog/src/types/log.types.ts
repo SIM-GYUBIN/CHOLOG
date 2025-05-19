@@ -222,32 +222,46 @@ export interface LogDetailRequest {
 export interface LogDetail {
   id: string;
   timestamp: string;
-  level: "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
+  level: string;
   message: string;
-  source: "frontend" | "backend";
+  source: string;
   projectKey: string;
   environment: string;
   traceId: string;
   logger: string;
   logType: string;
+  client?: {
+    url?: string;
+    userAgent?: string;
+    referrer?: string;
+  };
   http?: {
-    request: {
-      method: string;
-      url: string;
+    request?: {
+      method?: string;
+      url?: string;
+      [key: string]: any;
     };
-    response: {
-      statusCode: number;
-    };
-    durationMs: number;
+    response?: any; // string 또는 객체 모두 허용
+    durationMs?: number;
   };
   error?: {
     type: string;
     message: string;
-    stacktrace: string;
+    stacktrace?: string;
   };
-  payload?: {
-    [key: string]: unknown;
+  event?: {
+    type: string;
+    targetSelector?: string;
+    properties?: Record<string, any>;
   };
+  payload?: Record<string, any>;
+}
+
+// API 응답 전체 타입
+export interface LogDetailResponse {
+  success: boolean;
+  data: LogDetail;
+  timestamp: string;
 }
 
 /**
