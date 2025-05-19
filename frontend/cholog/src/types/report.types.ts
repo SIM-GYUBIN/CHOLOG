@@ -5,53 +5,103 @@
 
 /**
  * [#REPORT-1]
- * @description 리포트 조회를 위한 경로 변수 인터페이스
- * @property {number} projectId - 프로젝트의 고유 식별자
- * @property {string} reportId - 리포트의 고유 식별자
+ * @description 리포트 조회 요청 파라미터
+ * @property {number} projectId - 조회할 프로젝트 ID
  */
-export interface ReportPathParams {
+export interface ReportRequestParams {
   projectId: number;
-  reportId: string;
 }
 
 /**
  * [#REPORT-2]
- * @description 리포트 섹션의 기본 구조를 정의하는 인터페이스
- * @property {string} sectionTitle - 섹션의 제목
- * @property {string} content - 섹션의 내용
+ * @description 리포트 조회 요청 바디
+ * @property {string} startDate - 조회 시작일 (yyyy-MM-dd)
+ * @property {string} endDate - 조회 종료일 (yyyy-MM-dd)
  */
-export interface ReportSection {
-  sectionTitle: string;
-  content: string;
+export interface ReportRequestBody {
+  startDate: string;
+  endDate: string;
 }
 
 /**
  * [#REPORT-3]
- * @description 리포트의 상세 정보를 담는 인터페이스
- * @property {string} reportId - 리포트의 고유 식별자
- * @property {number} projectId - 리포트가 속한 프로젝트의 식별자
- * @property {string} title - 리포트의 제목
- * @property {string} summary - 리포트의 요약 내용
- * @property {string} createdAt - 리포트 생성 시각 (ISO 8601 포맷)
- * @property {string} createdBy - 리포트 작성자 이메일
- * @property {ReportSection[]} sections - 리포트의 섹션 목록
+ * @description 로그 레벨 분포 항목
+ * @property {string} level - 로그 레벨 (INFO, ERROR 등)
+ * @property {number} count - 발생 횟수
+ * @property {number} percentage - 전체 대비 비율
  */
-export interface Report {
-  reportId: string;
-  projectId: number;
-  title: string;
-  summary: string;
-  createdAt: string;
-  createdBy: string;
-  sections: ReportSection[];
+export interface LogLevelItem {
+  level: string;
+  count: number;
+  percentage: number;
 }
 
 /**
  * [#REPORT-4]
- * @description 리포트 조회 성공 시의 응답 인터페이스
- * @extends {BaseResponse} 기본 API 응답 형식을 상속
- * @property {Report} data - 조회된 리포트 정보
- * @property {string} timestamp - 응답 생성 시각
+ * @description 로그 레벨 분포 데이터
+ * @property {LogLevelItem[]} distribution - 로그 분포 목록
+ * @property {number} totalLogsInDistribution - 총 로그 수
+ */
+export interface LogLevelDistribution {
+  distribution: LogLevelItem[];
+  totalLogsInDistribution: number;
+}
+
+/**
+ * [#REPORT-5]
+ * @description 자주 발생하는 에러 항목
+ * @property {number} rank - 순위
+ * @property {string} errorIdentifier - 에러 구분자
+ * @property {number} occurrenceCount - 발생 횟수
+ * @property {string} sourceOrigin - 프론트/백 구분
+ */
+export interface TopErrorItem {
+  rank: number;
+  errorIdentifier: string;
+  occurrenceCount: number;
+  sourceOrigin: string;
+}
+
+/**
+ * [#REPORT-6]
+ * @description 느린 API 항목
+ * @property {number} rank - 순위
+ * @property {string} httpMethod - HTTP 메서드
+ * @property {string} requestPath - 요청 경로
+ * @property {number} averageResponseTimeMs - 평균 응답 시간 (ms)
+ * @property {number} maxResponseTimeMs - 최대 응답 시간 (ms)
+ * @property {number} totalRequests - 총 요청 수
+ */
+export interface SlowBackendApiItem {
+  rank: number;
+  httpMethod: string;
+  requestPath: string;
+  averageResponseTimeMs: number;
+  maxResponseTimeMs: number;
+  totalRequests: number;
+}
+
+/**
+ * [#REPORT-7]
+ * @description 리포트 상세 응답 데이터
+ */
+export interface Report {
+  projectId: number;
+  periodDescription: string;
+  generatedAt: string;
+  totalLogCounts: {
+    overallTotal: number;
+    frontendTotal: number;
+    backendTotal: number;
+  };
+  logLevelDistribution: LogLevelDistribution;
+  topErrors: TopErrorItem[];
+  slowBackendApis: SlowBackendApiItem[];
+}
+
+/**
+ * [#REPORT-8]
+ * @description 리포트 조회 성공 응답
  */
 export interface ReportSuccessResponse {
   success: true;
@@ -60,14 +110,8 @@ export interface ReportSuccessResponse {
 }
 
 /**
- * [#REPORT-5]
- * @description API 에러 응답 인터페이스
- * @property {boolean} success - 요청 처리 성공 여부
- * @property {Record<string, never>} data - 빈 데이터 객체
- * @property {Object} error - 에러 정보
- * @property {ErrorCode} error.code - 에러 코드
- * @property {string} error.message - 에러 메시지
- * @property {string} timestamp - 에러 발생 시각
+ * [#REPORT-9]
+ * @description 리포트 조회 실패 응답
  */
 export interface ReportErrorResponse {
   success: false;
@@ -80,88 +124,18 @@ export interface ReportErrorResponse {
 }
 
 /**
- * [#REPORT-6]
- * @description 리포트 목록의 개별 항목 인터페이스
- * @property {string} reportId - 리포트의 고유 식별자
- * @property {string} title - 리포트의 제목
- * @property {string} summary - 리포트의 요약 내용
- * @property {string} createdAt - 리포트 생성 시각
- * @property {string} createdBy - 리포트 작성자 이메일
- */
-export interface ReportListItem {
-  reportId: string;
-  title: string;
-  summary: string;
-  createdAt: string;
-  createdBy: string;
-}
-
-/**
- * [#REPORT-7]
- * @description 페이지네이션 정보를 담는 인터페이스
- * @property {number} pageNumber - 현재 페이지 번호
- * @property {number} totalPages - 전체 페이지 수
- * @property {number} totalElements - 전체 항목 수
- * @property {number} pageSize - 페이지당 항목 수
- * @property {boolean} first - 첫 페이지 여부
- * @property {boolean} last - 마지막 페이지 여부
- */
-export interface PageInfo {
-  pageNumber: number;
-  totalPages: number;
-  totalElements: number;
-  pageSize: number;
-  first: boolean;
-  last: boolean;
-}
-
-/**
- * [#REPORT-8]
- * @description 리포트 목록 데이터를 담는 인터페이스
- * @extends {PageInfo} 페이지네이션 정보를 상속
- * @property {ReportListItem[]} content - 리포트 목록 배열
- */
-export interface ReportListData extends PageInfo {
-  content: ReportListItem[];
-}
-
-/**
- * [#REPORT-9]
- * @description 리포트 목록 조회 성공 시의 응답 인터페이스
- * @property {boolean} success - 요청 처리 성공 여부
- * @property {ReportListData} data - 리포트 목록 및 페이지네이션 정보
- * @property {string} timestamp - 응답 생성 시각
- */
-export interface ReportListSuccessResponse {
-  success: true;
-  data: ReportListData;
-  timestamp: string;
-}
-
-/**
- * @description API 응답에 사용되는 에러 코드
- * @typedef {string} ErrorCode
- * @enum {string}
- * @property {"INVALID_REQUEST"} - 잘못된 요청
- * @property {"UNAUTHORIZED"} - 인증되지 않은 사용자
- * @property {"REPORT_NOT_FOUND"} - 리포트를 찾을 수 없음
- * @property {"PROJECT_NOT_FOUND"} - 프로젝트를 찾을 수 없음
- * @property {"INTERNAL_ERROR"} - 서버 내부 오류
- */
-export type ErrorCode = 'INVALID_REQUEST' | 'UNAUTHORIZED' | 'REPORT_NOT_FOUND' | 'PROJECT_NOT_FOUND' | 'INTERNAL_ERROR';
-
-/**
  * [#REPORT-10]
- * @description 리포트 목록 조회 응답의 통합 타입
- * @type {ReportListSuccessResponse | ReportErrorResponse}
+ * @description API 에러 코드 정의
  */
-export type ReportListResponse = ReportListSuccessResponse | ReportErrorResponse;
+export type ErrorCode =
+  | "INVALID_REQUEST"
+  | "UNAUTHORIZED"
+  | "REPORT_NOT_FOUND"
+  | "PROJECT_NOT_FOUND"
+  | "INTERNAL_ERROR";
 
 /**
  * [#REPORT-11]
- * @description 리포트 목록 조회 요청 파라미터 인터페이스
- * @property {number} projectId - 조회할 프로젝트의 식별자
+ * @description 리포트 단일 조회 응답 통합 타입
  */
-export interface ReportListParams {
-  projectId: number;
-}
+export type ReportResponse = ReportSuccessResponse | ReportErrorResponse;

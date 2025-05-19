@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import DonutChart from "../components/charts/DonutChart";
 import ErrorCountChart from "../components/charts/MonthlyLogCountChart";
 import ProjectNavBar from "../components/projectNavbar";
 import RankingCardList from "../components/common/RankingCardList";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../store/store";
+import { fetchReportDetail } from "../store/slices/reportSlice";
 
 const levelColors: Record<string, string> = {
   ERROR: "#FB2C36",
@@ -14,48 +17,79 @@ const levelColors: Record<string, string> = {
   FATAL: "#AD46FF",
 };
 
-const mockReportData = {
-  projectId: "1",
-  periodDescription: "2025년 05월 01일 ~ 2025년 05월 15일",
-  generatedAt: "2025-05-15T08:27:12.7916876Z",
-  totalLogCounts: {
-    overallTotal: 13,
-    frontendTotal: 13,
-    backendTotal: 0,
-  },
-  logLevelDistribution: {
-    distribution: [
-      { level: "INFO", count: 8, percentage: 61.53 },
-      { level: "ERROR", count: 3, percentage: 23.08 },
-      { level: "DEBUG", count: 1, percentage: 7.69 },
-      { level: "WARN", count: 1, percentage: 7.69 },
-      { level: "FATAL", count: 1, percentage: 7.69 },
-    ],
-    totalLogsInDistribution: 13,
-  },
-  topErrors: [
-    {
-      rank: 1,
-      errorIdentifier: "XHRError",
-      occurrenceCount: 1,
-      sourceOrigin: "frontend",
-    },
-  ],
-  slowBackendApis: [
-    {
-      rank: 1,
-      httpMethod: "POST",
-      requestPath: "http://localhost:8080/test",
-      averageResponseTimeMs: 2336,
-      maxResponseTimeMs: 2336,
-      totalRequests: 1,
-    },
-  ],
+// const mockReportData = {
+//   projectId: "1",
+//   periodDescription: "2025년 05월 01일 ~ 2025년 05월 15일",
+//   generatedAt: "2025-05-15T08:27:12.7916876Z",
+//   totalLogCounts: {
+//     overallTotal: 13,
+//     frontendTotal: 13,
+//     backendTotal: 0,
+//   },
+//   logLevelDistribution: {
+//     distribution: [
+//       { level: "INFO", count: 8, percentage: 61.53 },
+//       { level: "ERROR", count: 3, percentage: 23.08 },
+//       { level: "DEBUG", count: 1, percentage: 7.69 },
+//       { level: "WARN", count: 1, percentage: 7.69 },
+//       { level: "FATAL", count: 1, percentage: 7.69 },
+//     ],
+//     totalLogsInDistribution: 13,
+//   },
+//   topErrors: [
+//     {
+//       rank: 1,
+//       errorIdentifier: "XHRError",
+//       occurrenceCount: 1,
+//       sourceOrigin: "frontend",
+//     },
+//   ],
+//   slowBackendApis: [
+//     {
+//       rank: 1,
+//       httpMethod: "POST",
+//       requestPath: "http://localhost:8080/test",
+//       averageResponseTimeMs: 2336,
+//       maxResponseTimeMs: 2336,
+//       totalRequests: 1,
+//     },
+//   ],
+// };
+
+// 이번 달의 시작일과 종료일 구하기
+const getCurrentMonthRange = (): { startDate: string; endDate: string } => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return {
+    startDate: start.toISOString().split("T")[0],
+    endDate: end.toISOString().split("T")[0],
+  };
 };
 
 const ReportPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const [reportData, setReportData] = useState(mockReportData);
+  const dispatch = useDispatch<AppDispatch>();
+  const { currentReport: reportData } = useSelector(
+    (state: RootState) => state.report
+  );
+  const currentProject = useSelector((state: RootState) =>
+    state.project.projects.find((p) => p.id === Number(projectId))
+  );
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    const { startDate, endDate } = getCurrentMonthRange();
+
+    dispatch(
+      fetchReportDetail({
+        projectId: parseInt(projectId, 10),
+        startDate,
+        endDate,
+      })
+    );
+  }, [projectId, dispatch]);
 
   const logData =
     reportData?.logLevelDistribution.distribution.map((item) => ({
@@ -81,7 +115,9 @@ const ReportPage: React.FC = () => {
       rank: api.rank,
     })) || [];
 
-  const summaryText = `이 리포트는 ${reportData?.periodDescription} 기간 동안 수집된 로그 분석 결과입니다.`;
+  const summaryText = reportData?.periodDescription
+    ? `이 리포트는 ${reportData.periodDescription} 기간 동안 수집된 로그 분석 결과입니다.`
+    : "기간 정보가 없습니다.";
 
   return (
     <div className="max-w-[60vw] mx-auto">
@@ -90,7 +126,9 @@ const ReportPage: React.FC = () => {
 
         <div className="flex flex-row justify-between mb-4">
           <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
-            <div className="text-[24px] text-slate-500">{"프로젝트명"}</div>
+            <div className="text-[24px] text-slate-500">
+              {currentProject?.name ?? "프로젝트명 미확인"}
+            </div>
           </div>
         </div>
 
@@ -105,7 +143,9 @@ const ReportPage: React.FC = () => {
                 {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
               </p>
               <p className="text-xl font-semibold text-[var(--text)]">
-                {(reportData.totalLogCounts as any)[key].toLocaleString()}
+                {(reportData?.totalLogCounts as any)?.[
+                  key
+                ]?.toLocaleString?.() ?? "-"}
               </p>
             </div>
           ))}
@@ -172,7 +212,10 @@ const ReportPage: React.FC = () => {
             {summaryText}
           </div>
           <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
-            생성일자: {new Date(reportData.generatedAt).toLocaleString()}
+            생성일자:{" "}
+            {reportData?.generatedAt
+              ? new Date(reportData.generatedAt).toLocaleString()
+              : "-"}{" "}
           </div>
         </div>
       </div>
