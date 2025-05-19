@@ -157,6 +157,10 @@ const userSlice = createSlice({
       state.nickname = null;
       state.error = null;
     },
+    resetLoginStatus: (state) => {
+      state.isLoggedIn = false;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -215,5 +219,6 @@ const userSlice = createSlice({
 });
 
 // 액션 및 리듀서 내보내기
-export const { resetSignupStatus, logout } = userSlice.actions;
+export const { resetSignupStatus, logout, resetLoginStatus } =
+  userSlice.actions;
 export default userSlice.reducer;

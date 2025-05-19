@@ -3,11 +3,17 @@ import logo from "../assets/logo.svg";
 import close from "../assets/delete.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
-import { userLogin, userSignup } from "../store/slices/userSlice";
+import {
+  userLogin,
+  userSignup,
+  resetLoginStatus,
+} from "../store/slices/userSlice";
+import { useNavigate } from "react-router-dom";
 
 type MatchStatus = "match" | "mismatch" | null;
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error, signupSuccess } = useSelector(
     (state: RootState) => state.user
@@ -24,6 +30,25 @@ const LoginPage: React.FC = () => {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupNickname, setSignupNickname] = useState("");
   const [signupMatchStatus, setSignupMatchStatus] = useState<MatchStatus>(null);
+
+  //SSAFY 로그인
+  const SSAFY_CLIENT_ID = "19615ce9-e7d0-4696-aacd-ef1de95b291e";
+  const SSAFY_REDIRECT_URI = "https://www.cholog.com/api/user/login/ssafy";
+
+  const handleSsafyLogin = () => {
+    const ssoUrl = `https://project.ssafy.com/oauth/sso-check?client_id=${SSAFY_CLIENT_ID}&redirect_uri=${SSAFY_REDIRECT_URI}&response_type=code`;
+    window.location.href = ssoUrl;
+  };
+
+  const { isLoggedIn } = useSelector((state: RootState) => state.user);
+
+  // 로그인 성공 시 이동
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/projectList");
+      dispatch(resetLoginStatus());
+    }
+  }, [isLoggedIn, navigate, dispatch]);
 
   // 로그인 유효성
   useEffect(() => {
@@ -220,6 +245,7 @@ const LoginPage: React.FC = () => {
             {/* 다른 방법 로그인 버튼 */}
             <button
               type="button"
+              onClick={handleSsafyLogin}
               className="w-full py-2 mt-2 border border-gray-400 text-[var(--text)] rounded-md bg-[var(--bg)] hover:bg-blue-50 transition-colors hover:border-blue-400"
             >
               ssafy 로그인
