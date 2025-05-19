@@ -99,21 +99,30 @@ public class RequestResponseLoggingFilter implements Filter {
             ? (ContentCachingRequestWrapper) request
             : new ContentCachingRequestWrapper(httpRequest);
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper((HttpServletResponse) response);
-        
+
+        log.warn("[SDK-EMERGENCY-FIX] Bypassing response body caching and copyBodyToResponse in RequestResponseLoggingFilter to prevent issues with WebFlux.");
+
         try {
-            // 요청 시작 시점에 요청 헤더와 파라미터를 MDC에 기록하고 로그를 남깁니다.
-            // 실제 요청 본문은 RequestBodyLoggingFilter에서 MDC에 추가되었을 수 있습니다.
-            logRequestDetails(requestWrapper);
-            
-            chain.doFilter(requestWrapper, responseWrapper);
-            
+            // 요청 관련 로깅은 최대한 유지 시도
+            // logRequestDetails(requestWrapper); // 기존에 이 메서드가 있다면 호출
+
+            // 중요: ContentCachingResponseWrapper로 응답을 감싸지 않고 원본 응답 객체를 그대로 전달
+            chain.doFilter(requestWrapper, response);
+
         } finally {
-            // 응답 처리 완료 후 응답 관련 정보를 MDC에 기록하고 로그를 남깁니다.
-            logResponseDetails(responseWrapper);
-            
-            // 매우 중요: ContentCachingResponseWrapper가 캐시한 응답 본문을 실제 응답 스트림으로 복사합니다.
-            // 이것이 없으면 클라이언트는 빈 응답을 받게 됩니다.
-            responseWrapper.copyBodyToResponse();
+            // 응답 로깅: ContentCachingResponseWrapper를 사용하지 않으므로,
+            // 기존 logResponseDetails 메서드는 응답 본문을 읽지 못할 것입니다.
+            // HttpServletResponse에서 직접 상태 코드나 헤더를 읽어 로깅하는
+            // 최소한의 로직만 수행하거나, 이 부분 로깅도 일시적으로 줄입니다.
+            if (response instanceof HttpServletResponse) {
+                HttpServletResponse httpResponse = (HttpServletResponse) response;
+                String requestId = MDC.get(CentralLogAppender.REQUEST_ID_MDC_KEY); // RequestTimingFilter에서 설정된 값 사용
+                log.info("[SDK-EMERGENCY-FIX] Response processing completed (body logging bypassed): status={}, requestId={}",
+                        httpResponse.getStatus(), requestId);
+                // 기존 logResponseDetails에서 헤더 로깅 등을 분리하여 여기서 호출할 수 있습니다.
+                // 예: logResponseHeadersAndStatusOnly(httpResponse);
+            }
+            // responseWrapper.copyBodyToResponse(); // 이 줄을 반드시 제거하거나 주석 처리!
         }
     }
     
