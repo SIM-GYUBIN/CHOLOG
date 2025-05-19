@@ -76,6 +76,8 @@ const LogPage = () => {
   const nav = useNavigate();
   const handleclick = (id: string) => {
     if (id && projectId) {
+      // LLM 분석 결과 초기화
+      setShowExplanation(false);
       nav(`/project/${projectId}/log/${id}`);
     }
   };
@@ -100,7 +102,7 @@ const LogPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 max-w-screen-2xl">
+    <div className="w-full min-w-[320px] max-w-[60vw] mx-auto px-4 lg:px-0">
       <ProjectNavBar />
 
       <div className="flex flex-col lg:flex-row gap-6 mx-auto text-[var(--text)]">
