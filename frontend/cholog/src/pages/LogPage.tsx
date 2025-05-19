@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import EachLog from "../components/eachLog";
@@ -51,14 +52,18 @@ const LogPage = () => {
   const dispatch = useAppDispatch();
   const { logDetail, traceLogs, isLoading } = useSelector(
     (state: any) => state.log);
-
+  
+  // 스택트레이스 토글 상태 관리
+  const [showStacktrace, setShowStacktrace] = useState(false);
 
   useEffect(() => {
     if (logId && projectId) {
       dispatch(fetchLogDetail({
         logId,
         projectId: Number(projectId)
-      }));
+      })).then((action) => {
+        console.log('로그 디테일 API 응답:', action.payload);
+      });
     }
   }, [logId, projectId, dispatch]);
 
@@ -69,7 +74,9 @@ const LogPage = () => {
           traceId: logDetail.traceId,
           projectId: Number(projectId),
         })
-      );
+      ).then((action) => {
+        console.log('트레이스 로그 API 응답:', action.payload);
+      });
     }
   }, [logDetail?.traceId, projectId, dispatch]);
 
@@ -101,8 +108,18 @@ const LogPage = () => {
     }));
   };
 
+  // 객체를 JSON 형식으로 표시하는 함수
+  const renderJsonObject = (obj: any) => {
+    if (!obj) return null;
+    return (
+      <pre className="text-[12px] bg-slate-100 p-2 rounded overflow-x-auto">
+        {JSON.stringify(obj, null, 2)}
+      </pre>
+    );
+  };
+
   return (
-    <div className="w-full min-w-[320px] max-w-[60vw] mx-auto px-4 lg:px-0">
+    <div className="w-full min-w-[500px] max-w-[65vw] mx-auto px-4 lg:px-0">
       <ProjectNavBar />
 
       <div className="flex flex-col lg:flex-row gap-6 mx-auto text-[var(--text)]">
@@ -142,12 +159,60 @@ const LogPage = () => {
               </button>
             </div>
           </div>
-          <div className="text-left font-[paperlogy4] mb-6">
-            {logDetail?.timestamp}
+          
+          {/* 기본 로그 정보 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="text-left">
+              <span className="text-[12px] text-slate-500">타임스탬프</span>
+              <div className="font-[paperlogy4]">
+                {logDetail?.timestamp ? new Date(logDetail.timestamp).toLocaleString('ko-KR', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false
+                }).replace(/\. /g, '-').replace(/\./g, '') : '-'}
+              </div>
+            </div>
+            <div className="text-left">
+              <span className="text-[12px] text-slate-500">소스</span>
+              <div className="font-[paperlogy4]">{logDetail?.source || '-'}</div>
+            </div>
+            <div className="text-left">
+              <span className="text-[12px] text-slate-500">환경</span>
+              <div className="font-[paperlogy4]">{logDetail?.environment || '-'}</div>
+            </div>
+            <div className="text-left">
+              <span className="text-[12px] text-slate-500">추적 ID</span>
+              <div className="font-[paperlogy4]" title={logDetail?.traceId}>
+                {logDetail?.traceId || '-'}
+              </div>
+            </div>
+            <div className="text-left">
+              <span className="text-[12px] text-slate-500">로거</span>
+              <div className="font-[paperlogy4] break-words">
+                {logDetail?.logger && logDetail.logger.length > 20 
+                  ? logDetail.logger.split('.').map((part, index, array) => (
+                      <span key={index}>
+                        {part}
+                        {index < array.length - 1 && (
+                          <>.<br className="md:hidden" /></>
+                        )}
+                      </span>
+                    ))
+                  : logDetail?.logger || '-'}
+              </div>
+            </div>
+            <div className="text-left">
+              <span className="text-[12px] text-slate-500">로그 타입</span>
+              <div className="font-[paperlogy4]">{logDetail?.logType || '-'}</div>
+            </div>
           </div>
 
           {/* 로그 메세지 섹션 */}
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               MESSAGE
             </div>
@@ -156,6 +221,172 @@ const LogPage = () => {
             </div>
           </div>
 
+          {/* 에러 정보 섹션 - 에러 정보가 있을 때만 표시 */}
+          {logDetail?.error && (
+            <div className="mb-6">
+              <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+                ERROR DETAILS
+              </div>
+              <div className="text-left bg-red-50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+                <div className="mb-2">
+                  <span className="font-bold">Type: </span>
+                  {logDetail.error.type || '-'}
+                </div>
+                <div className="mb-2">
+                  <span className="font-bold">Message: </span>
+                  {logDetail.error.message || '-'}
+                </div>
+                {logDetail.error.stacktrace && (
+                  <div>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setShowStacktrace(!showStacktrace)}>
+                      <span className="font-bold">Stacktrace:</span>
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="16" 
+                        height="16" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                        className={`transition-transform ${showStacktrace ? 'rotate-180' : ''}`}
+                      >
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </div>
+                    {showStacktrace && (
+                      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-[12px] bg-slate-100 p-2 rounded">
+                        {logDetail.error.stacktrace}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 클라이언트 및 HTTP 정보 섹션 */}
+          <div className="mb-6">
+            <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+              CLIENT & HTTP INFO
+            </div>
+            <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {logDetail?.client?.url && (
+                  <div>
+                    <span className="font-bold">URL: </span>
+                    <span className="break-all">{logDetail.client.url}</span>
+                  </div>
+                )}
+                {logDetail?.client?.userAgent && (
+                  <div>
+                    <span className="font-bold">User Agent: </span>
+                    <span className="break-all">{logDetail.client.userAgent}</span>
+                  </div>
+                )}
+                {logDetail?.client?.referrer && (
+                  <div>
+                    <span className="font-bold">Referrer: </span>
+                    <span className="break-all">{logDetail.client.referrer}</span>
+                  </div>
+                )}
+                {logDetail?.http?.durationMs !== undefined && (
+                  <div>
+                    <span className="font-bold">Duration: </span>
+                    {logDetail.http.durationMs}ms
+                  </div>
+                )}
+              </div>
+              
+              {/* HTTP 요청/응답 정보 */}
+              {logDetail?.http && (
+                <div className="mt-4 border-t pt-4 border-slate-200">
+                  <div className="font-bold mb-2">HTTP 상세 정보:</div>
+                  
+                  {logDetail.http.request && (
+                    <div className="mb-3">
+                      <div className="font-semibold">Request:</div>
+                      <div className="ml-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {logDetail.http.request.method && (
+                          <div>
+                            <span className="font-medium">Method: </span>
+                            {logDetail.http.request.method}
+                          </div>
+                        )}
+                        {logDetail.http.request.url && (
+                          <div>
+                            <span className="font-medium">URL: </span>
+                            <span className="break-all">{logDetail.http.request.url}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {logDetail.http.response && (
+                    <div>
+                      <div className="font-semibold">Response:</div>
+                      <div className="ml-4">
+                        {logDetail.http.response.statusCode && (
+                          <div>
+                            <span className="font-medium">Status Code: </span>
+                            {logDetail.http.response.statusCode}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* 이벤트 정보 섹션 */}
+          {logDetail?.event && (
+            <div className="mb-6">
+              <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+                EVENT INFO
+              </div>
+              <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  {logDetail.event.type && (
+                    <div>
+                      <span className="font-bold">Type: </span>
+                      {logDetail.event.type}
+                    </div>
+                  )}
+                  {logDetail.event.targetSelector && (
+                    <div>
+                      <span className="font-bold">Target: </span>
+                      {logDetail.event.targetSelector}
+                    </div>
+                  )}
+                </div>
+                
+                {logDetail.event.properties && Object.keys(logDetail.event.properties).length > 0 && (
+                  <div>
+                    <div className="font-bold mb-2">Properties:</div>
+                    {renderJsonObject(logDetail.event.properties)}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* 페이로드 정보 섹션 */}
+          {logDetail?.payload && Object.keys(logDetail.payload).length > 0 && (
+            <div className="mb-6">
+              <div className="text-left p-4 text-[18px] font-[paperlogy6]">
+                PAYLOAD
+              </div>
+              <div className="text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+                {renderJsonObject(logDetail.payload)}
+              </div>
+            </div>
+          )}
+
+          {/* CHO:LOG EXPLANE 섹션 */}
           <div className="mb-8">
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               CHO:LOG EXPLANE
@@ -171,7 +402,12 @@ const LogPage = () => {
                   {explanationError ? (
                     <span className="text-red-500">{explanationError}</span>
                   ) : (
-                    explanation || '분석실패했다굴... 너무 어려운 로그 아닌가굴...'
+                    explanation ? explanation.split('\n').map((line, index) => (
+                      <React.Fragment key={index}>
+                        {line}
+                        {index < explanation.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    )) : '분석실패했다굴... 너무 어려운 로그 아닌가굴...'
                   )}
                 </div>
               ) : (
@@ -190,7 +426,7 @@ const LogPage = () => {
         </div>
 
         {/* 관련 로그 섹션 */}
-        <div className="flex-1 rounded-lg p-6 shadow-sm bg-white/5 border border-[var(--line)]">
+        <div className="flex-1 rounded-lg p-6 shadow-sm min-w-[300px] bg-white/5 border border-[var(--line)]">
           <h2 className="text-left text-18px font-[paperlogy6] mb-6">
             Related Log
           </h2>
@@ -206,14 +442,22 @@ const LogPage = () => {
                     <img
                       src={getLevelIcon(log.level)}
                       alt={`${log.level} icon`}
-                      className="w-5 h-5 mt-1 ml-0.5"
+                      className="w-5 h-5 ml-0.5"
                     />
                     <div
                       className="absolute h-10 w-[2px] bg-[var(--helpertext)]"
                       style={{ left: "50%", zIndex: -1 }}
                     ></div>
                   </div>
-                  <div className="text-[14px] min-w-[50px]">{log.source}</div>
+                  <div className="text-[14px] min-w-[50px]">
+                    {log.source
+                      ? log.source.toLowerCase() === 'backend'
+                        ? 'BE'
+                        : log.source.toLowerCase() === 'frontend'
+                          ? 'FE'
+                          : log.source
+                      : '-'}
+                  </div>
                   <div className="text-[14px] truncate max-w-[200px]">
                     {log.message}
                   </div>
