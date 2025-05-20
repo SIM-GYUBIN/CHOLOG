@@ -133,7 +133,6 @@ const initialState: UserState = {
   isLoading: false,
   error: null,
   signupSuccess: false,
-  nickname: null,
   isLoggedIn: false,
 };
 
@@ -154,7 +153,6 @@ const userSlice = createSlice({
      */
     logout: (state) => {
       state.isLoggedIn = false;
-      state.nickname = null;
       state.error = null;
     },
     resetLoginStatus: (state) => {
@@ -188,27 +186,12 @@ const userSlice = createSlice({
       })
       .addCase(userLogin.fulfilled, (state, action) => {
         state.isLoading = false;
-        if (
-          !action.payload ||
-          !action.payload.data ||
-          typeof action.payload.data.nickname !== "string"
-        ) {
-          state.error = {
-            code: "INVALID_RESPONSE",
-            message: "서버 응답에 닉네임 정보가 없습니다.",
-          };
-          state.isLoggedIn = false;
-          state.nickname = null;
-          return;
-        }
         state.isLoggedIn = true;
-        state.nickname = action.payload.data.nickname;
         state.error = null;
       })
       .addCase(userLogin.rejected, (state, action) => {
         state.isLoading = false;
         state.isLoggedIn = false;
-        state.nickname = null;
         state.error = (action.payload as ApiResponse)?.error || null;
       })
 
@@ -220,7 +203,6 @@ const userSlice = createSlice({
       .addCase(userLogout.fulfilled, (state) => {
         state.isLoading = false;
         state.isLoggedIn = false;
-        state.nickname = null;
         state.error = null;
       })
       .addCase(userLogout.rejected, (state, action) => {
