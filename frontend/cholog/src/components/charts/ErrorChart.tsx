@@ -88,7 +88,7 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
   return (
     <div className="w-full p-6 bg-white/5 rounded-2xl h-full border border-[var(--line)]">
       <h2 className="text-left text-xl font-semibold text-[var(--text)] mb-4">
-        시간별 로그 발생량
+        로그 발생 추이
       </h2>
       <div
         ref={scrollRef}
