@@ -47,7 +47,7 @@ function AppContent() {
       {/* Section 2: 프론트에서도 CHO:LOG를! */}
       <FullpageScroll.Section className="bg-[#F4FCE3] text-black flex flex-col items-center justify-center px-6 py-20">
         <h2 className="text-[2.5rem] md:text-[3rem] font-bold mb-6 text-[#5EA500] text-center">
-          🔧 프론트에서도 CHO:LOG를!
+          ☘️ 프론트에서도 CHO:LOG를!
         </h2>
         <p className="text-lg text-gray-700 text-center mb-10 max-w-2xl">
           프론트엔드에서도 단 1줄 설치로
@@ -73,7 +73,7 @@ function AppContent() {
             code={`import Cholog from "cholog-sdk";
 
 Cholog.init({
-  apiKey: "f98c78f3-8bea-4ead-a631-3d79bae44c11",
+  apiKey: "YOUR_API_KEY",
   environment: "prod",
 });`}
           />
@@ -96,7 +96,7 @@ Cholog.init({
         {/* Gradle 설정 */}
         <div className="w-full max-w-3xl mb-8">
           <h3 className="text-xl font-semibold mb-2 text-[#4A8400]">
-            1️⃣ Gradle 설정
+            ✅ Gradle 설정
           </h3>
           <CopyableCode
             code={`repositories {
@@ -105,7 +105,7 @@ Cholog.init({
 }
 
 dependencies {
-  implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.0.9'
+  implementation 'com.ssafy.lab.s12-final:S12P31B207:LATEST_VERSION'
 }`}
           />
         </div>
@@ -113,12 +113,12 @@ dependencies {
         {/* YML 설정 */}
         <div className="w-full max-w-3xl">
           <h3 className="text-xl font-semibold mb-2 text-[#4A8400]">
-            2️⃣ application.yml 설정
+            ✅ application.yml 설정
           </h3>
           <CopyableCode
             code={`cholog:
   logger:
-    api-key: your-api-key`}
+    api-key: YOUR_API_KEY`}
           />
           <p className="text-sm text-gray-500 mt-2">
             ※ <code>url</code>은 로그 수신 서버, <code>api-key</code>는 사용자
