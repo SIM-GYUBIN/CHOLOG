@@ -68,7 +68,7 @@ export default function ArchiveModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-[500px]">
+      <div className="bg-[var(--bg)] rounded-lg p-6 w-[500px] border border-[var(--line)]">
         <h2 className="text-[18px] font-[paperlogy6] mb-4">로그 아카이브</h2>
 
         <div className="mb-4">
@@ -90,13 +90,13 @@ export default function ArchiveModal({
         <div className="flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-[14px] text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-[14px] text-[var(--text)] hover:bg-slate-400/20 rounded-lg transition-colors"
           >
             취소
           </button>
           <button
             onClick={handleSubmit}
-            className="px-4 py-2 text-[14px] text-white bg-[rgba(101,218,94,1)] hover:bg-[rgba(91,196,84,1)] rounded-lg transition-colors"
+            className="px-4 py-2 text-[14px] text-white bg-lime-500 hover:bg-lime-600 rounded-lg transition-colors"
           >
             아카이브
           </button>

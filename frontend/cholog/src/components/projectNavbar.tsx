@@ -35,7 +35,7 @@ export default function ProjectNavBar() {
             !isActive("/archives") &&
             !isActive("/report") &&
             !isActive("/projectsetting")
-              ? "text-green-600 font-bold"
+              ? "text-lime-600 font-bold"
               : "text-slate-400"
           }`}
         >
@@ -45,7 +45,7 @@ export default function ProjectNavBar() {
               !isActive("/archives") &&
               !isActive("/report") &&
               !isActive("/projectsetting")
-                ? "text-green-600"
+                ? "text-lime-600"
                 : "text-slate-400"
             }`}
           >
@@ -63,14 +63,12 @@ export default function ProjectNavBar() {
         <button
           onClick={() => navigate(`/project/${projectId}/archives`)}
           className={`flex justify-start items-center gap-2 cursor-pointer ${
-            isActive("/archives")
-              ? "text-green-600 font-bold"
-              : "text-slate-400"
+            isActive("/archives") ? "text-lime-600 font-bold" : "text-slate-400"
           }`}
         >
           <div
             className={`w-4 h-4 ${
-              isActive("/archives") ? "text-green-600" : "text-slate-400"
+              isActive("/archives") ? "text-lime-600" : "text-slate-400"
             }`}
           >
             <svg
@@ -87,12 +85,12 @@ export default function ProjectNavBar() {
         <button
           onClick={() => navigate(`/report/${projectId}`)}
           className={`flex justify-start items-center gap-2 cursor-pointer ${
-            isActive("/report") ? "text-green-600 font-bold" : "text-slate-400"
+            isActive("/report") ? "text-lime-600 font-bold" : "text-slate-400"
           }`}
         >
           <div
             className={` ${
-              isActive("/report") ? "text-green-600" : "text-slate-400"
+              isActive("/report") ? "text-lime-600" : "text-slate-400"
             }`}
           >
             <svg
@@ -113,12 +111,12 @@ export default function ProjectNavBar() {
             setIsAlarmSettingOpen(true);
           }}
           className={`flex justify-start items-center gap-2 cursor-pointer ${
-            isAlarmSettingOpen ? "text-green-600 font-bold" : "text-slate-400"
+            isAlarmSettingOpen ? "text-lime-600 font-bold" : "text-slate-400"
           }`}
         >
           <div
             className={`${
-              isAlarmSettingOpen ? "text-green-600" : "text-slate-400"
+              isAlarmSettingOpen ? "text-lime-600" : "text-slate-400"
             }`}
           >
             <svg

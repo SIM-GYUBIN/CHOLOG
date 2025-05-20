@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchReportDetail } from "../store/slices/reportSlice";
 import { fetchProjectDetail } from "../store/slices/projectSlice";
+import { motion } from "framer-motion";
 
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -21,7 +22,6 @@ const levelColors: Record<string, string> = {
   FATAL: "#AD46FF",
 };
 
-// 이번 달의 시작일과 종료일 구하기
 const getCurrentMonthRange = (): { startDate: string; endDate: string } => {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -57,10 +57,8 @@ const ReportPage: React.FC = () => {
 
   const handleGenerateReport = () => {
     if (!projectId) return;
-
     const { startDate: defaultStart, endDate: defaultEnd } =
       getCurrentMonthRange();
-
     dispatch(
       fetchReportDetail({
         projectId: parseInt(projectId, 10),
@@ -172,166 +170,163 @@ const ReportPage: React.FC = () => {
     : "기간 정보가 없습니다.";
 
   return (
-    <div className="max-w-[65vw] mx-auto">
-      <ProjectNavBar /> {/* NavBar는 PDF에 포함하지 않음 */}
+    <motion.div
+      className="max-w-[65vw] mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="flex flex-col">
+        <ProjectNavBar />
 
-      {/* PDF 다운로드 버튼을 날짜 선택 옆에 추가 */}
-      <div className="flex items-center gap-4 my-6 px-1">
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          max={todayString}
-          className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
-        />
-        <span className="text-[var(--text)]">~</span>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          max={todayString}
-          className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
-        />
-        <button
-          onClick={handleGenerateReport}
-          className="px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors text-sm"
+        <motion.div
+          className="flex flex-row justify-between mb-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
         >
-          리포트 생성
-        </button>
-        <button
-          onClick={handleDownloadPdf}
-          disabled={isGeneratingPdf || !reportData}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm disabled:bg-gray-400"
-        >
-          {isGeneratingPdf ? 'PDF 생성 중...' : 'PDF 다운로드'}
-        </button>
-      </div>
-
-      {/* 이 div가 PDF로 변환될 실제 컨텐츠 영역입니다. */}
-      <div ref={reportContentRef} className="flex flex-col p-1 bg-[var(--bg)]"> {/* 배경색을 명시적으로 주고 싶다면 여기에 */}
-        <div className="flex flex-row justify-between mb-4">
           <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
             <div className="text-[24px] text-[var(--helpertext)]">
               {currentProject?.name ?? "프로젝트명 미확인"} 리포트
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* 리포트 데이터가 없을 때 안내 메시지 */}
-        {!reportData && (
-          <div className="text-center py-10 text-[var(--text)]">
-            날짜를 선택하고 "리포트 생성" 버튼을 눌러주세요.
+        <motion.div
+          className="flex items-center gap-4 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            max={todayString}
+            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+          />
+          <span className="text-[var(--text)]">~</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            max={todayString}
+            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+          />
+          <button
+            onClick={handleGenerateReport}
+            className="px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors"
+          >
+            리포트 생성
+          </button>
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-3 gap-4 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
+            <div
+              key={key}
+              className="bg-white/5 border border-[var(--line)] rounded-2xl p-4"
+            >
+              <p className="text-sm text-[var(--helpertext)] mb-1">
+                {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
+              </p>
+              <p className="text-xl font-semibold text-[var(--text)]">
+                {(reportData?.totalLogCounts as any)?.[
+                  key
+                ]?.toLocaleString?.() ?? "-"}
+              </p>
+            </div>
+          ))}
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-2 gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+        >
+          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+              로그 레벨 분포
+            </h2>
+            <DonutChart data={logData} size={200} thickness={12} />
           </div>
-        )}
 
-        {/* 리포트 데이터가 있을 때만 내용 표시 */}
-        {reportData && (
-          <>
-            {/* 총 로그 개요 */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
-                <div
-                  key={key}
-                  className="bg-white/5 border border-[var(--line)] rounded-2xl p-4"
-                >
-                  <p className="text-sm text-[var(--helpertext)] mb-1">
-                    {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
-                  </p>
-                  <p className="text-xl font-semibold text-[var(--text)]">
-                    {(reportData?.totalLogCounts as any)?.[
-                      key
-                    ]?.toLocaleString?.() ?? "-"}
-                  </p>
+          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+              로그 발생 추이
+            </h2>
+            <ErrorCountChart
+              projectId={parseInt(projectId!, 10)}
+              token={localStorage.getItem("token") ?? ""}
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-2 gap-6 mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+              자주 발생하는 에러 TOP 3
+            </h2>
+            <RankingCardList items={topErrors} />
+          </div>
+          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+              응답이 느린 API TOP 3
+            </h2>
+            <RankingCardList
+              items={topApis}
+              renderItem={(item) => (
+                <div className="flex flex-col items-start gap-1">
+                  <div className="text-base font-bold text-gray-800">
+                    #{item.rank}
+                  </div>
+                  <div className="text-sm text-gray-800">
+                    {item.name.split(" ")[0]}
+                  </div>
+                  <div className="text-sm text-gray-800 break-all">
+                    {item.name.split(" ")[1]}
+                  </div>
+                  <div className="mt-2 text-sm text-gray-500 whitespace-pre-line">
+                    {item.extra}
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            />
+          </div>
+        </motion.div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-                  로그 레벨 분포
-                </h2>
-                {logData.length > 0 ? (
-                  <DonutChart data={logData} size={200} thickness={12} />
-                ) : (
-                  <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>
-                )}
-              </div>
-
-              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-                  로그 발생 추이
-                </h2>
-                {/* ErrorCountChart는 projectId가 확실히 있을 때만 렌더링 */}
-                {projectId && (
-                    <ErrorCountChart
-                    projectId={parseInt(projectId, 10)}
-                    token={localStorage.getItem("token") ?? ""}
-                    />
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 mt-6">
-              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-                  자주 발생하는 에러 TOP 3
-                </h2>
-                {topErrors.length > 0 ? (
-                  <RankingCardList items={topErrors} />
-                ) : (
-                  <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>
-                )}
-              </div>
-              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-                  응답이 느린 API TOP 3
-                </h2>
-                {topApis.length > 0 ? (
-                  <RankingCardList
-                    items={topApis}
-                    renderItem={(item) => (
-                      <div className="flex flex-col items-start gap-1 text-[var(--text)]"> {/* 텍스트 색상 적용 */}
-                        <div className="text-base font-bold">
-                          #{item.rank}
-                        </div>
-                        <div className="text-sm">
-                          {item.name.split(" ")[0]}
-                        </div>
-                        <div className="text-sm break-all">
-                          {item.name.split(" ")[1]}
-                        </div>
-                        <div className="mt-2 text-xs text-[var(--helpertext)] whitespace-pre-line"> {/* 텍스트 색상 적용 */}
-                          {item.extra}
-                        </div>
-                      </div>
-                    )}
-                  />
-                ) : (
-                  <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>
-                )}
-              </div>
-            </div>
-
-            {/* 생성일자 및 요약 */}
-            <div className="mt-8">
-              <div className="text-left px-4 text-[18px] font-[paperlogy6] text-[var(--text)]">
-                요약
-              </div>
-              <div className="text-left bg-lime-50 dark:bg-lime-900/30 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm text-lime-700 dark:text-lime-300"> {/* 테마에 맞는 배경/글자색 변경 */}
-                {summaryText}
-              </div>
-              <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
-                생성일자:{" "}
-                {reportData?.generatedAt
-                  ? new Date(reportData.generatedAt).toLocaleString('ko-KR') // 한국 시간 형식
-                  : "-"}
-              </div>
-            </div>
-          </>
-        )}
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+        >
+          <div className="text-left px-4 text-[18px] font-[paperlogy6]">
+            요약
+          </div>
+          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+            {summaryText}
+          </div>
+          <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
+            생성일자:{" "}
+            {reportData?.generatedAt
+              ? new Date(reportData.generatedAt).toLocaleString()
+              : "-"}
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

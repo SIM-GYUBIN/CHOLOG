@@ -29,7 +29,7 @@ const getLevelIcon = (level: string) => {
   switch (level) {
     case "ERROR":
       return errorIcon;
-    case "WARNING":
+    case "WARN":
       return warnIcon;
     case "INFO":
       return infoIcon;
@@ -97,7 +97,7 @@ const LogPage = () => {
   };
 
   const handleArchive = (reason: string) => {
-    console.log("아카이븴 완료:", reason);
+    console.log("아카이빙 완료:", reason);
     setIsArchiveModalOpen(false);
     // 필요한 후속 처리
   };
@@ -242,7 +242,7 @@ const LogPage = () => {
             <div className="text-left p-4 text-[18px] font-[paperlogy6] ">
               MESSAGE
             </div>
-            <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm break-all">
+            <div className="max-w-[550px] text-left bg-slate-200/20 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm break-all">
               {logDetail?.message &&
               logDetail.message.length > 150 &&
               !showFullMessage
@@ -282,7 +282,7 @@ const LogPage = () => {
               <div className="text-left p-4 text-[18px] font-[paperlogy6]">
                 ERROR DETAILS
               </div>
-              <div className="text-left bg-red-50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              <div className="text-left bg-red-200/10 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
                 <div className="mb-2">
                   <span className="font-bold">Type: </span>
                   {logDetail.error.type || "-"}
@@ -329,7 +329,7 @@ const LogPage = () => {
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               CLIENT & HTTP INFO
             </div>
-            <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+            <div className="max-w-[550px] text-left bg-slate-200/20 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {logDetail?.client?.url && (
                   <div>
@@ -458,12 +458,12 @@ const LogPage = () => {
             </div>
             <div className="cursor-pointer" onClick={handleExplanationClick}>
               {isExplanationLoading ? (
-                <div className="flex gap-5 h-full px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-xl">
+                <div className="flex gap-5 h-full px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-xl">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-5 border-lime-600"></div>
                   <span>분석중이다굴~!</span>
                 </div>
               ) : showExplanation ? (
-                <div className="text-[14px] text-left font-[consolaNormal] px-6 py-3 shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-lg">
+                <div className="text-[14px] text-left font-[consolaNormal] px-6 py-3 shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-lg">
                   {explanationError ? (
                     <span className="text-red-500">{explanationError}</span>
                   ) : explanation ? (
@@ -479,7 +479,7 @@ const LogPage = () => {
                 </div>
               ) : (
                 <div className="flex justify-end gap-5">
-                  <div className="h-full text-left px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-[#F7FEE7] rounded-3xl">
+                  <div className="h-full text-left px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-3xl">
                     <div>도움이 필요하면</div>
                     <div>나를 클릭하라굴~!</div>
                   </div>
@@ -504,7 +504,7 @@ const LogPage = () => {
                 <div
                   onClick={() => handleclick(log.id)}
                   key={index}
-                  className="flex items-start gap-2 md:gap-3 text-[var(--text)] cursor-pointer hover:bg-[#F7FEE7] p-1 rounded transition-colors"
+                  className="flex items-start gap-2 md:gap-3 text-[var(--text)] cursor-pointer hover:bg-lime-200/20 p-1 rounded transition-colors"
                 >
                   <div className="relative flex items-center flex-shrink-0">
                     <div className="w-5 h-5 relative flex items-center justify-center">
@@ -537,7 +537,7 @@ const LogPage = () => {
               ))}
           </div>
         </div>
-        {/* 아카이븴 모달 */}
+        {/* 아카이빙 모달 */}
         <ArchiveModal
           logId={logDetail?.id}
           projectId={projectId} // projectId 추가

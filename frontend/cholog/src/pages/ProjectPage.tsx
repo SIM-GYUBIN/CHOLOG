@@ -9,6 +9,7 @@ import { fetchLogStats, fetchLogs } from "../store/slices/logSlice";
 import { AppDispatch, RootState } from "../store/store";
 import ProjectNavBar from "../components/projectNavbar";
 import { fetchProjectDetail } from "../store/slices/projectSlice";
+import { motion } from "framer-motion";
 
 const ProjectPage = () => {
   const { projectId } = useParams();
@@ -31,7 +32,6 @@ const ProjectPage = () => {
     }
   }, [dispatch, projectId]);
 
-  // 현재 프로젝트 찾기
   const currentProject = projects.find((p) => p.id === Number(projectId));
 
   const handleCopyClipBoard = async (text: string) => {
@@ -43,7 +43,6 @@ const ProjectPage = () => {
     }
   };
 
-  // 로딩 중일 때 표시할 스켈레톤 UI
   if (projectLoading || logsLoading) {
     return (
       <div className="max-w-[60vw] mx-auto">
@@ -67,7 +66,6 @@ const ProjectPage = () => {
     );
   }
 
-  // 에러 발생 시 표시할 UI
   if (logsError) {
     return (
       <div className="max-w-[60vw] mx-auto">
@@ -81,9 +79,20 @@ const ProjectPage = () => {
   }
 
   return (
-    <div className="w-full min-w-[320px] max-w-[65vw] mx-auto px-4 lg:px-0">
+    <motion.div
+      className="w-full min-w-[320px] max-w-[65vw] mx-auto px-4 lg:px-0"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <ProjectNavBar />
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+
+      <motion.div
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
         <div className="flex flex-row items-center gap-2 font-[paperlogy5] flex-wrap">
           <div className="text-[20px] sm:text-[24px] text-slate-500">
             {currentProject?.name || "프로젝트를 찾을 수 없습니다"}
@@ -100,17 +109,30 @@ const ProjectPage = () => {
             <img src={copy} alt="복사" className="w-4 sm:w-5 h-4 sm:h-5" />
           </div>
         </div>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-7 py-3 sm:py-5 gap-4 lg:gap-10">
+      </motion.div>
+
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-7 py-3 sm:py-5 gap-4 lg:gap-10"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
         <div className="lg:col-span-3">
           <LogSummary />
         </div>
         <div className="lg:col-span-4">
           <ErrorChart projectId={Number(projectId)} />
         </div>
-      </div>
-      <LogList logs={logs} pagination={pagination} />
-    </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+      >
+        <LogList logs={logs} pagination={pagination} />
+      </motion.div>
+    </motion.div>
   );
 };
 

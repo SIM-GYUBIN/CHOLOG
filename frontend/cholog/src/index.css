@@ -96,6 +96,7 @@ body {
   --helpertext: #94a3b8; /* state-400 */
   --line: #e5eaf1; /*state-200*/
   --nav: #ffffff;
+  --sub: #f8fafc; /*state-50*/
   /* --primary: #99a1af; light: gray-400 */
 }
 
@@ -105,5 +106,6 @@ html.dark {
   --helpertext: #9ca3af; /* dark: gray-400 */
   --line: #ffffff1f; /*불투명도 15%*/
   --nav: #181818;
+  --sub: #111111;
   /* --primary: #99a1af; dark: gray-400 */
 }
