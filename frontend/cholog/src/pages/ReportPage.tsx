@@ -10,8 +10,8 @@ import { fetchReportDetail } from "../store/slices/reportSlice";
 import { fetchProjectDetail } from "../store/slices/projectSlice";
 import { motion } from "framer-motion";
 
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const levelColors: Record<string, string> = {
   ERROR: "#FB2C36",
@@ -57,13 +57,16 @@ const ReportPage: React.FC = () => {
 
   const handleGenerateReport = () => {
     if (!projectId) return;
-    const { startDate: defaultStart, endDate: defaultEnd } =
-      getCurrentMonthRange();
+    if (!startDate || !endDate) {
+      alert("날짜를 입력해주세요.");
+      return;
+    }
+
     dispatch(
       fetchReportDetail({
         projectId: parseInt(projectId, 10),
-        startDate: startDate || defaultStart,
-        endDate: endDate || defaultEnd,
+        startDate,
+        endDate,
       })
     );
   };
@@ -85,8 +88,7 @@ const ReportPage: React.FC = () => {
       // 좀 더 확실한 방법은 각 차트 컴포넌트의 렌더링 완료 시점을 아는 것이지만,
       // 간단하게 setTimeout을 사용하거나, 사용자가 버튼을 누르는 시점에는
       // 대부분 렌더링이 완료되어 있을 것으로 가정합니다.
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const canvas = await html2canvas(reportElement, {
         // scale: 2, // 높은 해상도를 위해 scale 조정
@@ -96,11 +98,11 @@ const ReportPage: React.FC = () => {
         // 필요시 backgroundColor: '#FFFFFF' 등을 명시할 수 있습니다.
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
-        orientation: 'p', // 세로 (portrait)
-        unit: 'mm',       // 단위
-        format: 'a4',     // 용지 크기
+        orientation: "p", // 세로 (portrait)
+        unit: "mm", // 단위
+        format: "a4", // 용지 크기
       });
 
       const pdfPageWidth = pdf.internal.pageSize.getWidth();
@@ -115,27 +117,39 @@ const ReportPage: React.FC = () => {
       // 이미지가 페이지 높이보다 클 경우 여러 페이지에 걸쳐 추가
       if (scaledImgHeight > pdfPageHeight) {
         while (position < scaledImgHeight) {
-          pdf.addImage(imgData, 'PNG', 0, -position, pdfPageWidth, scaledImgHeight);
+          pdf.addImage(
+            imgData,
+            "PNG",
+            0,
+            -position,
+            pdfPageWidth,
+            scaledImgHeight
+          );
           position += pdfPageHeight;
 
-          if (position < scaledImgHeight) { // 아직 남은 이미지가 있다면 새 페이지 추가
+          if (position < scaledImgHeight) {
+            // 아직 남은 이미지가 있다면 새 페이지 추가
             pdf.addPage();
           }
         }
-      } else { // 이미지가 한 페이지에 들어갈 경우
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfPageWidth, scaledImgHeight);
+      } else {
+        // 이미지가 한 페이지에 들어갈 경우
+        pdf.addImage(imgData, "PNG", 0, 0, pdfPageWidth, scaledImgHeight);
       }
 
       // 동적 파일명 (프로젝트명과 리포트 기간 사용)
-      const projectName = currentProject?.name?.replace(/\s+/g, '_') || 'Report';
+      const projectName =
+        currentProject?.name?.replace(/\s+/g, "_") || "Report";
       const periodString = reportData?.periodDescription
-        ? reportData.periodDescription.replace(/\s*~\s*/, '_to_').replace(/\s+/g, '_').replace(/[^\w-]/g, '')
-        : `${startDate}_to_${endDate}`.replace(/[^\w-]/g, '');
+        ? reportData.periodDescription
+            .replace(/\s*~\s*/, "_to_")
+            .replace(/\s+/g, "_")
+            .replace(/[^\w-]/g, "")
+        : `${startDate}_to_${endDate}`.replace(/[^\w-]/g, "");
       pdf.save(`${projectName}_Report_${periodString}.pdf`);
-
     } catch (error) {
-      console.error('PDF 생성 중 오류 발생:', error);
-      alert('PDF를 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.');
+      console.error("PDF 생성 중 오류 발생:", error);
+      alert("PDF를 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -160,7 +174,8 @@ const ReportPage: React.FC = () => {
       count: 0,
       extra: [
         `요청 수: ${api.totalRequests}회`,
-        `평균 응답 시간: ${(api.averageResponseTimeMs / 1000).toFixed(1)}초`,
+        `평균 응답 시간: ${(api.averageResponseTimeMs / 1000).toFixed(3)}초`,
+        `최대 응답 시간: ${(api.maxResponseTimeMs / 1000).toFixed(3)}초`,
       ].join("\n"),
       rank: api.rank,
     })) || [];
@@ -276,28 +291,28 @@ const ReportPage: React.FC = () => {
         >
           <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              자주 발생하는 에러 TOP 3
+              자주 발생하는 에러
             </h2>
             <RankingCardList items={topErrors} />
           </div>
           <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              응답이 느린 API TOP 3
+              응답이 느린 API
             </h2>
             <RankingCardList
               items={topApis}
               renderItem={(item) => (
                 <div className="flex flex-col items-start gap-1">
-                  <div className="text-base font-bold text-gray-800">
+                  <div className="text-base font-bold text-[var(--text)]">
                     #{item.rank}
                   </div>
-                  <div className="text-sm text-gray-800">
+                  <div className="text-sm text-[var(--text)]">
                     {item.name.split(" ")[0]}
                   </div>
-                  <div className="text-sm text-gray-800 break-all">
+                  <div className="text-sm text-[var(--text)] break-all">
                     {item.name.split(" ")[1]}
                   </div>
-                  <div className="mt-2 text-sm text-gray-500 whitespace-pre-line">
+                  <div className="mt-2 text-sm text-[var(--helpertext)] whitespace-pre-line">
                     {item.extra}
                   </div>
                 </div>
@@ -312,10 +327,10 @@ const ReportPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55 }}
         >
-          <div className="text-left px-4 text-[18px] font-[paperlogy6]">
+          <div className="text-left px-4 text-[var(--text)] text-[18px] font-[paperlogy6]">
             요약
           </div>
-          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+          <div className="text-left bg-lime-50/20 p-4 rounded-lg text-[14px] font-[consolaNormal] text-[var(--text)] shadow-sm">
             {summaryText}
           </div>
           <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
