@@ -128,7 +128,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
   // webhookData가 변경될 때 폼 데이터 업데이트 및 콘솔 로그 출력
   useEffect(() => {
     // API 응답 결과를 콘솔에 출력
-    console.log("웹훅 설정 API 응답 결과:", webhookData);
+    // console.log('웹훅 설정 API 응답 결과:', webhookData);
 
     if (webhookData?.exists && webhookData.webhookItem) {
       setMmURL(webhookData.webhookItem.mmURL || "");
