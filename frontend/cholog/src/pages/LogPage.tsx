@@ -11,6 +11,7 @@ import { LogDetail } from "../types/log.types";
 import { fetchLogDetail, fetchTraceLog } from "../store/slices/logSlice";
 import { useAppDispatch } from "../hooks/useAppDispatch";
 import JiraMakingButton from "../components/JiraMakingButton";
+import { motion } from "framer-motion";
 
 interface RelatedLog {
   type: "BE" | "FE";
@@ -44,6 +45,36 @@ const getLevelIcon = (level: string) => {
     default:
       return infoIcon;
   }
+};
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      when: "beforeChildren",
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const sectionVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 100 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -10 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { type: "spring", stiffness: 100 },
+  },
 };
 
 const LogPage = () => {
@@ -132,15 +163,27 @@ const LogPage = () => {
   };
 
   return (
-    <div className="w-full min-w-[500px] max-w-[65vw] mx-auto px-4 lg:px-0">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="w-full min-w-[500px] max-w-[65vw] mx-auto px-4 lg:px-0"
+    >
       <ProjectNavBar />
 
       <div className="flex flex-col lg:flex-row gap-6 mx-auto text-[var(--text)]">
         {/* 메인 로그 섹션 */}
-        <div className="flex-[2] bg-white/5 rounded-lg p-6 shadow-sm border border-[var(--line)]">
-          <div className="flex items-center justify-between mb-4">
+        <motion.div
+          variants={sectionVariants}
+          className="flex-[2] bg-white/5 rounded-lg p-6 shadow-sm border border-[var(--line)]"
+        >
+          <motion.div
+            variants={itemVariants}
+            className="flex items-center justify-between mb-4"
+          >
             <div className="flex items-center gap-2">
-              <img
+              <motion.img
+                whileHover={{ scale: 1.1 }}
                 src={getLevelIcon(logDetail?.level)}
                 alt="level icon"
                 className="w-11 h-11"
@@ -151,7 +194,9 @@ const LogPage = () => {
             </div>
             <div className="flex items-center gap-2">
               <JiraMakingButton />
-              <button
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setIsArchiveModalOpen(true)}
                 className="p-2 rounded-full hover:bg-slate-100/50 transition-colors"
               >
@@ -169,13 +214,16 @@ const LogPage = () => {
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* 기본 로그 정보 */}
-          <div className="w-full max-w-[550px] grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 overflow-x-auto">
-            <div className="text-left">
+          <motion.div
+            variants={sectionVariants}
+            className="w-full max-w-[550px] grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 overflow-x-auto"
+          >
+            <motion.div variants={itemVariants} className="text-left">
               <span className="text-[12px] text-slate-500">타임스탬프</span>
               <div className="font-[paperlogy4]">
                 {logDetail?.timestamp
@@ -193,26 +241,26 @@ const LogPage = () => {
                       .replace(/\./g, "")
                   : "-"}
               </div>
-            </div>
-            <div className="text-left">
+            </motion.div>
+            <motion.div variants={itemVariants} className="text-left">
               <span className="text-[12px] text-slate-500">소스</span>
               <div className="font-[paperlogy4]">
                 {logDetail?.source || "-"}
               </div>
-            </div>
-            <div className="text-left">
+            </motion.div>
+            <motion.div variants={itemVariants} className="text-left">
               <span className="text-[12px] text-slate-500">환경</span>
               <div className="font-[paperlogy4]">
                 {logDetail?.environment || "-"}
               </div>
-            </div>
-            <div className="text-left">
+            </motion.div>
+            <motion.div variants={itemVariants} className="text-left">
               <span className="text-[12px] text-slate-500">추적 ID</span>
               <div className="font-[paperlogy4]" title={logDetail?.traceId}>
                 {logDetail?.traceId || "-"}
               </div>
-            </div>
-            <div className="text-left">
+            </motion.div>
+            <motion.div variants={itemVariants} className="text-left">
               <span className="text-[12px] text-slate-500">로거</span>
               <div className="font-[paperlogy4] break-words">
                 {logDetail?.logger && logDetail.logger.length > 20
@@ -228,21 +276,24 @@ const LogPage = () => {
                     ))
                   : logDetail?.logger || "-"}
               </div>
-            </div>
-            <div className="text-left">
+            </motion.div>
+            <motion.div variants={itemVariants} className="text-left">
               <span className="text-[12px] text-slate-500">로그 타입</span>
               <div className="font-[paperlogy4]">
                 {logDetail?.logType || "-"}
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* 로그 메세지 섹션 */}
-          <div className="mb-6">
+          <motion.div variants={sectionVariants} className="mb-6">
             <div className="text-left p-4 text-[18px] font-[paperlogy6] ">
               MESSAGE
             </div>
-            <div className="max-w-[550px] text-left bg-slate-200/20 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm break-all">
+            <motion.div
+              variants={itemVariants}
+              className="max-w-[550px] text-left bg-slate-200/20 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm break-all"
+            >
               {logDetail?.message &&
               logDetail.message.length > 150 &&
               !showFullMessage
@@ -250,14 +301,17 @@ const LogPage = () => {
                 : logDetail?.message}
 
               {logDetail?.message && logDetail.message.length > 150 && (
-                <div
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
                   className="flex items-center gap-2 cursor-pointer mt-2 text-lime-600"
                   onClick={() => setShowFullMessage(!showFullMessage)}
                 >
                   <span className="font-bold text-[12px]">
                     {showFullMessage ? "접기" : "더보기"}
                   </span>
-                  <svg
+                  <motion.svg
+                    animate={{ rotate: showFullMessage ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
                     height="16"
@@ -267,22 +321,24 @@ const LogPage = () => {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`transition-transform ${showFullMessage ? "rotate-180" : ""}`}
                   >
                     <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </div>
+                  </motion.svg>
+                </motion.div>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* 에러 정보 섹션 - 에러 정보가 있을 때만 표시 */}
           {logDetail?.error && (
-            <div className="mb-6">
+            <motion.div variants={sectionVariants} className="mb-6">
               <div className="text-left p-4 text-[18px] font-[paperlogy6]">
                 ERROR DETAILS
               </div>
-              <div className="text-left bg-red-200/10 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              <motion.div
+                variants={itemVariants}
+                className="text-left bg-red-200/10 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm"
+              >
                 <div className="mb-2">
                   <span className="font-bold">Type: </span>
                   {logDetail.error.type || "-"}
@@ -293,12 +349,15 @@ const LogPage = () => {
                 </div>
                 {logDetail.error.stacktrace && (
                   <div>
-                    <div
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
                       className="flex items-center gap-2 cursor-pointer"
                       onClick={() => setShowStacktrace(!showStacktrace)}
                     >
                       <span className="font-bold">Stacktrace:</span>
-                      <svg
+                      <motion.svg
+                        animate={{ rotate: showStacktrace ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
                         height="16"
@@ -308,62 +367,73 @@ const LogPage = () => {
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className={`transition-transform ${showStacktrace ? "rotate-180" : ""}`}
                       >
                         <polyline points="6 9 12 15 18 9"></polyline>
-                      </svg>
-                    </div>
+                      </motion.svg>
+                    </motion.div>
                     {showStacktrace && (
-                      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-[12px] bg-slate-100 p-2 rounded">
+                      <motion.pre
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="mt-2 overflow-x-auto whitespace-pre-wrap text-[12px] bg-slate-100 p-2 rounded"
+                      >
                         {logDetail.error.stacktrace}
-                      </pre>
+                      </motion.pre>
                     )}
                   </div>
                 )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
 
           {/* 클라이언트 및 HTTP 정보 섹션 */}
-          <div className="mb-6">
+          <motion.div variants={sectionVariants} className="mb-6">
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               CLIENT & HTTP INFO
             </div>
-            <div className="max-w-[550px] text-left bg-slate-200/20 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+            <motion.div
+              variants={itemVariants}
+              className="max-w-[550px] text-left bg-slate-200/20 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {logDetail?.client?.url && (
-                  <div>
+                  <motion.div variants={itemVariants}>
                     <span className="font-bold">URL: </span>
                     <span className="break-all">{logDetail.client.url}</span>
-                  </div>
+                  </motion.div>
                 )}
                 {logDetail?.client?.userAgent && (
-                  <div>
+                  <motion.div variants={itemVariants}>
                     <span className="font-bold">User Agent: </span>
                     <span className="break-all">
                       {logDetail.client.userAgent}
                     </span>
-                  </div>
+                  </motion.div>
                 )}
                 {logDetail?.client?.referrer && (
-                  <div>
+                  <motion.div variants={itemVariants}>
                     <span className="font-bold">Referrer: </span>
                     <span className="break-all">
                       {logDetail.client.referrer}
                     </span>
-                  </div>
+                  </motion.div>
                 )}
                 {logDetail?.http?.durationMs !== undefined && (
-                  <div>
+                  <motion.div variants={itemVariants}>
                     <span className="font-bold">Duration: </span>
                     {logDetail.http.durationMs}ms
-                  </div>
+                  </motion.div>
                 )}
               </div>
 
               {/* HTTP 요청/응답 정보 */}
               {logDetail?.http && (
-                <div className="mt-4 border-t pt-4 border-slate-200">
+                <motion.div
+                  variants={itemVariants}
+                  className="mt-4 border-t pt-4 border-slate-200"
+                >
                   <div className="font-bold mb-2">HTTP 상세 정보:</div>
 
                   {logDetail.http.request && (
@@ -371,18 +441,18 @@ const LogPage = () => {
                       <div className="font-semibold">Request:</div>
                       <div className="ml-4 grid grid-cols-1 md:grid-cols-2 gap-2">
                         {logDetail.http.request.method && (
-                          <div>
+                          <motion.div variants={itemVariants}>
                             <span className="font-medium">Method: </span>
                             {logDetail.http.request.method}
-                          </div>
+                          </motion.div>
                         )}
                         {logDetail.http.request.url && (
-                          <div>
+                          <motion.div variants={itemVariants}>
                             <span className="font-medium">URL: </span>
                             <span className="break-all">
                               {logDetail.http.request.url}
                             </span>
-                          </div>
+                          </motion.div>
                         )}
                       </div>
                     </div>
@@ -393,77 +463,104 @@ const LogPage = () => {
                       <div className="font-semibold">Response:</div>
                       <div className="ml-4">
                         {logDetail.http.response.statusCode && (
-                          <div>
+                          <motion.div variants={itemVariants}>
                             <span className="font-medium">Status Code: </span>
                             {logDetail.http.response.statusCode}
-                          </div>
+                          </motion.div>
                         )}
                       </div>
                     </div>
                   )}
-                </div>
+                </motion.div>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* 이벤트 정보 섹션 */}
           {logDetail?.event && (
-            <div className="mb-6">
+            <motion.div variants={sectionVariants} className="mb-6">
               <div className="text-left p-4 text-[18px] font-[paperlogy6]">
                 EVENT INFO
               </div>
-              <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              <motion.div
+                variants={itemVariants}
+                className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                   {logDetail.event.type && (
-                    <div>
+                    <motion.div variants={itemVariants}>
                       <span className="font-bold">Type: </span>
                       {logDetail.event.type}
-                    </div>
+                    </motion.div>
                   )}
                   {logDetail.event.targetSelector && (
-                    <div>
+                    <motion.div variants={itemVariants}>
                       <span className="font-bold">Target: </span>
                       {logDetail.event.targetSelector}
-                    </div>
+                    </motion.div>
                   )}
                 </div>
 
                 {logDetail.event.properties &&
                   Object.keys(logDetail.event.properties).length > 0 && (
-                    <div>
+                    <motion.div variants={itemVariants}>
                       <div className="font-bold mb-2">Properties:</div>
                       {renderJsonObject(logDetail.event.properties)}
-                    </div>
+                    </motion.div>
                   )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
 
           {/* 페이로드 정보 섹션 */}
           {logDetail?.payload && Object.keys(logDetail.payload).length > 0 && (
-            <div className="mb-6">
+            <motion.div variants={sectionVariants} className="mb-6">
               <div className="text-left p-4 text-[18px] font-[paperlogy6]">
                 PAYLOAD
               </div>
-              <div className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
+              <motion.div
+                variants={itemVariants}
+                className="max-w-[550px] text-left bg-slate-100/50 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm"
+              >
                 {renderJsonObject(logDetail.payload)}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
 
           {/* CHO:LOG EXPLANE 섹션 */}
-          <div className="mb-8">
+          <motion.div variants={sectionVariants} className="mb-8">
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
               CHO:LOG EXPLANE
             </div>
-            <div className="cursor-pointer" onClick={handleExplanationClick}>
+            <motion.div
+              variants={itemVariants}
+              className="cursor-pointer"
+              onClick={handleExplanationClick}
+            >
               {isExplanationLoading ? (
-                <div className="flex gap-5 h-full px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-xl">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-5 border-lime-600"></div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex gap-5 h-full px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-xl"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1,
+                      ease: "linear",
+                    }}
+                    className="rounded-full h-6 w-6 border-b-5 border-lime-600"
+                  ></motion.div>
                   <span>분석중이다굴~!</span>
-                </div>
+                </motion.div>
               ) : showExplanation ? (
-                <div className="text-[14px] text-left font-[consolaNormal] px-6 py-3 shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-lg">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-[14px] text-left font-[consolaNormal] px-6 py-3 shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-lg"
+                >
                   {explanationError ? (
                     <span className="text-red-500">{explanationError}</span>
                   ) : explanation ? (
@@ -476,32 +573,49 @@ const LogPage = () => {
                   ) : (
                     "분석실패했다굴... 너무 어려운 로그 아닌가굴..."
                   )}
-                </div>
+                </motion.div>
               ) : (
-                <div className="flex justify-end gap-5">
-                  <div className="h-full text-left px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-3xl">
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  className="flex justify-end gap-5"
+                >
+                  <motion.div className="h-full text-left px-6 py-3 text-[14px] shadow-sm hover:bg-lime-200/50 transition-all bg-lime-200/20 rounded-3xl">
                     <div>도움이 필요하면</div>
                     <div>나를 클릭하라굴~!</div>
-                  </div>
-                  <div className="w-20">
+                  </motion.div>
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="w-20"
+                  >
                     <img src={frogimg} alt="개구리" />
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
         {/* 관련 로그 섹션 */}
-
-        <div className="flex-1 rounded-lg p-4 md:p-6 shadow-sm min-w-[280px] bg-white/5 border border-[var(--line)]">
+        <motion.div
+          variants={sectionVariants}
+          className="flex-1 rounded-lg p-4 md:p-6 shadow-sm min-w-[280px] bg-white/5 border border-[var(--line)]"
+        >
           <h2 className="text-left text-base md:text-lg font-[paperlogy6] mb-4 md:mb-6">
             Related Log
           </h2>
-          <div className="space-y-3 md:space-y-4">
+          <motion.div
+            variants={containerVariants}
+            className="space-y-3 md:space-y-4"
+          >
             {!isLoading &&
               traceLogs?.map((log, index, array) => (
-                <div
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{
+                    scale: 1.03,
+                    backgroundColor: "rgba(163, 230, 53, 0.2)",
+                  }}
                   onClick={() => handleclick(log.id)}
                   key={index}
                   className="flex items-start gap-2 md:gap-3 text-[var(--text)] cursor-pointer hover:bg-lime-200/20 p-1 rounded transition-colors"
@@ -515,10 +629,13 @@ const LogPage = () => {
                       />
                     </div>
                     {index !== array.length - 1 && (
-                      <div
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: "3rem" }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
                         className="absolute h-12 md:h-14 w-[2px] bg-[var(--helpertext)]"
                         style={{ left: "50%", zIndex: -1, top: "50%" }}
-                      ></div>
+                      ></motion.div>
                     )}
                   </div>
                   <div className="text-xs md:text-sm flex-shrink-0 min-w-[30px] md:min-w-[50px]">
@@ -533,10 +650,11 @@ const LogPage = () => {
                   <div className="text-xs md:text-sm truncate max-w-[120px] sm:max-w-[160px] md:max-w-[200px]">
                     {log.message}
                   </div>
-                </div>
+                </motion.div>
               ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
+
         {/* 아카이빙 모달 */}
         <ArchiveModal
           logId={logDetail?.id}
@@ -546,7 +664,7 @@ const LogPage = () => {
           onArchive={handleArchive}
         />
       </div>
-    </div>
+    </motion.div>
   );
 };
 
