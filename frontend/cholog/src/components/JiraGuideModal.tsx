@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import url1 from'@/assets/jiraimg/token1.png';
-import url2 from'@/assets/jiraimg/token2.png';
-import url3 from'@/assets/jiraimg/token3.png';
-import url4 from'@/assets/jiraimg/token4.png';
-import url5 from'@/assets/jiraimg/token5.png';
-
-
+import React, { useState } from "react";
+import url1 from "@/assets/jiraimg/token1.png";
+import url2 from "@/assets/jiraimg/token2.png";
+import url3 from "@/assets/jiraimg/token3.png";
+import url4 from "@/assets/jiraimg/token4.png";
+import url5 from "@/assets/jiraimg/token5.png";
 
 interface URLGuideModalProps {
   isOpen: boolean;
@@ -27,12 +25,20 @@ const URLGuideModal: React.FC<URLGuideModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60]" onClick={onClose}>
-      <div className="bg-white rounded-lg p-4 w-[700px] shadow-lg" onClick={e => e.stopPropagation()}>
-        <div className="text-[16px] font-[paperlogy6] mb-3">Jira API 토큰 확인 방법</div>
+    <div
+      className="fixed inset-0 bg-black/30 flex items-center justify-center z-[60]"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg p-4 w-[700px] shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-[16px] font-[paperlogy6] mb-3">
+          Jira API 토큰 확인 방법
+        </div>
         <div className="relative">
           <div className="overflow-hidden rounded-lg">
-            <div 
+            <div
               className="flex transition-transform duration-300 ease-in-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
@@ -46,7 +52,7 @@ const URLGuideModal: React.FC<URLGuideModalProps> = ({ isOpen, onClose }) => {
               ))}
             </div>
           </div>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -54,11 +60,22 @@ const URLGuideModal: React.FC<URLGuideModalProps> = ({ isOpen, onClose }) => {
             }}
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 hover:bg-white"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 19.5L8.25 12l7.5-7.5"
+              />
             </svg>
           </button>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -66,8 +83,19 @@ const URLGuideModal: React.FC<URLGuideModalProps> = ({ isOpen, onClose }) => {
             }}
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 hover:bg-white"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 4.5l7.5 7.5-7.5 7.5"
+              />
             </svg>
           </button>
 
@@ -80,13 +108,13 @@ const URLGuideModal: React.FC<URLGuideModalProps> = ({ isOpen, onClose }) => {
                   setCurrentIndex(index);
                 }}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  currentIndex === index ? 'bg-slate-700' : 'bg-slate-300'
+                  currentIndex === index ? "bg-slate-700" : "bg-slate-300"
                 }`}
               />
             ))}
           </div>
         </div>
-        <button 
+        <button
           onClick={onClose}
           className="mt-4 text-[12px] text-slate-500 hover:text-slate-700"
         >
