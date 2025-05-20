@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchReportDetail } from "../store/slices/reportSlice";
 import { fetchProjectDetail } from "../store/slices/projectSlice";
+import { motion } from "framer-motion";
 
 const levelColors: Record<string, string> = {
   ERROR: "#FB2C36",
@@ -18,7 +19,6 @@ const levelColors: Record<string, string> = {
   FATAL: "#AD46FF",
 };
 
-// 이번 달의 시작일과 종료일 구하기
 const getCurrentMonthRange = (): { startDate: string; endDate: string } => {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -51,10 +51,8 @@ const ReportPage: React.FC = () => {
 
   const handleGenerateReport = () => {
     if (!projectId) return;
-
     const { startDate: defaultStart, endDate: defaultEnd } =
       getCurrentMonthRange();
-
     dispatch(
       fetchReportDetail({
         projectId: parseInt(projectId, 10),
@@ -93,20 +91,34 @@ const ReportPage: React.FC = () => {
     : "기간 정보가 없습니다.";
 
   return (
-    <div className="max-w-[65vw] mx-auto">
+    <motion.div
+      className="max-w-[65vw] mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="flex flex-col">
         <ProjectNavBar />
 
-        <div className="flex flex-row justify-between mb-4">
+        <motion.div
+          className="flex flex-row justify-between mb-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
           <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
             <div className="text-[24px] text-[var(--helpertext)]">
               {currentProject?.name ?? "프로젝트명 미확인"}
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* 날짜 선택 & 리포트 생성 버튼 */}
-        <div className="flex items-center gap-4 mb-6">
+        <motion.div
+          className="flex items-center gap-4 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           <input
             type="date"
             value={startDate}
@@ -128,10 +140,14 @@ const ReportPage: React.FC = () => {
           >
             리포트 생성
           </button>
-        </div>
+        </motion.div>
 
-        {/* 총 로그 개요 */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <motion.div
+          className="grid grid-cols-3 gap-4 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
           {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
             <div
               key={key}
@@ -147,9 +163,14 @@ const ReportPage: React.FC = () => {
               </p>
             </div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <motion.div
+          className="grid grid-cols-2 gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+        >
           <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
               로그 레벨 분포
@@ -166,9 +187,14 @@ const ReportPage: React.FC = () => {
               token={localStorage.getItem("token") ?? ""}
             />
           </div>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-2 gap-6 mt-6">
+        <motion.div
+          className="grid grid-cols-2 gap-6 mt-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
           <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
               자주 발생하는 에러 TOP 3
@@ -199,10 +225,14 @@ const ReportPage: React.FC = () => {
               )}
             />
           </div>
-        </div>
+        </motion.div>
 
-        {/* 생성일자 및 요약 */}
-        <div className="mt-8">
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+        >
           <div className="text-left px-4 text-[18px] font-[paperlogy6]">
             요약
           </div>
@@ -213,11 +243,11 @@ const ReportPage: React.FC = () => {
             생성일자:{" "}
             {reportData?.generatedAt
               ? new Date(reportData.generatedAt).toLocaleString()
-              : "-"}{" "}
+              : "-"}
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

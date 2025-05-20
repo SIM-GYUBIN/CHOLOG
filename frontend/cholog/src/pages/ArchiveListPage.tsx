@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchArchivedLogs } from "../store/slices/logSlice";
 import { RootState, AppDispatch } from "../store/store";
 import { fetchProjectDetail } from "../store/slices/projectSlice";
+import { motion } from "framer-motion";
 
 interface ArchiveLog {
   logId: string;
@@ -17,29 +18,6 @@ interface ArchiveLog {
   logEnvironment: string;
   logMessage: string;
   logTimestamp: string;
-}
-
-interface PaginationInfo {
-  pageNumber: number;
-  totalPages: number;
-  totalElements: number;
-  pageSize: number;
-  first: boolean;
-  last: boolean;
-}
-
-interface ApiResponse {
-  success: boolean;
-  data: {
-    content: ArchiveLog[];
-    pageNumber: number;
-    totalPages: number;
-    totalElements: number;
-    pageSize: number;
-    first: boolean;
-    last: boolean;
-  };
-  timestamp: string;
 }
 
 export default function ArchiveListPage() {
@@ -60,9 +38,7 @@ export default function ArchiveListPage() {
     }
   }, [projectId, dispatch]);
 
-  // 현재 프로젝트 찾기
   const currentProject = projects.find((p) => p.id === Number(projectId));
-
   const handlePageChange = (newPage: number) => {
     if (projectId) {
       dispatch(fetchArchivedLogs({ projectId, page: newPage, size: 10 }));
@@ -70,13 +46,9 @@ export default function ArchiveListPage() {
   };
 
   const toggleReason = (logId: string) => {
-    setExpandedReasons((prev) => ({
-      ...prev,
-      [logId]: !prev[logId],
-    }));
+    setExpandedReasons((prev) => ({ ...prev, [logId]: !prev[logId] }));
   };
 
-  // 페이지네이션 정보 추출
   const pagination = archivedLogs || {
     pageNumber: 1,
     totalPages: 1,
@@ -86,23 +58,36 @@ export default function ArchiveListPage() {
     last: true,
   };
 
-  // 아카이빙 로그 컨텐츠 추출
   const archiveLogs = archivedLogs?.content || [];
 
   return (
-    <div className="max-w-[65vw] mx-auto">
+    <motion.div
+      className="max-w-[65vw] mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <ProjectNavBar />
 
-      <div className="flex flex-row justify-between mb-4">
+      <motion.div
+        className="flex flex-row justify-between mb-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
         <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
           <div className="text-[24px] text-slate-400">
             {currentProject?.name || "프로젝트를 찾을 수 없습니다"}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {isLoading ? (
-        <div className="border rounded-xl border-[var(--line)] bg-white/5">
+        <motion.div
+          className="border rounded-xl border-[var(--line)] bg-white/5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
           {[...Array(3)].map((_, index) => (
             <div key={index} className="animate-pulse">
               <div
@@ -116,17 +101,38 @@ export default function ArchiveListPage() {
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-xl border border-[var(--line)]">
+        <motion.div
+          className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-xl border border-[var(--line)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
           <div className="text-xl text-red-500 mb-2">오류가 발생했습니다</div>
           <div className="text-gray-500">{error.message}</div>
-        </div>
+        </motion.div>
       ) : (
         <>
-          <div className="border rounded-xl border-[var(--line)] bg-white/5">
+          <motion.div
+            className="border rounded-xl border-[var(--line)] bg-white/5"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.08 },
+              },
+            }}
+          >
             {archiveLogs.map((log, index) => (
-              <div key={log.logId} className="w-full">
+              <motion.div
+                key={log.logId}
+                variants={{
+                  hidden: { opacity: 0, y: 10 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+              >
                 <div
                   className={`flex w-full ${index !== 0 ? "border-t border-[var(--line)]" : ""}`}
                 >
@@ -170,12 +176,17 @@ export default function ArchiveListPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {archiveLogs.length > 0 && (
-            <div className="flex justify-center text-center gap-2 mt-6 text-[12px]">
+            <motion.div
+              className="flex justify-center text-center gap-2 mt-6 text-[12px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
               <button
                 onClick={() => handlePageChange(pagination.pageNumber - 1)}
                 disabled={pagination.first}
@@ -187,7 +198,6 @@ export default function ArchiveListPage() {
               >
                 이전
               </button>
-
               <div className="flex gap-1">
                 {Array.from(
                   { length: pagination.totalPages },
@@ -206,7 +216,6 @@ export default function ArchiveListPage() {
                   </button>
                 ))}
               </div>
-
               <button
                 onClick={() => handlePageChange(pagination.pageNumber + 1)}
                 disabled={pagination.last}
@@ -218,21 +227,25 @@ export default function ArchiveListPage() {
               >
                 다음
               </button>
-            </div>
+            </motion.div>
           )}
 
           {archiveLogs.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-2xl border border-[var(--line)]">
-              <div className="text-lg sm:text-xl text-lime-500 mb-2">
+            <motion.div
+              className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-2xl border border-[var(--line)]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <div className="text-lg sm:text-xl text-[#5EA500] mb-2">
                 아카이브된 로그가 없습니다
               </div>
               <div className="text-sm sm:text-base text-[var(--helpertext)]">
                 아직 아카이브된 로그가 없습니다.
               </div>
-            </div>
+            </motion.div>
           )}
         </>
       )}
-    </div>
+    </motion.div>
   );
 }

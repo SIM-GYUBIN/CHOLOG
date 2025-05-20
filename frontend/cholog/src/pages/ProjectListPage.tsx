@@ -10,6 +10,7 @@ import logo from "@/assets/logo2.svg";
 import ProjectActions from "../components/ProjectList/ProjectActions";
 import ProjectTable from "../components/ProjectList/ProjectTable";
 import ProjectModal from "../components/ProjectList/ProjectModal";
+import { motion } from "framer-motion";
 
 const ProjectListPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -53,12 +54,11 @@ const ProjectListPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (isSubmitting) return; // 이미 제출 중이면 중복 제출 방지
-
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
-    if (modalType === "add") {
-      try {
+    try {
+      if (modalType === "add") {
         const result = await dispatch(
           createProject({ name: inputValue, token: "" })
         ).unwrap();
@@ -66,11 +66,7 @@ const ProjectListPage = () => {
           dispatch(fetchProjects());
           alert("프로젝트가 성공적으로 생성되었습니다.");
         }
-      } catch (error: any) {
-        alert(error.message || "프로젝트 생성 중 오류가 발생했습니다.");
-      }
-    } else if (modalType === "join") {
-      try {
+      } else if (modalType === "join") {
         const result = await dispatch(
           joinProject({ projectToken: inputValue })
         ).unwrap();
@@ -78,35 +74,57 @@ const ProjectListPage = () => {
           dispatch(fetchProjects());
           alert("프로젝트에 성공적으로 참가했습니다.");
         }
-      } catch (error: any) {
-        alert(error.message || "프로젝트 참가 중 오류가 발생했습니다.");
       }
+    } catch (error: any) {
+      alert(error.message || "작업 중 오류가 발생했습니다.");
     }
 
     closeModal();
     setIsSubmitting(false);
   };
 
-  // 로딩과 에러 체크 제거
   return (
-    <div className="max-w-[65vw] mx-auto">
-      <div className="text-center my-18">
+    <motion.div
+      className="max-w-[65vw] mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
+      <motion.div
+        className="text-center my-18"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
         <img src={logo} alt="Cholog logo" className="h-12 mx-auto" />
-      </div>
+      </motion.div>
 
-      <ProjectActions
-        onAdd={() => openModal("add")}
-        onJoin={() => openModal("join")}
-        onSearch={handleSearch}
-      />
-      <section className="mt-8">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <ProjectActions
+          onAdd={() => openModal("add")}
+          onJoin={() => openModal("join")}
+          onSearch={handleSearch}
+        />
+      </motion.div>
+
+      <motion.section
+        className="mt-8"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
         <ProjectTable
           projects={filteredProjects}
           onCopy={handleCopy}
           isLoading={isLoading}
           error={error}
         />
-      </section>
+      </motion.section>
+
       <ProjectModal
         showModal={showModal}
         modalType={modalType}
@@ -116,7 +134,7 @@ const ProjectListPage = () => {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
       />
-    </div>
+    </motion.div>
   );
 };
 
