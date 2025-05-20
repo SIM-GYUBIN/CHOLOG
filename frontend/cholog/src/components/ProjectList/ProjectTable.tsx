@@ -55,31 +55,22 @@ const ProjectTable = ({
   };
 
   const handleModifySubmit = async () => {
-    const projectId = selectedProject?.id;
-
-    if (!projectId) {
-      console.error(
-        "선택된 프로젝트가 없거나 프로젝트 ID가 유효하지 않습니다."
-      );
-      alert("프로젝트 정보를 찾을 수 없습니다.");
-      return;
-    }
+    if (!selectedProject?.id) return;
 
     try {
       const result = await dispatch(
         updateProject({
-          projectId,
-          name: newProjectName,
+          projectId: selectedProject.id,
+          name: newProjectName.trim(),
         })
       ).unwrap();
 
       if (result.success) {
-        alert("프로젝트 이름이 성공적으로 수정되었습니다.");
+        alert("프로젝트 이름이 수정되었습니다.");
         window.location.reload();
       }
     } catch (error: any) {
-      console.error("프로젝트 이름 수정 실패:", error);
-      alert(error.message || "프로젝트 이름 수정 중 오류가 발생했습니다.");
+      alert("프로젝트 이름 수정에 실패했습니다.");
     } finally {
       setShowModifyModal(false);
       setSelectedProject(null);
@@ -87,45 +78,78 @@ const ProjectTable = ({
     }
   };
 
+  const handleConfirm = async () => {
+    if (!selectedProject?.id) return;
+
+    try {
+      let result;
+      if (modalType === "delete") {
+        result = await dispatch(
+          deleteProject({ projectId: selectedProject.id })
+        ).unwrap();
+        if (result) alert("프로젝트가 삭제되었습니다.");
+      } else if (modalType === "leave") {
+        result = await dispatch(
+          leaveProject({ projectId: selectedProject.id })
+        ).unwrap();
+        if (result) alert("프로젝트에서 탈퇴했습니다.");
+      }
+
+      if (result) window.location.reload();
+    } catch (error: any) {
+      alert(
+        modalType === "delete"
+          ? "프로젝트 삭제에 실패했습니다."
+          : "프로젝트 탈퇴에 실패했습니다."
+      );
+    } finally {
+      setShowConfirmModal(false);
+      setSelectedProject(null);
+      setModalType(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full p-8 text-center">
+        <div className="animate-pulse text-gray-500">로딩중...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full p-8 text-center bg-white rounded-xl">
+        <div className="text-red-500 font-medium mb-2">
+          데이터를 불러올 수 없습니다
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-gray-500 hover:text-gray-700 underline"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
+  if (!projects?.length) {
+    return (
+      <div className="w-full p-8 text-center bg-white rounded-xl">
+        <div className="text-[#5EA500] font-medium mb-2">
+          프로젝트가 없습니다
+        </div>
+        <div className="text-gray-500">
+          새 프로젝트를 생성하거나 참여해보세요
+        </div>
+      </div>
+    );
+  }
+
   const handleActionClick = (project: Project, type: "delete" | "leave") => {
     setSelectedProject(project);
     setModalType(type);
     setShowConfirmModal(true);
-  };
-
-  const handleConfirm = async () => {
-    if (!selectedProject || !selectedProject.id) {
-      console.error(
-        "선택된 프로젝트가 없거나 프로젝트 ID가 유효하지 않습니다."
-      );
-      return;
-    }
-
-    try {
-      if (modalType === "delete") {
-        const result = await dispatch(
-          deleteProject({ projectId: selectedProject.id })
-        ).unwrap();
-        if (result) {
-          alert("프로젝트가 성공적으로 삭제되었습니다.");
-          window.location.reload();
-        }
-      } else if (modalType === "leave") {
-        const result = await dispatch(
-          leaveProject({ projectId: selectedProject.id })
-        ).unwrap();
-        if (result) {
-          alert("프로젝트에서 성공적으로 탈퇴했습니다.");
-          window.location.reload();
-        }
-      }
-      setShowConfirmModal(false);
-      setSelectedProject(null);
-      setModalType(null);
-    } catch (error: any) {
-      console.error("작업 실패:", error);
-      alert(error.message || "작업 중 오류가 발생했습니다.");
-    }
   };
 
   if (isLoading) {
@@ -197,88 +221,99 @@ const ProjectTable = ({
 
   return (
     <>
-      <table className="w-full">
-        <thead>
-          <tr className="border-b-2 border-[#5EA500]">
-            <th className="w-1/3 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
-              프로젝트명
-            </th>
-            <th className="w-1/3 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
-              프로젝트 ID
-            </th>
-            <th className="w-1/4 p-4 font-paperlogy6 text-[var(--text)] text-left text-xl">
-              생성일
-            </th>
-            <th className="w-12 p-4"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {projects.map((project) => (
-            <tr
-              key={project.id}
-              className="border-b border-[var(--line)] hover:bg-[#5EA50008] transition-colors"
-            >
-              <td className="w-1/3 p-4">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigate(`/project/${project.id}`)}
-                    className="text-left text-[16px] text-[var(--text)] font-paperlogy5 hover:text-[#5EA500] truncate cursor-pointer transition-colors"
-                  >
-                    {project.name}
-                  </button>
-                  {project.isCreator && (
+      <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[800px]">
+          {" "}
+          {/* 최소 너비 설정 */}
+          <thead>
+            <tr className="border-b-2 border-[#5EA500] animate-fadeIn">
+              <th className="w-1/3 p-2 sm:p-4 font-paperlogy6 text-[var(--text)] text-left text-base sm:text-xl">
+                프로젝트명
+              </th>
+              <th className="w-1/3 p-2 sm:p-4 font-paperlogy6 text-[var(--text)] text-left text-base sm:text-xl">
+                프로젝트 ID
+              </th>
+              <th className="w-1/4 p-2 sm:p-4 font-paperlogy6 text-[var(--text)] text-left text-base sm:text-xl">
+                생성일
+              </th>
+              <th className="w-12 p-2 sm:p-4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((project, index) => (
+              <tr
+                key={project.id}
+                className="border-b border-[var(--line)] hover:bg-[#5EA50008] transition-colors animate-fadeIn"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <td className="w-1/3 p-2 sm:p-4">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     <button
-                      className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors"
-                      onClick={() => handleModifyClick(project)}
+                      onClick={() => navigate(`/project/${project.id}`)}
+                      className="text-left text-sm sm:text-[16px] text-[var(--text)] font-paperlogy5 hover:text-[#5EA500] truncate cursor-pointer transition-colors max-w-[150px] sm:max-w-[200px]"
+                    >
+                      {project.name}
+                    </button>
+                    {project.isCreator && (
+                      <button
+                        className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors flex-shrink-0"
+                        onClick={() => handleModifyClick(project)}
+                      >
+                        <img
+                          src={modifyIcon}
+                          alt="Modify"
+                          className="h-3 sm:h-3.5 w-3 sm:w-3.5"
+                        />
+                      </button>
+                    )}
+                  </div>
+                </td>
+                <td className="w-1/4 p-2 sm:p-4 font-paperlogy4 text-[var(--helpertext)] text-left text-sm sm:text-[16px]">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <span className="truncate max-w-[100px] sm:max-w-[150px]">
+                      {project.projectToken}
+                    </span>
+                    <button
+                      onClick={() => handleCopy(project.projectToken)}
+                      className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors flex-shrink-0"
                     >
                       <img
-                        src={modifyIcon}
-                        alt="Modify"
-                        className="h-3.5 w-3.5"
+                        src={copyIcon}
+                        alt="Copy"
+                        className="h-3.5 sm:h-4 w-3.5 sm:w-4"
                       />
                     </button>
-                  )}
-                </div>
-              </td>
-              <td className="w-1/4 p-4 font-paperlogy4 text-[var(--helpertext)] text-left text-[16px]">
-                <div className="flex items-center gap-2">
-                  <span className="truncate">{project.projectToken}</span>
+                  </div>
+                </td>
+                <td className="w-1/4 p-2 sm:p-4 font-paperlogy4 text-[var(--text)] text-left text-sm sm:text-[16px]">
+                  {new Date(project.createdAt).toLocaleString("ko-KR", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                  })}
+                </td>
+                <td className="w-1/4">
                   <button
-                    onClick={() => handleCopy(project.projectToken)}
-                    className="p-1 hover:bg-[#5EA50015] rounded-md transition-colors flex-shrink-0"
+                    className="p-1 sm:p-1.5 hover:bg-[#5EA50015] rounded-md transition-colors focus:outline-none cursor-pointer"
+                    onClick={() =>
+                      handleActionClick(
+                        project,
+                        project.isCreator ? "delete" : "leave"
+                      )
+                    }
                   >
-                    <img src={copyIcon} alt="Copy" className="h-4 w-4" />
+                    <img
+                      src={project.isCreator ? deleteIcon : exitIcon}
+                      alt={project.isCreator ? "Delete" : "Exit"}
+                      className={`${project.isCreator ? "h-2.5 sm:h-3" : "h-4 sm:h-5"}`}
+                    />
                   </button>
-                </div>
-              </td>
-              <td className="w-1/4 p-4 font-paperlogy4 text-[var(--text)] text-left text-[16px]">
-                {new Date(project.createdAt).toLocaleString("ko-KR", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                })}
-              </td>
-              <td className="w-1/4">
-                <button
-                  className="p-1.5 hover:bg-[#5EA50015] rounded-md transition-colors focus:outline-none cursor-pointer"
-                  onClick={() =>
-                    handleActionClick(
-                      project,
-                      project.isCreator ? "delete" : "leave"
-                    )
-                  }
-                >
-                  <img
-                    src={project.isCreator ? deleteIcon : exitIcon}
-                    alt={project.isCreator ? "Delete" : "Exit"}
-                    className={`${project.isCreator ? "h-3" : "h-5"}`}
-                  />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {showModifyModal && selectedProject && (
         <ModifyProjectModal
