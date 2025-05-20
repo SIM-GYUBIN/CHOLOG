@@ -184,7 +184,9 @@ dependencies {
           로그를 쉽게 보여줍니다.
         </p>
         <button
-          onClick={() => (window.location.href = "https://www.cholog.com")}
+          onClick={() =>
+            (window.location.href = "https://www.cholog.com/login")
+          }
           className="px-10 py-4 bg-white text-[#5EA500] rounded-2xl text-lg font-semibold hover:bg-gray-100 transition"
         >
           지금 시작하기 →

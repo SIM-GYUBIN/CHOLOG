@@ -48,7 +48,7 @@ function AppContent() {
       {!hideNavbar && <NavigationBar />}
       <div className={!hideNavbar ? "pt-16" : ""}>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/projectlist" element={<ProjectListPage />} />
