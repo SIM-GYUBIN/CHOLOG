@@ -158,8 +158,8 @@ public class GroqApiClient {
         if (log.getHttp() != null) {
             simple.setHttpMethod(log.getHttp().getMethod());
             simple.setRequestUrl(log.getHttp().getRequestUri());
-            if (log.getHttp().getStatus() != null) {
-                simple.setStatusCode(log.getHttp().getStatus());
+            if (log.getHttp().getStatusCode() != null) {
+                simple.setStatusCode(log.getHttp().getStatusCode());
             }
             if (log.getHttp().getResponseTime() != null) {
                 simple.setHttpDurationMs(log.getHttp().getResponseTime());

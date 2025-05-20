@@ -100,43 +100,18 @@ public class LogDocument {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class HttpInfo {
-//        @Field(name = "request", type = FieldType.Object)
-//        private HttpRequestInfo request;
-//        @Field(name = "response", type = FieldType.Object)
-//        private HttpResponseInfo response;
-//        @Field(name = "durationMs", type = FieldType.Long)
-//        private Long durationMs;
-        @Field(name = "method", type = FieldType.Keyword)
+        @Field(name = "requestMethod", type = FieldType.Keyword)
         @Schema(example = "POST")
         private String method;
         @Field(name = "requestUri", type = FieldType.Text)
         @Schema(example = "https://example.com/api/v1/resource")
         private String requestUri;
-        @Field(name = "statusCode", type = FieldType.Integer)
+        @Field(name = "httpStatus", type = FieldType.Integer)
         @Schema(example = "200")
-        private Integer status;
+        private Integer statusCode;
         @Field(name = "responseTime", type = FieldType.Long)
         private Long responseTime;
     }
-
-//    @Data
-//    @JsonIgnoreProperties(ignoreUnknown = true)
-//    public static class HttpRequestInfo {
-//        @Field(name = "method", type = FieldType.Keyword)
-//        @Schema(example = "POST")
-//        private String method;
-//        @Field(name = "url", type = FieldType.Text)
-//        @Schema(example = "https://example.com/api/v1/resource")
-//        private String url;
-//    }
-//
-//    @Data
-//    @JsonIgnoreProperties(ignoreUnknown = true)
-//    public static class HttpResponseInfo {
-//        @Field(name = "statusCode", type = FieldType.Integer)
-//        @Schema(example = "200")
-//        private Integer statusCode;
-//    }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)

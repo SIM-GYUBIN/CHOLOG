@@ -192,15 +192,7 @@ public class LogService {
         );
         sortOptionsList.add(timestampSort);
         sortOptionsList.add(sequenceSort);
-//
-//        Query searchQuery = NativeQuery.builder()
-//                .withQuery(QueryBuilders.term(t -> t
-//                        .field("requestId.keyword")
-//                        .value(traceId)
-//                ))
-//                .withSort(sortOptionsList)
-//                .build();
-//
+
         // 1. requestId에 대한 term 쿼리
         co.elastic.clients.elasticsearch._types.query_dsl.Query termQuery = QueryBuilders.term(t -> t
                 .field("requestId.keyword")

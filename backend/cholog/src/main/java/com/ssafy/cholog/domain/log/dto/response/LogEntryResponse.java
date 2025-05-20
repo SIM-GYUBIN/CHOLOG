@@ -59,8 +59,8 @@ public class LogEntryResponse {
             }
 
             HttpItem.HttpResponseInfo.HttpResponseInfoBuilder responseBuilder = HttpItem.HttpResponseInfo.builder();
-            if (httpInfo.getStatus() != null) {
-                responseBuilder.statusCode(httpInfo.getStatus());
+            if (httpInfo.getStatusCode() != null) {
+                responseBuilder.statusCode(httpInfo.getStatusCode());
             }
 
             httpItem = HttpItem.builder()

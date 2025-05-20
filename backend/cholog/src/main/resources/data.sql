@@ -1,8 +1,8 @@
-INSERT INTO user (created_at, email, nickname, password)
-VALUES (NOW(), 'test1@email.com', 'testman1', 'testpassword');
+INSERT INTO user (created_at, email, nickname, password, user_type)
+VALUES (NOW(), 'test1@email.com', 'testman1', 'testpassword', 'GENERAL');
 
-INSERT INTO user (created_at, email, nickname, password)
-VALUES (NOW(), 'test2@email.com', 'testman2', 'testpassword');
+INSERT INTO user (created_at, email, nickname, password, user_type)
+VALUES (NOW(), 'test2@email.com', 'testman2', 'testpassword', 'GENERAL');
 
 INSERT INTO project (created_at, name, project_token)
 VALUES (NOW(), 'project1', '123123');
@@ -21,6 +21,3 @@ VALUES (true, 2, 2);
 
 INSERT INTO project_user (is_creator, project_id, user_id)
 VALUES (false, 2, 1);
-
-INSERT INTO webhook (id, is_enabled, project_id, created_at, last_checked_timestamp, mm_url, keywords)
-VALUES (1, true, 1, NOW(), NOW(), 'https://meeting.ssafy.com/hooks/3jcu5pfyfjnbjckay6knt9jrke', 'Timeout,Unauthorized,Not_found')

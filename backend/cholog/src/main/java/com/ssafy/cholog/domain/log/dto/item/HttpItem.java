@@ -15,6 +15,7 @@ public class HttpItem {
     @Schema(example = "200")
     private Long durationMs;
 
+    @Getter
     @Builder
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class HttpRequestInfo {
@@ -24,6 +25,7 @@ public class HttpItem {
         private String url;
     }
 
+    @Getter
     @Builder
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class HttpResponseInfo {
