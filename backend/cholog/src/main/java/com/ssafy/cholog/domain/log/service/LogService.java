@@ -455,9 +455,9 @@ public class LogService {
                 .withMaxResults(0) // 집계 결과만 필요
                 .build();
 
-        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+        SearchHits<LogListDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
-                LogDocument.class,
+                LogListDocument.class,
                 IndexCoordinates.of(indexName)
         );
 
