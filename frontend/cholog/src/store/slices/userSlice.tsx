@@ -188,6 +188,19 @@ const userSlice = createSlice({
       })
       .addCase(userLogin.fulfilled, (state, action) => {
         state.isLoading = false;
+        if (
+          !action.payload ||
+          !action.payload.data ||
+          typeof action.payload.data.nickname !== "string"
+        ) {
+          state.error = {
+            code: "INVALID_RESPONSE",
+            message: "서버 응답에 닉네임 정보가 없습니다.",
+          };
+          state.isLoggedIn = false;
+          state.nickname = null;
+          return;
+        }
         state.isLoggedIn = true;
         state.nickname = action.payload.data.nickname;
         state.error = null;
