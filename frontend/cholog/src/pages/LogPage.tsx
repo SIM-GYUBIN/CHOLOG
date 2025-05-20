@@ -620,8 +620,7 @@ const LogPage = () => {
                 <motion.div
                   variants={itemVariants}
                   whileHover={{
-                    scale: 1.03,
-                    backgroundColor: "rgba(163, 230, 53, 0.2)",
+                    backgroundColor: "rgba(163, 230, 53, 0.1)",
                   }}
                   onClick={() => handleclick(log.id)}
                   key={index}
