@@ -133,7 +133,8 @@ const ReportPage: React.FC = () => {
       count: 0,
       extra: [
         `요청 수: ${api.totalRequests}회`,
-        `평균 응답 시간: ${(api.averageResponseTimeMs / 1000).toFixed(1)}초`,
+        `평균 응답 시간: ${(api.averageResponseTimeMs / 1000).toFixed(3)}초`,
+        `최대 응답 시간: ${(api.maxResponseTimeMs / 1000).toFixed(3)}초`,
       ].join("\n"),
       rank: api.rank,
     })) || [];

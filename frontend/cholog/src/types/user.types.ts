@@ -95,6 +95,5 @@ export interface UserState {
   isLoading: boolean;
   error: ApiError | null;
   signupSuccess: boolean;
-  nickname: string | null;
   isLoggedIn: boolean;
 }

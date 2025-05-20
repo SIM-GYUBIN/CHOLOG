@@ -79,7 +79,7 @@ export default function EachLog({
     }[level] || "bg-white";
 
   // islevelBg가 true면 levelBg 적용, 아니면 배경색 없음
-  const containerClass = `border-b border-b-[1.5px] border-b-[var(--helpertext)] px-4 py-3 cursor-pointer hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1),0_-4px_12px_-2px_rgba(0,0,0,0.1)] transition-shadow ${islevelBg ? levelBg : ""}`;
+  const containerClass = `border-b border-b-[1.5px] border-b-[var(--helpertext)] px-4 py-3 cursor-pointer hover:bg-white/15 transition-shadow ${islevelBg ? levelBg : ""}`;
 
   return (
     <div className={containerClass} onClick={handleclick}>

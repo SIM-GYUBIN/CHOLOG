@@ -27,15 +27,15 @@ const RankingCardList: React.FC<RankingCardListProps> = ({ items }) => {
           return (
             <div
               key={index}
-              className="bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200"
+              className="bg-[var(--sub)] rounded-lg border border-[var(--line)] shadow-sm hover:shadow-md transition-shadow duration-200"
             >
-              <div className="p-5 text-left text-gray-800">
-                <div className="text-lg font-bold text-gray-500 mb-1">
+              <div className="p-5 text-left text-[var(--text)]">
+                <div className="text-lg font-bold text-[var(--helpertext)] mb-1">
                   #{rank}
                 </div>
                 <div className="text-sm font-semibold">{method}</div>
                 <div className="text-sm break-all mb-2">{url}</div>
-                <div className="text-sm text-gray-600 leading-snug space-y-1">
+                <div className="text-sm text-[var(--helpertext)] leading-snug space-y-1">
                   {item.extra.split("\n").map((line, i) => (
                     <div
                       key={i}
@@ -60,16 +60,23 @@ const RankingCardList: React.FC<RankingCardListProps> = ({ items }) => {
         return (
           <div
             key={index}
-            className="bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200"
+            className="bg-[var(--sub)] rounded-lg border border-[var(--line)] shadow-sm hover:shadow-md transition-shadow duration-200"
           >
-            <div className="p-5 flex items-center justify-between text-gray-800">
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-bold text-gray-400">#{rank}</span>
-                <h3 className="text-base font-bold">{item.name}</h3>
+            <div className="p-5 text-[var(--text)] relative min-h-[64px]">
+              {/* 순위 */}
+              <div className="text-lg font-bold text-gray-400 text-left">
+                #{rank}
               </div>
-              <span className="text-lg font-bold text-lime-500">
+
+              {/* 에러 메시지 */}
+              <div className="mt-1 pr-9 text-base font-bold text-left break-words whitespace-pre-wrap leading-snug">
+                {item.name}
+              </div>
+
+              {/* 오른쪽 고정 숫자 */}
+              <div className="absolute top-5 right-5 text-lg font-bold text-lime-500 whitespace-nowrap">
                 {item.count.toLocaleString()}
-              </span>
+              </div>
             </div>
           </div>
         );
