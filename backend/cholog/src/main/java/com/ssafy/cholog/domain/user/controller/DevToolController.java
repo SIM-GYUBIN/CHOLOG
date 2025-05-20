@@ -6,7 +6,6 @@ import com.ssafy.cholog.global.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/dev")
-@Profile({"dev","local"})
+//@Profile({"dev","local"})
 @RequiredArgsConstructor
 @Tag(name = "개발 도구", description = "개발 환경에서만 사용 가능한 API")
 public class DevToolController {
