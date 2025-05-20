@@ -14,9 +14,15 @@ import dayjs from "dayjs";
 
 interface ErrorChartProps {
   projectId?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
-const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
+const ErrorCountChart: React.FC<ErrorChartProps> = ({
+  projectId,
+  startDate,
+  endDate,
+}) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch<AppDispatch>();
   const { errorTimeline } = useSelector((state: RootState) => state.log);
@@ -30,12 +36,12 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
       dispatch(
         fetchErrorTimeline({
           projectId,
-          startDate: yesterday.toISOString().split("T")[0],
-          endDate: today.toISOString().split("T")[0],
+          startDate: startDate || yesterday.toISOString().split("T")[0],
+          endDate: endDate || today.toISOString().split("T")[0],
         })
       );
     }
-  }, [dispatch, projectId]);
+  }, [dispatch, projectId, startDate, endDate]);
 
   // ✅ 0인 데이터 생략
   const chartData = errorTimeline
@@ -87,7 +93,7 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({ projectId }) => {
 
   return (
     <div className="w-full p-6 bg-white/5 rounded-2xl h-full border border-[var(--line)]">
-      <h2 className="text-left text-xl font-semibold text-[var(--text)] mb-4">
+      <h2 className="text-center text-xl font-semibold text-[var(--text)] mb-4">
         로그 발생 추이
       </h2>
       <div
