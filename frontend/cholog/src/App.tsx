@@ -40,6 +40,7 @@ function AppContent() {
   const hideNavbar =
     location.pathname.toLowerCase() === "/projectlist" ||
     location.pathname.toLowerCase() === "/login" ||
+    // location.pathname.toLowerCase() === "/" ||
     location.pathname.toLowerCase() === "/landing";
 
   return (
