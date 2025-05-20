@@ -4,6 +4,26 @@
  */
 
 /**
+ * 에러 코드 타입
+ */
+export type ErrorCode =
+  | "INVALID_REQUEST"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "INTERNAL_ERROR"
+  | "INVALID_CREDENTIALS"
+  | "ACCOUNT_NOT_FOUND"
+  | "INVALID_RESPONSE";
+
+/**
+ * 에러 객체 타입
+ */
+export interface ApiError {
+  code: ErrorCode;
+  message: string;
+}
+
+/**
  * [#USER-1]
  * @description API 응답에 사용되는 에러 코드
  * @property {boolean} success - 요청 성공 여부
@@ -17,16 +37,7 @@ export interface ApiResponse {
   success: boolean;
   data: Record<string, unknown>;
   timestamp: string;
-  error?: {
-    code:
-      | "INVALID_REQUEST"
-      | "UNAUTHORIZED"
-      | "FORBIDDEN"
-      | "INTERNAL_ERROR"
-      | "INVALID_CREDENTIALS"
-      | "ACCOUNT_NOT_FOUND";
-    message: string;
-  };
+  error?: ApiError;
 }
 
 /**
@@ -60,10 +71,13 @@ export interface LoginRequest {
  * @property {Object} data - 응답 데이터
  * @property {string} data.nickname - 로그인한 사용자의 닉네임
  */
-export interface LoginResponse extends ApiResponse {
+export interface LoginResponse {
+  success: boolean;
   data: {
     nickname: string;
   };
+  timestamp: string;
+  error?: ApiError;
 }
 
 /**
@@ -79,7 +93,7 @@ export interface LogoutResponse extends ApiResponse {
 
 export interface UserState {
   isLoading: boolean;
-  error: ApiResponse["error"] | null;
+  error: ApiError | null;
   signupSuccess: boolean;
   nickname: string | null;
   isLoggedIn: boolean;
