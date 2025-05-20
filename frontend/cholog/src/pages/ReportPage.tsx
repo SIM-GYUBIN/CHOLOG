@@ -235,111 +235,120 @@ const ReportPage: React.FC = () => {
             리포트 생성
           </button>
         </motion.div>
-
-        <motion.div
-          className="grid grid-cols-3 gap-4 mb-6"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
-            <div
-              key={key}
-              className="bg-white/5 border border-[var(--line)] rounded-2xl p-4"
+        {!reportData ? (
+          <div className="text-center text-gray-500 mt-10">
+            아직 리포트가 생성되지 않았습니다.
+          </div>
+        ) : (
+          <>
+            <motion.div
+              className="grid grid-cols-3 gap-4 mb-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
             >
-              <p className="text-sm text-[var(--helpertext)] mb-1">
-                {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
-              </p>
-              <p className="text-xl font-semibold text-[var(--text)]">
-                {(reportData?.totalLogCounts as any)?.[
-                  key
-                ]?.toLocaleString?.() ?? "-"}
-              </p>
-            </div>
-          ))}
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-2 gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45 }}
-        >
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              로그 레벨 분포
-            </h2>
-            <DonutChart data={logData} size={200} thickness={12} />
-          </div>
-
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              로그 발생 추이
-            </h2>
-            <ErrorCountChart
-              projectId={parseInt(projectId!, 10)}
-              token={localStorage.getItem("token") ?? ""}
-            />
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-2 gap-6 mt-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              자주 발생하는 에러
-            </h2>
-            <RankingCardList items={topErrors} />
-          </div>
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              응답이 느린 API
-            </h2>
-            <RankingCardList
-              items={topApis}
-              renderItem={(item) => (
-                <div className="flex flex-col items-start gap-1">
-                  <div className="text-base font-bold text-[var(--text)]">
-                    #{item.rank}
+              {["overallTotal", "frontendTotal", "backendTotal"].map(
+                (key, idx) => (
+                  <div
+                    key={key}
+                    className="bg-white/5 border border-[var(--line)] rounded-2xl p-4"
+                  >
+                    <p className="text-sm text-[var(--helpertext)] mb-1">
+                      {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
+                    </p>
+                    <p className="text-xl font-semibold text-[var(--text)]">
+                      {(reportData?.totalLogCounts as any)?.[
+                        key
+                      ]?.toLocaleString?.() ?? "-"}
+                    </p>
                   </div>
-                  <div className="text-sm text-[var(--text)]">
-                    {item.name.split(" ")[0]}
-                  </div>
-                  <div className="text-sm text-[var(--text)] break-all">
-                    {item.name.split(" ")[1]}
-                  </div>
-                  <div className="mt-2 text-sm text-[var(--helpertext)] whitespace-pre-line">
-                    {item.extra}
-                  </div>
-                </div>
+                )
               )}
-            />
-          </div>
-        </motion.div>
+            </motion.div>
 
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-        >
-          <div className="text-left px-4 text-[var(--text)] text-[18px] font-[paperlogy6]">
-            요약
-          </div>
-          <div className="text-left bg-lime-50/20 p-4 rounded-lg text-[14px] font-[consolaNormal] text-[var(--text)] shadow-sm">
-            {summaryText}
-          </div>
-          <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
-            생성일자:{" "}
-            {reportData?.generatedAt
-              ? new Date(reportData.generatedAt).toLocaleString()
-              : "-"}
-          </div>
-        </motion.div>
+            <motion.div
+              className="grid grid-cols-2 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45 }}
+            >
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  로그 레벨 분포
+                </h2>
+                <DonutChart data={logData} size={200} thickness={12} />
+              </div>
+
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  로그 발생 추이
+                </h2>
+                <ErrorCountChart
+                  projectId={parseInt(projectId!, 10)}
+                  token={localStorage.getItem("token") ?? ""}
+                />
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="grid grid-cols-2 gap-6 mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  자주 발생하는 에러
+                </h2>
+                <RankingCardList items={topErrors} />
+              </div>
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  응답이 느린 API
+                </h2>
+                <RankingCardList
+                  items={topApis}
+                  renderItem={(item) => (
+                    <div className="flex flex-col items-start gap-1">
+                      <div className="text-base font-bold text-[var(--text)]">
+                        #{item.rank}
+                      </div>
+                      <div className="text-sm text-[var(--text)]">
+                        {item.name.split(" ")[0]}
+                      </div>
+                      <div className="text-sm text-[var(--text)] break-all">
+                        {item.name.split(" ")[1]}
+                      </div>
+                      <div className="mt-2 text-sm text-[var(--helpertext)] whitespace-pre-line">
+                        {item.extra}
+                      </div>
+                    </div>
+                  )}
+                />
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="mt-8"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
+            >
+              <div className="text-left px-4 text-[var(--text)] text-[18px] font-[paperlogy6]">
+                요약
+              </div>
+              <div className="text-left bg-lime-50/20 p-4 rounded-lg text-[14px] font-[consolaNormal] text-[var(--text)] shadow-sm">
+                {summaryText}
+              </div>
+              <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
+                생성일자:{" "}
+                {reportData?.generatedAt
+                  ? new Date(reportData.generatedAt).toLocaleString()
+                  : "-"}
+              </div>
+            </motion.div>
+          </>
+        )}
       </div>
     </motion.div>
   );
