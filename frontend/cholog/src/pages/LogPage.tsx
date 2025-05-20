@@ -56,9 +56,9 @@ const containerVariants = {
       duration: 0.3,
       ease: "easeOut",
       when: "beforeChildren",
-      staggerChildren: 0.05
-    }
-  }
+      staggerChildren: 0.05,
+    },
+  },
 };
 
 const sectionVariants = {
@@ -68,9 +68,9 @@ const sectionVariants = {
     y: 0,
     transition: {
       duration: 0.3,
-      ease: "easeOut"
-    }
-  }
+      ease: "easeOut",
+    },
+  },
 };
 
 const itemVariants = {
@@ -79,9 +79,9 @@ const itemVariants = {
     opacity: 1,
     transition: {
       duration: 0.2,
-      ease: "easeOut"
-    }
-  }
+      ease: "easeOut",
+    },
+  },
 };
 
 const LogPage = () => {
@@ -384,7 +384,7 @@ const LogPage = () => {
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="mt-2 overflow-x-auto whitespace-pre-wrap text-[12px] bg-slate-100 p-2 rounded"
+                        className="mt-2 overflow-x-auto whitespace-pre-wrap text-[12px] bg-[var(--bg)] text-[var(--text)] p-2 rounded"
                       >
                         {logDetail.error.stacktrace}
                       </motion.pre>
@@ -620,8 +620,7 @@ const LogPage = () => {
                 <motion.div
                   variants={itemVariants}
                   whileHover={{
-                    scale: 1.03,
-                    backgroundColor: "rgba(163, 230, 53, 0.2)",
+                    backgroundColor: "rgba(163, 230, 53, 0.1)",
                   }}
                   onClick={() => handleclick(log.id)}
                   key={index}
