@@ -438,7 +438,7 @@ public class LogService {
         DateHistogramAggregation dateHistogramAgg = DateHistogramAggregation.of(dh -> dh
                 .field(timestampFieldName)
                 .calendarInterval(CalendarInterval.Hour) // 1시간 간격
-                .minDocCount(0) // 로그가 없는 시간대도 0으로 표시
+                .minDocCount(1) // 로그가 없는 시간대도 0으로 표시
                 .extendedBounds(eb -> eb // 집계 범위를 명시적으로 설정하여 빈 구간도 포함
                         .min(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(startDateTimeBoundaryUtc.toInstant().toEpochMilli()))))
                         .max(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(
