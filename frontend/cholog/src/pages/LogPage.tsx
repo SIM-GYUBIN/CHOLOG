@@ -29,7 +29,7 @@ const getLevelIcon = (level: string) => {
   switch (level) {
     case "ERROR":
       return errorIcon;
-    case "WARNING":
+    case "WARN":
       return warnIcon;
     case "INFO":
       return infoIcon;
