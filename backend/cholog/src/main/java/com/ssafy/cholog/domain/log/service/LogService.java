@@ -317,7 +317,7 @@ public class LogService {
 
             if (!frontIndexOps.exists()) {
                 frontIndexOps.create(settings);
-                frontIndexOps.putMapping(LogDocument.class);
+//                frontIndexOps.putMapping(LogDocument.class);
             } else {
                 log.info("Elasticsearch frontend index {} already exists. Skipping creation.", frontIndexName);
             }
@@ -328,7 +328,7 @@ public class LogService {
 
             if (!backIndexOps.exists()) {
                 backIndexOps.create(settings);
-                backIndexOps.putMapping(LogDocument.class);
+//                backIndexOps.putMapping(LogDocument.class);
             } else {
                 log.info("Elasticsearch backend index {} already exists. Skipping creation.", backIndexName);
             }
