@@ -5,6 +5,7 @@ import ProjectNavBar from "../components/projectNavbar";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchArchivedLogs } from "../store/slices/logSlice";
 import { RootState, AppDispatch } from "../store/store";
+import { fetchProjectDetail } from "../store/slices/projectSlice";
 
 interface ArchiveLog {
   logId: string;
@@ -48,16 +49,19 @@ export default function ArchiveListPage() {
     (state: RootState) => state.log
   );
   const { projects } = useSelector((state: RootState) => state.project);
-  const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
+  const [expandedReasons, setExpandedReasons] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (projectId) {
       dispatch(fetchArchivedLogs({ projectId, page: 1, size: 10 }));
+      dispatch(fetchProjectDetail(Number(projectId)));
     }
   }, [projectId, dispatch]);
 
   // 현재 프로젝트 찾기
-  const currentProject = projects.find(p => p.id === Number(projectId));
+  const currentProject = projects.find((p) => p.id === Number(projectId));
 
   const handlePageChange = (newPage: number) => {
     if (projectId) {
@@ -86,7 +90,7 @@ export default function ArchiveListPage() {
   const archiveLogs = archivedLogs?.content || [];
 
   return (
-    <div className="max-w-[60vw] mx-auto">
+    <div className="max-w-[65vw] mx-auto">
       <ProjectNavBar />
 
       <div className="flex flex-row justify-between mb-4">
@@ -219,8 +223,12 @@ export default function ArchiveListPage() {
 
           {archiveLogs.length === 0 && (
             <div className="flex flex-col items-center justify-center h-48 bg-white/5 rounded-2xl border border-[var(--line)]">
-              <div className="text-lg sm:text-xl text-[#5EA500] mb-2">아카이브된 로그가 없습니다</div>
-              <div className="text-sm sm:text-base text-gray-500">아직 아카이브된 로그가 없습니다.</div>
+              <div className="text-lg sm:text-xl text-[#5EA500] mb-2">
+                아카이브된 로그가 없습니다
+              </div>
+              <div className="text-sm sm:text-base text-gray-500">
+                아직 아카이브된 로그가 없습니다.
+              </div>
             </div>
           )}
         </>

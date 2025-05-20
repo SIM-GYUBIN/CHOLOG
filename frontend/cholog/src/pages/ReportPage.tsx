@@ -7,6 +7,7 @@ import RankingCardList from "../components/common/RankingCardList";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchReportDetail } from "../store/slices/reportSlice";
+import { fetchProjectDetail } from "../store/slices/projectSlice";
 
 const levelColors: Record<string, string> = {
   ERROR: "#FB2C36",
@@ -41,6 +42,12 @@ const ReportPage: React.FC = () => {
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
+    if (projectId) {
+      dispatch(fetchProjectDetail(Number(projectId)));
+    }
+  }, [dispatch, projectId]);
 
   const handleGenerateReport = () => {
     if (!projectId) return;
@@ -86,7 +93,7 @@ const ReportPage: React.FC = () => {
     : "기간 정보가 없습니다.";
 
   return (
-    <div className="max-w-[60vw] mx-auto">
+    <div className="max-w-[65vw] mx-auto">
       <div className="flex flex-col">
         <ProjectNavBar />
 

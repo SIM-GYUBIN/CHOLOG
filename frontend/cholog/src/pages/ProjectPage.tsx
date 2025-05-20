@@ -81,7 +81,7 @@ const ProjectPage = () => {
   }
 
   return (
-    <div className="w-full min-w-[320px] max-w-[60vw] mx-auto px-4 lg:px-0">
+    <div className="w-full min-w-[320px] max-w-[65vw] mx-auto px-4 lg:px-0">
       <ProjectNavBar />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
         <div className="flex flex-row items-center gap-2 font-[paperlogy5] flex-wrap">
