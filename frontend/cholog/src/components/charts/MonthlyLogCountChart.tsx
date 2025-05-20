@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
+import api from "../../api/axios";
 import {
   AreaChart,
   Area,
@@ -33,9 +33,8 @@ const MonthlyLogCountChart: React.FC<MonthlyLogCountChartProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/log/${projectId}/timeline`, {
+        const response = await api.get(`/log/${projectId}/timeline`, {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           params: {

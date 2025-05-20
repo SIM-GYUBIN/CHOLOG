@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import DonutChart from "../components/charts/DonutChart";
 import ErrorCountChart from "../components/charts/MonthlyLogCountChart";
@@ -6,12 +6,8 @@ import ProjectNavBar from "../components/projectNavbar";
 import RankingCardList from "../components/common/RankingCardList";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
-import { fetchReportDetail } from "../store/slices/reportSlice";
-import { fetchProjectDetail } from "../store/slices/projectSlice";
+import { fetchReportDetail, downloadPdfReport, clearPdfError, DownloadPdfParams } from "../store/slices/reportSlice";
 import { motion } from "framer-motion";
-
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 const levelColors: Record<string, string> = {
   ERROR: "#FB2C36",
@@ -33,114 +29,91 @@ const getCurrentMonthRange = (): { startDate: string; endDate: string } => {
 };
 const todayString = new Date().toISOString().split("T")[0];
 
+
 const ReportPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const dispatch = useDispatch<AppDispatch>();
-  const { currentReport: reportData } = useSelector(
-    (state: RootState) => state.report
-  );
+
+  // Redux 스토어에서 상태 가져오기
+  const {
+    currentReport: reportData,
+    isLoading: isReportLoading, // 리포트 데이터 로딩 상태
+    error: reportError,         // 리포트 데이터 로딩 오류
+    isGeneratingPdf,            // PDF 생성 로딩 상태 (Redux 스토어에서 관리)
+    pdfError,                   // PDF 생성 오류 (Redux 스토어에서 관리)
+    reportGeneratedStartDate,   // 현재 리포트가 생성된 시작일
+    reportGeneratedEndDate,     // 현재 리포트가 생성된 종료일
+  } = useSelector((state: RootState) => state.report);
+
   const currentProject = useSelector((state: RootState) =>
     state.project.projects.find((p) => p.id === Number(projectId))
   );
 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // UI에서 날짜 선택을 위한 로컬 상태
+  const [localStartDate, setLocalStartDate] = useState("");
+  const [localEndDate, setLocalEndDate] = useState("");
 
-  const reportContentRef = useRef<HTMLDivElement>(null);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  // const reportContentRef = useRef<HTMLDivElement>(null); // 더 이상 직접 사용하지 않음
+  // const [isGeneratingPdf, setIsGeneratingPdf] = useState(false); // Redux 스토어로 대체
 
   useEffect(() => {
     if (projectId) {
-      dispatch(fetchProjectDetail(Number(projectId)));
+      // 컴포넌트 마운트 시 또는 projectId 변경 시 프로젝트 상세 정보 가져오기
+      // dispatch(fetchProjectDetail(Number(projectId))); // 이 부분은 필요에 따라 유지 또는 삭제
+      // 만약 초기 리포트 로딩 로직이 필요하다면 여기에 추가
+      // 예: dispatch(fetchReportDetail({ projectId: Number(projectId), ...getCurrentMonthRange() }));
     }
   }, [dispatch, projectId]);
 
+
+  // PDF 생성 오류 처리
+  useEffect(() => {
+    if (pdfError) {
+      alert(`PDF 생성 중 오류가 발생했습니다: ${pdfError}`);
+      dispatch(clearPdfError()); // 오류 메시지 표시 후 Redux 상태 초기화
+    }
+  }, [pdfError, dispatch]);
+
+  // 리포트 데이터 생성 (JSON 조회) 함수
   const handleGenerateReport = () => {
-    if (!projectId) return;
+    if (!projectId || isReportLoading) return;
     const { startDate: defaultStart, endDate: defaultEnd } =
       getCurrentMonthRange();
     dispatch(
       fetchReportDetail({
         projectId: parseInt(projectId, 10),
-        startDate: startDate || defaultStart,
-        endDate: endDate || defaultEnd,
+        startDate: localStartDate || defaultStart,
+        endDate: localEndDate || defaultEnd,
       })
     );
   };
 
-  // PDF 다운로드 함수 추가
-  const handleDownloadPdf = async () => {
-    if (!reportContentRef.current || isGeneratingPdf || !reportData) {
+  // PDF 다운로드 함수 (Redux Thunk 디스패치)
+  const handleDownloadPdf = () => {
+    if (isGeneratingPdf || !reportData || !projectId || isReportLoading) {
       if (!reportData) {
-        alert("먼저 리포트를 생성해주세요.");
+        alert("PDF로 만들 리포트 내용이 없습니다. 먼저 리포트를 생성해주세요.");
       }
       return;
     }
 
-    setIsGeneratingPdf(true);
-    const reportElement = reportContentRef.current;
+    const htmlContent = document.documentElement.outerHTML;
 
-    try {
-      // 차트 등의 요소가 완전히 렌더링될 시간을 잠시 줍니다. (선택 사항)
-      // 좀 더 확실한 방법은 각 차트 컴포넌트의 렌더링 완료 시점을 아는 것이지만,
-      // 간단하게 setTimeout을 사용하거나, 사용자가 버튼을 누르는 시점에는
-      // 대부분 렌더링이 완료되어 있을 것으로 가정합니다.
-      await new Promise(resolve => setTimeout(resolve, 500));
+    // Thunk에 전달할 파라미터 구성
+    // PDF 생성 시점의 날짜는 현재 조회된 리포트의 날짜를 사용하는 것이 일관성 있음
+    const startDateForPdf = reportGeneratedStartDate || localStartDate || getCurrentMonthRange().startDate;
+    const endDateForPdf = reportGeneratedEndDate || localEndDate || getCurrentMonthRange().endDate;
 
-
-      const canvas = await html2canvas(reportElement, {
-        // scale: 2, // 높은 해상도를 위해 scale 조정
-        useCORS: true, // 외부 이미지가 있다면 필요 (현재 코드에는 명시적 외부 이미지는 없음)
-        // Tailwind CSS의 var(--bg) 같은 CSS 변수 배경색을 html2canvas가 잘 인식하는지,
-        // 또는 브라우저의 계산된 스타일을 잘 가져오는지에 따라 배경색이 결정됩니다.
-        // 필요시 backgroundColor: '#FFFFFF' 등을 명시할 수 있습니다.
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'p', // 세로 (portrait)
-        unit: 'mm',       // 단위
-        format: 'a4',     // 용지 크기
-      });
-
-      const pdfPageWidth = pdf.internal.pageSize.getWidth();
-      const pdfPageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = imgWidth / imgHeight;
-      const scaledImgHeight = pdfPageWidth / ratio; // PDF 너비에 맞춘 이미지 높이
-
-      let position = 0; // 이미지의 현재 y 위치 (잘라낼 부분의 시작점)
-
-      // 이미지가 페이지 높이보다 클 경우 여러 페이지에 걸쳐 추가
-      if (scaledImgHeight > pdfPageHeight) {
-        while (position < scaledImgHeight) {
-          pdf.addImage(imgData, 'PNG', 0, -position, pdfPageWidth, scaledImgHeight);
-          position += pdfPageHeight;
-
-          if (position < scaledImgHeight) { // 아직 남은 이미지가 있다면 새 페이지 추가
-            pdf.addPage();
-          }
-        }
-      } else { // 이미지가 한 페이지에 들어갈 경우
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfPageWidth, scaledImgHeight);
-      }
-
-      // 동적 파일명 (프로젝트명과 리포트 기간 사용)
-      const projectName = currentProject?.name?.replace(/\s+/g, '_') || 'Report';
-      const periodString = reportData?.periodDescription
-        ? reportData.periodDescription.replace(/\s*~\s*/, '_to_').replace(/\s+/g, '_').replace(/[^\w-]/g, '')
-        : `${startDate}_to_${endDate}`.replace(/[^\w-]/g, '');
-      pdf.save(`${projectName}_Report_${periodString}.pdf`);
-
-    } catch (error) {
-      console.error('PDF 생성 중 오류 발생:', error);
-      alert('PDF를 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.');
-    } finally {
-      setIsGeneratingPdf(false);
-    }
+    const params: DownloadPdfParams = {
+      projectId: parseInt(projectId, 10),
+      htmlContent,
+      startDate: startDateForPdf,
+      endDate: endDateForPdf,
+    };
+    dispatch(downloadPdfReport(params));
   };
 
+  // 데이터 가공 로직 (logData, topErrors, topApis, summaryText)은 이전과 동일
   const logData =
     reportData?.logLevelDistribution.distribution.map((item) => ({
       name: item.level,
@@ -167,7 +140,8 @@ const ReportPage: React.FC = () => {
 
   const summaryText = reportData?.periodDescription
     ? `이 리포트는 ${reportData.periodDescription} 기간 동안 수집된 로그 분석 결과입니다.`
-    : "기간 정보가 없습니다.";
+    : "기간 정보가 없습니다. 리포트를 생성해주세요.";
+
 
   return (
     <motion.div
@@ -176,155 +150,150 @@ const ReportPage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
+      {/* ProjectNavBar는 PDF에 포함되지 않는다고 가정 */}
+      <ProjectNavBar />
+
+      {/* 제목 부분 */}
+      <motion.div
+        className="flex flex-row justify-between my-4 items-center" // my-4와 items-center 추가
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
+          <div className="text-[24px] text-[var(--helpertext)]">
+            {currentProject?.name ?? "프로젝트명 미확인"} 리포트
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 날짜 선택 & 버튼 영역 */}
+      <motion.div
+        className="flex items-center gap-4 mb-6"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <input
+          type="date"
+          value={localStartDate} // 로컬 상태 바인딩
+          onChange={(e) => setLocalStartDate(e.target.value)}
+          max={todayString}
+          className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+        />
+        <span className="text-[var(--text)]">~</span>
+        <input
+          type="date"
+          value={localEndDate} // 로컬 상태 바인딩
+          onChange={(e) => setLocalEndDate(e.target.value)}
+          max={todayString}
+          className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+        />
+        <button
+          onClick={handleGenerateReport}
+          disabled={isReportLoading} // 리포트 데이터 로딩 중 비활성화
+          className="px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors text-sm"
+        >
+          {isReportLoading ? '리포트 생성 중...' : '리포트 생성'}
+        </button>
+        <button
+          onClick={handleDownloadPdf} // 수정된 PDF 다운로드 함수 호출
+          disabled={isGeneratingPdf || !reportData || isReportLoading} // PDF 생성 중, 데이터 없거나, 리포트 로딩 중일 때 비활성화
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm disabled:bg-gray-400"
+        >
+          {isGeneratingPdf ? 'PDF 생성 중...' : 'PDF 다운로드'}
+        </button>
+      </motion.div>
+
+      {/* reportError 메시지 표시 (선택적 UI) */}
+      {reportError && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded-md">
+          리포트 조회 중 오류: {reportError}
+        </div>
+      )}
+
+      {/* 리포트 내용 (실제 PDF로 변환될 주요 영역) */}
+      {/* document.documentElement.outerHTML을 사용하므로 특정 ref는 필요 없음 */}
       <div className="flex flex-col">
-        <ProjectNavBar />
-
-        <motion.div
-          className="flex flex-row justify-between mb-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
-            <div className="text-[24px] text-[var(--helpertext)]">
-              {currentProject?.name ?? "프로젝트명 미확인"} 리포트
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="flex items-center gap-4 mb-6"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            max={todayString}
-            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
-          />
-          <span className="text-[var(--text)]">~</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            max={todayString}
-            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
-          />
-          <button
-            onClick={handleGenerateReport}
-            className="px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors"
+        {/* 리포트 데이터가 없을 때 안내 메시지 */}
+        {!isReportLoading && !reportData && !reportError && (
+          <motion.div
+            className="text-center py-10 text-[var(--text)]"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
           >
-            리포트 생성
-          </button>
-        </motion.div>
+            날짜를 선택하고 "리포트 생성" 버튼을 눌러 리포트를 조회해주세요.
+          </motion.div>
+        )}
 
-        <motion.div
-          className="grid grid-cols-3 gap-4 mb-6"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
-            <div
-              key={key}
-              className="bg-white/5 border border-[var(--line)] rounded-2xl p-4"
+        {/* 리포트 데이터가 있을 때만 내용 표시 */}
+        {reportData && (
+          <>
+            <motion.div /* 총 로그 개요 */
+              className="grid grid-cols-3 gap-4 mb-6"
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
             >
-              <p className="text-sm text-[var(--helpertext)] mb-1">
-                {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
-              </p>
-              <p className="text-xl font-semibold text-[var(--text)]">
-                {(reportData?.totalLogCounts as any)?.[
-                  key
-                ]?.toLocaleString?.() ?? "-"}
-              </p>
-            </div>
-          ))}
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-2 gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45 }}
-        >
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              로그 레벨 분포
-            </h2>
-            <DonutChart data={logData} size={200} thickness={12} />
-          </div>
-
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              로그 발생 추이
-            </h2>
-            <ErrorCountChart
-              projectId={parseInt(projectId!, 10)}
-              token={localStorage.getItem("token") ?? ""}
-            />
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-2 gap-6 mt-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              자주 발생하는 에러 TOP 3
-            </h2>
-            <RankingCardList items={topErrors} />
-          </div>
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              응답이 느린 API TOP 3
-            </h2>
-            <RankingCardList
-              items={topApis}
-              renderItem={(item) => (
-                <div className="flex flex-col items-start gap-1">
-                  <div className="text-base font-bold text-gray-800">
-                    #{item.rank}
-                  </div>
-                  <div className="text-sm text-gray-800">
-                    {item.name.split(" ")[0]}
-                  </div>
-                  <div className="text-sm text-gray-800 break-all">
-                    {item.name.split(" ")[1]}
-                  </div>
-                  <div className="mt-2 text-sm text-gray-500 whitespace-pre-line">
-                    {item.extra}
-                  </div>
+              {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
+                <div key={key} className="bg-white/5 border border-[var(--line)] rounded-2xl p-4">
+                  <p className="text-sm text-[var(--helpertext)] mb-1">
+                    {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
+                  </p>
+                  <p className="text-xl font-semibold text-[var(--text)]">
+                    {(reportData?.totalLogCounts as any)?.[key]?.toLocaleString?.() ?? "-"}
+                  </p>
                 </div>
-              )}
-            />
-          </div>
-        </motion.div>
+              ))}
+            </motion.div>
 
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-        >
-          <div className="text-left px-4 text-[18px] font-[paperlogy6]">
-            요약
-          </div>
-          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
-            {summaryText}
-          </div>
-          <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
-            생성일자:{" "}
-            {reportData?.generatedAt
-              ? new Date(reportData.generatedAt).toLocaleString()
-              : "-"}
-          </div>
-        </motion.div>
+            <motion.div /* 로그 레벨 분포 & 로그 발생 추이 */
+              className="grid grid-cols-2 gap-6"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
+            >
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">로그 레벨 분포</h2>
+                {logData.length > 0 ? <DonutChart data={logData} size={200} thickness={12} /> : <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>}
+              </div>
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">로그 발생 추이</h2>
+                {projectId && <ErrorCountChart projectId={parseInt(projectId, 10)} token={localStorage.getItem("token") ?? ""} />}
+              </div>
+            </motion.div>
+
+            <motion.div /* 에러 TOP3 & 느린 API TOP3 */
+              className="grid grid-cols-2 gap-6 mt-6"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+            >
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">자주 발생하는 에러 TOP 3</h2>
+                {topErrors.length > 0 ? <RankingCardList items={topErrors} /> : <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>}
+              </div>
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">응답이 느린 API TOP 3</h2>
+                {topApis.length > 0 ? <RankingCardList items={topApis} renderItem={(item) => (
+                  <div className="flex flex-col items-start gap-1 text-[var(--text)]">
+                    <div className="text-base font-bold">#{item.rank}</div>
+                    <div className="text-sm">{item.name.split(" ")[0]}</div>
+                    <div className="text-sm break-all">{item.name.split(" ")[1]}</div>
+                    <div className="mt-2 text-xs text-[var(--helpertext)] whitespace-pre-line">{item.extra}</div>
+                  </div>
+                )} /> : <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>}
+              </div>
+            </motion.div>
+
+            <motion.div /* 요약 및 생성일자 */
+              className="mt-8"
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
+            >
+              <div className="text-left px-4 text-[18px] font-[paperlogy6] text-[var(--text)]">요약</div>
+              <div className="text-left bg-lime-50 dark:bg-lime-900/30 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm text-lime-700 dark:text-lime-300">
+                {summaryText}
+              </div>
+              <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
+                생성일자:{" "}
+                {reportData?.generatedAt ? new Date(reportData.generatedAt).toLocaleString('ko-KR') : "-"}
+              </div>
+            </motion.div>
+          </>
+        )}
       </div>
     </motion.div>
   );
