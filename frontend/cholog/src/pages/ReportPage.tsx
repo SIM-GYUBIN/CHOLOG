@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import DonutChart from "../components/charts/DonutChart";
 import ErrorCountChart from "../components/charts/MonthlyLogCountChart";
@@ -8,6 +8,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import { fetchReportDetail } from "../store/slices/reportSlice";
 import { fetchProjectDetail } from "../store/slices/projectSlice";
+
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const levelColors: Record<string, string> = {
   ERROR: "#FB2C36",
@@ -43,6 +46,9 @@ const ReportPage: React.FC = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  const reportContentRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
   useEffect(() => {
     if (projectId) {
       dispatch(fetchProjectDetail(Number(projectId)));
@@ -62,6 +68,79 @@ const ReportPage: React.FC = () => {
         endDate: endDate || defaultEnd,
       })
     );
+  };
+
+  // PDF 다운로드 함수 추가
+  const handleDownloadPdf = async () => {
+    if (!reportContentRef.current || isGeneratingPdf || !reportData) {
+      if (!reportData) {
+        alert("먼저 리포트를 생성해주세요.");
+      }
+      return;
+    }
+
+    setIsGeneratingPdf(true);
+    const reportElement = reportContentRef.current;
+
+    try {
+      // 차트 등의 요소가 완전히 렌더링될 시간을 잠시 줍니다. (선택 사항)
+      // 좀 더 확실한 방법은 각 차트 컴포넌트의 렌더링 완료 시점을 아는 것이지만,
+      // 간단하게 setTimeout을 사용하거나, 사용자가 버튼을 누르는 시점에는
+      // 대부분 렌더링이 완료되어 있을 것으로 가정합니다.
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+
+      const canvas = await html2canvas(reportElement, {
+        // scale: 2, // 높은 해상도를 위해 scale 조정
+        useCORS: true, // 외부 이미지가 있다면 필요 (현재 코드에는 명시적 외부 이미지는 없음)
+        // Tailwind CSS의 var(--bg) 같은 CSS 변수 배경색을 html2canvas가 잘 인식하는지,
+        // 또는 브라우저의 계산된 스타일을 잘 가져오는지에 따라 배경색이 결정됩니다.
+        // 필요시 backgroundColor: '#FFFFFF' 등을 명시할 수 있습니다.
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'p', // 세로 (portrait)
+        unit: 'mm',       // 단위
+        format: 'a4',     // 용지 크기
+      });
+
+      const pdfPageWidth = pdf.internal.pageSize.getWidth();
+      const pdfPageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = imgWidth / imgHeight;
+      const scaledImgHeight = pdfPageWidth / ratio; // PDF 너비에 맞춘 이미지 높이
+
+      let position = 0; // 이미지의 현재 y 위치 (잘라낼 부분의 시작점)
+
+      // 이미지가 페이지 높이보다 클 경우 여러 페이지에 걸쳐 추가
+      if (scaledImgHeight > pdfPageHeight) {
+        while (position < scaledImgHeight) {
+          pdf.addImage(imgData, 'PNG', 0, -position, pdfPageWidth, scaledImgHeight);
+          position += pdfPageHeight;
+
+          if (position < scaledImgHeight) { // 아직 남은 이미지가 있다면 새 페이지 추가
+            pdf.addPage();
+          }
+        }
+      } else { // 이미지가 한 페이지에 들어갈 경우
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfPageWidth, scaledImgHeight);
+      }
+
+      // 동적 파일명 (프로젝트명과 리포트 기간 사용)
+      const projectName = currentProject?.name?.replace(/\s+/g, '_') || 'Report';
+      const periodString = reportData?.periodDescription
+        ? reportData.periodDescription.replace(/\s*~\s*/, '_to_').replace(/\s+/g, '_').replace(/[^\w-]/g, '')
+        : `${startDate}_to_${endDate}`.replace(/[^\w-]/g, '');
+      pdf.save(`${projectName}_Report_${periodString}.pdf`);
+
+    } catch (error) {
+      console.error('PDF 생성 중 오류 발생:', error);
+      alert('PDF를 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   const logData =
@@ -94,128 +173,163 @@ const ReportPage: React.FC = () => {
 
   return (
     <div className="max-w-[65vw] mx-auto">
-      <div className="flex flex-col">
-        <ProjectNavBar />
+      <ProjectNavBar /> {/* NavBar는 PDF에 포함하지 않음 */}
 
+      {/* PDF 다운로드 버튼을 날짜 선택 옆에 추가 */}
+      <div className="flex items-center gap-4 my-6 px-1">
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          max={todayString}
+          className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+        />
+        <span className="text-[var(--text)]">~</span>
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          max={todayString}
+          className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
+        />
+        <button
+          onClick={handleGenerateReport}
+          className="px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors text-sm"
+        >
+          리포트 생성
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={isGeneratingPdf || !reportData}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm disabled:bg-gray-400"
+        >
+          {isGeneratingPdf ? 'PDF 생성 중...' : 'PDF 다운로드'}
+        </button>
+      </div>
+
+      {/* 이 div가 PDF로 변환될 실제 컨텐츠 영역입니다. */}
+      <div ref={reportContentRef} className="flex flex-col p-1 bg-[var(--bg)]"> {/* 배경색을 명시적으로 주고 싶다면 여기에 */}
         <div className="flex flex-row justify-between mb-4">
           <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
             <div className="text-[24px] text-[var(--helpertext)]">
-              {currentProject?.name ?? "프로젝트명 미확인"}
+              {currentProject?.name ?? "프로젝트명 미확인"} 리포트
             </div>
           </div>
         </div>
 
-        {/* 날짜 선택 & 리포트 생성 버튼 */}
-        <div className="flex items-center gap-4 mb-6">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            max={todayString}
-            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
-          />
-          <span className="text-[var(--text)]">~</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            max={todayString}
-            className="px-3 py-2 border border-[var(--line)] rounded-md bg-[var(--bg)] text-sm text-[var(--text)]"
-          />
-          <button
-            onClick={handleGenerateReport}
-            className="px-4 py-2 bg-lime-500 text-white rounded-lg hover:bg-lime-600 transition-colors"
-          >
-            리포트 생성
-          </button>
-        </div>
-
-        {/* 총 로그 개요 */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
-            <div
-              key={key}
-              className="bg-white/5 border border-[var(--line)] rounded-2xl p-4"
-            >
-              <p className="text-sm text-[var(--helpertext)] mb-1">
-                {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
-              </p>
-              <p className="text-xl font-semibold text-[var(--text)]">
-                {(reportData?.totalLogCounts as any)?.[
-                  key
-                ]?.toLocaleString?.() ?? "-"}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              로그 레벨 분포
-            </h2>
-            <DonutChart data={logData} size={200} thickness={12} />
+        {/* 리포트 데이터가 없을 때 안내 메시지 */}
+        {!reportData && (
+          <div className="text-center py-10 text-[var(--text)]">
+            날짜를 선택하고 "리포트 생성" 버튼을 눌러주세요.
           </div>
+        )}
 
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              로그 발생 추이
-            </h2>
-            <ErrorCountChart
-              projectId={parseInt(projectId!, 10)}
-              token={localStorage.getItem("token") ?? ""}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6 mt-6">
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              자주 발생하는 에러 TOP 3
-            </h2>
-            <RankingCardList items={topErrors} />
-          </div>
-          <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-              응답이 느린 API TOP 3
-            </h2>
-            <RankingCardList
-              items={topApis}
-              renderItem={(item) => (
-                <div className="flex flex-col items-start gap-1">
-                  <div className="text-base font-bold text-gray-800">
-                    #{item.rank}
-                  </div>
-                  <div className="text-sm text-gray-800">
-                    {item.name.split(" ")[0]}
-                  </div>
-                  <div className="text-sm text-gray-800 break-all">
-                    {item.name.split(" ")[1]}
-                  </div>
-                  <div className="mt-2 text-sm text-gray-500 whitespace-pre-line">
-                    {item.extra}
-                  </div>
+        {/* 리포트 데이터가 있을 때만 내용 표시 */}
+        {reportData && (
+          <>
+            {/* 총 로그 개요 */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {["overallTotal", "frontendTotal", "backendTotal"].map((key, idx) => (
+                <div
+                  key={key}
+                  className="bg-white/5 border border-[var(--line)] rounded-2xl p-4"
+                >
+                  <p className="text-sm text-[var(--helpertext)] mb-1">
+                    {["전체 로그 수", "프론트엔드 로그", "백엔드 로그"][idx]}
+                  </p>
+                  <p className="text-xl font-semibold text-[var(--text)]">
+                    {(reportData?.totalLogCounts as any)?.[
+                      key
+                    ]?.toLocaleString?.() ?? "-"}
+                  </p>
                 </div>
-              )}
-            />
-          </div>
-        </div>
+              ))}
+            </div>
 
-        {/* 생성일자 및 요약 */}
-        <div className="mt-8">
-          <div className="text-left px-4 text-[18px] font-[paperlogy6]">
-            요약
-          </div>
-          <div className="text-left bg-[#F7FEE7] p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm">
-            {summaryText}
-          </div>
-          <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
-            생성일자:{" "}
-            {reportData?.generatedAt
-              ? new Date(reportData.generatedAt).toLocaleString()
-              : "-"}{" "}
-          </div>
-        </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  로그 레벨 분포
+                </h2>
+                {logData.length > 0 ? (
+                  <DonutChart data={logData} size={200} thickness={12} />
+                ) : (
+                  <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>
+                )}
+              </div>
+
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  로그 발생 추이
+                </h2>
+                {/* ErrorCountChart는 projectId가 확실히 있을 때만 렌더링 */}
+                {projectId && (
+                    <ErrorCountChart
+                    projectId={parseInt(projectId, 10)}
+                    token={localStorage.getItem("token") ?? ""}
+                    />
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 mt-6">
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  자주 발생하는 에러 TOP 3
+                </h2>
+                {topErrors.length > 0 ? (
+                  <RankingCardList items={topErrors} />
+                ) : (
+                  <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>
+                )}
+              </div>
+              <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
+                <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
+                  응답이 느린 API TOP 3
+                </h2>
+                {topApis.length > 0 ? (
+                  <RankingCardList
+                    items={topApis}
+                    renderItem={(item) => (
+                      <div className="flex flex-col items-start gap-1 text-[var(--text)]"> {/* 텍스트 색상 적용 */}
+                        <div className="text-base font-bold">
+                          #{item.rank}
+                        </div>
+                        <div className="text-sm">
+                          {item.name.split(" ")[0]}
+                        </div>
+                        <div className="text-sm break-all">
+                          {item.name.split(" ")[1]}
+                        </div>
+                        <div className="mt-2 text-xs text-[var(--helpertext)] whitespace-pre-line"> {/* 텍스트 색상 적용 */}
+                          {item.extra}
+                        </div>
+                      </div>
+                    )}
+                  />
+                ) : (
+                  <p className="text-sm text-[var(--helpertext)]">데이터가 없습니다.</p>
+                )}
+              </div>
+            </div>
+
+            {/* 생성일자 및 요약 */}
+            <div className="mt-8">
+              <div className="text-left px-4 text-[18px] font-[paperlogy6] text-[var(--text)]">
+                요약
+              </div>
+              <div className="text-left bg-lime-50 dark:bg-lime-900/30 p-4 rounded-lg text-[14px] font-[consolaNormal] shadow-sm text-lime-700 dark:text-lime-300"> {/* 테마에 맞는 배경/글자색 변경 */}
+                {summaryText}
+              </div>
+              <div className="text-right text-xs text-[var(--helpertext)] mt-2 px-4">
+                생성일자:{" "}
+                {reportData?.generatedAt
+                  ? new Date(reportData.generatedAt).toLocaleString('ko-KR') // 한국 시간 형식
+                  : "-"}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
