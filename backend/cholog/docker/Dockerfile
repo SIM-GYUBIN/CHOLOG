@@ -5,10 +5,8 @@ FROM openjdk:17-jdk-bullseye
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 시스템 패키지 목록 업데이트 및 Playwright 실행에 필요한 의존성 라이브러리 설치
-# apt-get update의 -qq 옵션 제거하여 상세 로그 확인
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    # Playwright 의존성 목록 (이전 목록 그대로 사용 가능성이 높음)
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -33,19 +31,16 @@ RUN apt-get update && \
     libxtst6 \
     libxshmfence1 \
     libglib2.0-0 \
-    libgobject-2.0-0 \ # 이제 찾아야 합니다!
+    libgobject-2.0-0 \
     libdbus-1-3 \
-    libgio-2.0-0 \   # 이제 찾아야 합니다!
+    libgio-2.0-0 \
     libatspi2.0-0 \
     libexpat1 \
     libxkbcommon0 \
     libcairo2 \
-    # 한국어 폰트
     fonts-nanum \
-    # HTTPS 통신 및 기타 유틸리티에 필요할 수 있는 패키지
     ca-certificates \
     apt-utils \
-    # 설치 후 불필요한 apt 캐시 삭제
     && rm -rf /var/lib/apt/lists/*
 
 # Dockerfile 내에서 사용할 변수 JAR_FILE을 정의
