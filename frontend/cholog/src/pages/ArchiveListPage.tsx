@@ -76,7 +76,7 @@ export default function ArchiveListPage() {
         transition={{ delay: 0.2 }}
       >
         <div className="flex flex-row items-center gap-2 font-[paperlogy5]">
-          <div className="text-[24px] text-slate-500">
+          <div className="text-[24px] text-slate-400">
             {currentProject?.name || "프로젝트를 찾을 수 없습니다"}
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function ArchiveListPage() {
                     />
                   </div>
                 </div>
-                <div className="px-6 py-3 text-[14px] text-slate-600 border-t border-[var(--line)]/10">
+                <div className="px-6 py-3 text-[14px] text-[var(--helpertext)] border-t border-[var(--line)]/10">
                   <div className="text-start">
                     <div
                       className={`${!expandedReasons[log.logId] ? "line-clamp-2" : ""} break-keep font-[paperlogy4] tracking-wider`}
@@ -168,7 +168,7 @@ export default function ArchiveListPage() {
                       {log.memo.length > 100 && (
                         <button
                           onClick={() => toggleReason(log.logId)}
-                          className="text-[12px] text-green-600 mt-1 hover:underline cursor-pointer"
+                          className="text-[12px] text-lime-600 mt-1 hover:underline cursor-pointer"
                         >
                           {expandedReasons[log.logId] ? "접기" : "더보기"}
                         </button>
@@ -192,8 +192,8 @@ export default function ArchiveListPage() {
                 disabled={pagination.first}
                 className={`px-3 py-1 rounded-xl ${
                   pagination.first
-                    ? "bg-slate-100 text-slate-400"
-                    : "text-slate-600 hover:bg-slate-200"
+                    ? "bg-[var(--bg))] border border-[var(--line)] text-slate-400"
+                    : "text-[var(--text)] hover:bg-[var(--bg)]"
                 }`}
               >
                 이전
@@ -208,8 +208,8 @@ export default function ArchiveListPage() {
                     onClick={() => handlePageChange(page)}
                     className={`px-3 py-1 rounded-xl ${
                       page === pagination.pageNumber
-                        ? "bg-[rgba(101,218,94,1)] text-white"
-                        : "bg-white text-slate-600 hover:bg-slate-200"
+                        ? "bg-lime-500 text-white"
+                        : "bg-[var(--bg)] text-[var(--text)] hover:bg-slate-400/20"
                     }`}
                   >
                     {page}
@@ -221,8 +221,8 @@ export default function ArchiveListPage() {
                 disabled={pagination.last}
                 className={`px-3 py-1 rounded-xl ${
                   pagination.last
-                    ? "bg-slate-100 text-slate-400"
-                    : "bg-white text-slate-600 hover:bg-slate-200"
+                    ? "bg-[var(--bg)] border border-[var(--line)] text-slate-400"
+                    : "bg-[var(--bg)] text-[var(--text)] hover:bg-slate-400/20"
                 }`}
               >
                 다음
@@ -239,7 +239,7 @@ export default function ArchiveListPage() {
               <div className="text-lg sm:text-xl text-[#5EA500] mb-2">
                 아카이브된 로그가 없습니다
               </div>
-              <div className="text-sm sm:text-base text-gray-500">
+              <div className="text-sm sm:text-base text-[var(--helpertext)]">
                 아직 아카이브된 로그가 없습니다.
               </div>
             </motion.div>
