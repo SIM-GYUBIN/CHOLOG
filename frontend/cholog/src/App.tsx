@@ -39,7 +39,8 @@ function AppContent() {
   const location = useLocation();
   const hideNavbar =
     location.pathname.toLowerCase() === "/projectlist" ||
-    location.pathname.toLowerCase() === "/login";
+    location.pathname.toLowerCase() === "/login" ||
+    location.pathname.toLowerCase() === "/landing";
 
   return (
     <div className="app">
@@ -48,6 +49,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/projectlist" element={<ProjectListPage />} />
           <Route path="/project/:projectId" element={<ProjectPage />} />
           <Route path="/project/:projectId/log/:logId" element={<LogPage />} />
