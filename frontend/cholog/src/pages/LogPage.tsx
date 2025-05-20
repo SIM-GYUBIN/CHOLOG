@@ -53,28 +53,35 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
+      duration: 0.3,
+      ease: "easeOut",
       when: "beforeChildren",
-      staggerChildren: 0.1,
-    },
-  },
+      staggerChildren: 0.05
+    }
+  }
 };
 
 const sectionVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring", stiffness: 100 },
-  },
+    transition: {
+      duration: 0.3,
+      ease: "easeOut"
+    }
+  }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, x: -10 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    x: 0,
-    transition: { type: "spring", stiffness: 100 },
-  },
+    transition: {
+      duration: 0.2,
+      ease: "easeOut"
+    }
+  }
 };
 
 const LogPage = () => {
@@ -167,7 +174,7 @@ const LogPage = () => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="w-full min-w-[500px] max-w-[65vw] mx-auto px-4 lg:px-0"
+      className="w-full max-w-[65vw] mx-auto px-4 lg:px-0"
     >
       <ProjectNavBar />
 
@@ -175,7 +182,7 @@ const LogPage = () => {
         {/* 메인 로그 섹션 */}
         <motion.div
           variants={sectionVariants}
-          className="flex-[2] bg-white/5 rounded-lg p-6 shadow-sm border border-[var(--line)]"
+          className="flex-[2] min-w-0 bg-white/5 rounded-lg p-6 shadow-sm border border-[var(--line)]"
         >
           <motion.div
             variants={itemVariants}
