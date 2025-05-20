@@ -161,7 +161,7 @@ public class LogService {
         return LogEntryResponse.fromLogDocument(logDocument);
     }
 
-    public List<LogEntryResponse> getLogByTraceId(Integer userId, Integer projectId, String traceId) {
+    public List<LogListResponse> getLogByTraceId(Integer userId, Integer projectId, String traceId) {
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId", projectId));
@@ -216,15 +216,15 @@ public class LogService {
                 .withMaxResults(20) // Elasticsearch 기본 반환 개수 제한(100) 고려, 필요시 조절
                 .build();
 
-        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+        SearchHits<LogListDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
-                LogDocument.class,
+                LogListDocument.class,
                 IndexCoordinates.of(indexName)
         );
 
         return searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .map(LogEntryResponse::fromLogDocument)
+                .map(LogListResponse::fromLogListDocument)
                 .collect(Collectors.toList());
     }
 

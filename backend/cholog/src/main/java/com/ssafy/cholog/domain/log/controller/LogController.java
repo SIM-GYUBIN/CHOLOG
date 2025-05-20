@@ -74,13 +74,13 @@ public class LogController {
     @Operation(summary = "traceId로 로그 조회", description = "traceId로 로그 조회 API")
     @PreAuthorize("isAuthenticated()")
     @ApiErrorCodeExamples({ErrorCode.USER_NOT_FOUND, ErrorCode.PROJECT_NOT_FOUND, ErrorCode.PROJECT_USER_NOT_FOUND})
-    public ResponseEntity<CommonResponse<List<LogEntryResponse>>> getLogByTraceId(
+    public ResponseEntity<CommonResponse<List<LogListResponse>>> getLogByTraceId(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Integer projectId,
             @PathVariable String traceId
     ) {
         Integer userId = authenticationUtil.getCurrentUserId(userPrincipal);
-        List<LogEntryResponse> logs = logService.getLogByTraceId(userId, projectId, traceId);
+        List<LogListResponse> logs = logService.getLogByTraceId(userId, projectId, traceId);
         return CommonResponse.ok(logs);
     }
 
