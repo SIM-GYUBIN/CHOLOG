@@ -1,10 +1,52 @@
-# Java 17 베이스 이미지 사용
-FROM openjdk:17-jdk-slim
+# Java 17 베이스 이미지 사용 - Debian Bullseye 일반 버전으로 변경
+FROM openjdk:17-jdk-bullseye
+
+# 환경 변수 설정으로 non-interactive 모드 강제
+ENV DEBIAN_FRONTEND=noninteractive
 
 # 시스템 패키지 목록 업데이트 및 Playwright 실행에 필요한 의존성 라이브러리 설치
-RUN apt-get update -qq
-RUN apt-get install -y libgobject-2.0-0
-RUN apt-get install -y libgio-2.0-0
+# apt-get update의 -qq 옵션 제거하여 상세 로그 확인
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    # Playwright 의존성 목록 (이전 목록 그대로 사용 가능성이 높음)
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libpango-1.0-0 \
+    libasound2 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxinerama1 \
+    libxrandr2 \
+    libxrender1 \
+    libxtst6 \
+    libxshmfence1 \
+    libglib2.0-0 \
+    libgobject-2.0-0 \ # 이제 찾아야 합니다!
+    libdbus-1-3 \
+    libgio-2.0-0 \   # 이제 찾아야 합니다!
+    libatspi2.0-0 \
+    libexpat1 \
+    libxkbcommon0 \
+    libcairo2 \
+    # 한국어 폰트
+    fonts-nanum \
+    # HTTPS 통신 및 기타 유틸리티에 필요할 수 있는 패키지
+    ca-certificates \
+    apt-utils \
+    # 설치 후 불필요한 apt 캐시 삭제
+    && rm -rf /var/lib/apt/lists/*
 
 # Dockerfile 내에서 사용할 변수 JAR_FILE을 정의
 ARG JAR_FILE=*.jar
