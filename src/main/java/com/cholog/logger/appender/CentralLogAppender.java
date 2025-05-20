@@ -557,7 +557,7 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
             IThrowableProxy throwableProxy = event.getThrowableProxy();
             if (throwableProxy != null) {
                 Map<String, Object> throwableData = new HashMap<>();
-                throwableData.put("className", throwableProxy.getClassName());
+                throwableData.put("type", throwableProxy.getClassName());
                 throwableData.put("message", throwableProxy.getMessage());
                 
                 // 예외가 있는 경우 httpStatus가 설정되어 있지 않으면 500으로 설정
@@ -587,14 +587,14 @@ public class CentralLogAppender extends AppenderBase<ILoggingEvent> {
                     for (int i = 0; i < stackTraceElements.length; i++) {
                         stackTraceStrings[i] = stackTraceElements[i].toString();
                     }
-                    throwableData.put("stackTrace", stackTraceStrings);
+                    throwableData.put("stacktrace", stackTraceStrings);
                 }
 
                 // 원인 예외(Cause) 정보 (간략히)
                 IThrowableProxy cause = throwableProxy.getCause();
                 if (cause != null) {
                     Map<String, Object> causeData = new HashMap<>();
-                    causeData.put("className", cause.getClassName());
+                    causeData.put("type", cause.getClassName());
                     causeData.put("message", cause.getMessage());
                     throwableData.put("cause", causeData);
                 }

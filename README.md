@@ -325,9 +325,9 @@ Kibana 대시보드에서 `cholog-*` 인덱스 패턴을 생성하여 수집된 
     "responseTime": 125
   },
   "error": {
-    "className": "java.lang.NullPointerException",
+    "type": "java.lang.NullPointerException",
     "message": "Cannot invoke \"String.length()\" because \"str\" is null",
-    "stackTrace": [
+    "stacktrace": [
       "at com.example.service.OrderService.processOrder(OrderService.java:125)",
       "at com.example.controller.OrderController.createOrder(OrderController.java:57)"
     ]
