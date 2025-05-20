@@ -6,6 +6,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
+import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.WaitUntilState;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
 import com.ssafy.cholog.domain.project.repository.ProjectRepository;
@@ -17,6 +19,7 @@ import com.ssafy.cholog.global.exception.CustomException;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -43,6 +46,9 @@ public class ReportService {
     private final ProjectRepository projectRepository;
     private final ProjectUserRepository projectUserRepository;
     private final ElasticsearchOperations elasticsearchOperations;
+
+    @Value("${app.domain.url}")
+    private String frontendBaseUrl;
 
     // Aggregation 이름 상수 (이전과 동일)
     private static final String AGG_FILTER_FRONTEND = "filter_frontend";
@@ -427,5 +433,51 @@ public class ReportService {
             return startDateStr;
         }
         return String.format("%s ~ %s", startDateStr, endDateStr);
+    }
+
+    /**
+     * 제공된 HTML 콘텐츠를 사용하여 PDF를 생성합니다.
+     * @param htmlContent PDF로 변환할 전체 HTML 문자열
+     * @return 생성된 PDF의 byte 배열
+     * @throws PlaywrightException PDF 생성 중 Playwright 관련 오류 발생 시
+     * @throws IllegalArgumentException htmlContent가 null이거나 비어있을 경우
+     */
+    public byte[] generatePdfFromHtml(String htmlContent) throws PlaywrightException, IllegalArgumentException {
+        if (htmlContent == null || htmlContent.trim().isEmpty()) {
+            throw new IllegalArgumentException("HTML content cannot be null or empty for PDF generation.");
+        }
+
+        try (Playwright playwright = Playwright.create()) {
+            // Chromium 브라우저 실행 (다른 브라우저도 선택 가능: playwright.firefox(), playwright.webkit())
+            Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
+                            .setHeadless(true) // 백그라운드에서 실행
+                    // 일부 Docker 또는 Linux 환경에서는 sandbox 옵션이 필요할 수 있습니다.
+                    // .setArgs(java.util.Arrays.asList("--no-sandbox", "--disable-setuid-sandbox"))
+            );
+            Page page = browser.newPage();
+
+            // HTML 콘텐츠 설정.
+            // baseURL은 HTML 내의 상대 경로(CSS, 이미지, 폰트 등)를 해석하는 기준이 됩니다.
+            // 이 값을 프론트엔드 애플리케이션의 실제 주소로 설정하는 것이 중요합니다.
+            page.setContent(htmlContent, new Page.SetContentOptions()
+                    .setWaitUntil(WaitUntilState.NETWORKIDLE)
+            );
+
+            // 뷰포트 크기 설정 (일관된 PDF 출력을 위해 권장)
+            page.setViewportSize(1200, 800); // 필요에 따라 페이지 콘텐츠에 맞게 조절
+
+            // PDF 생성 옵션 설정
+            Page.PdfOptions pdfOptions = new Page.PdfOptions()
+                    .setFormat("A4") // 용지 크기
+                    .setPrintBackground(true); // 배경 그래픽(색상, 이미지 등) 인쇄 여부
+
+            byte[] pdfBytes = page.pdf(pdfOptions);
+
+            browser.close(); // 브라우저 종료 (리소스 해제)
+            return pdfBytes;
+
+        } catch (PlaywrightException e) {
+            throw e;
+        }
     }
 }
