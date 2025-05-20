@@ -161,7 +161,7 @@ public class LogService {
         return LogEntryResponse.fromLogDocument(logDocument);
     }
 
-    public List<LogEntryResponse> getLogByTraceId(Integer userId, Integer projectId, String traceId) {
+    public List<LogListResponse> getLogByTraceId(Integer userId, Integer projectId, String traceId) {
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND, "projectId", projectId));
@@ -216,15 +216,15 @@ public class LogService {
                 .withMaxResults(20) // Elasticsearch 기본 반환 개수 제한(100) 고려, 필요시 조절
                 .build();
 
-        SearchHits<LogDocument> searchHits = elasticsearchOperations.search(
+        SearchHits<LogListDocument> searchHits = elasticsearchOperations.search(
                 searchQuery,
-                LogDocument.class,
+                LogListDocument.class,
                 IndexCoordinates.of(indexName)
         );
 
         return searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .map(LogEntryResponse::fromLogDocument)
+                .map(LogListResponse::fromLogListDocument)
                 .collect(Collectors.toList());
     }
 
@@ -438,7 +438,7 @@ public class LogService {
         DateHistogramAggregation dateHistogramAgg = DateHistogramAggregation.of(dh -> dh
                 .field(timestampFieldName)
                 .calendarInterval(CalendarInterval.Hour) // 1시간 간격
-                .minDocCount(0) // 로그가 없는 시간대도 0으로 표시
+                .minDocCount(1) // 로그가 없는 시간대도 0으로 표시
                 .extendedBounds(eb -> eb // 집계 범위를 명시적으로 설정하여 빈 구간도 포함
                         .min(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(startDateTimeBoundaryUtc.toInstant().toEpochMilli()))))
                         .max(FieldDateMath.of(fdmBuilder -> fdmBuilder.expr(String.valueOf(
