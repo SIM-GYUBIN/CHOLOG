@@ -63,7 +63,6 @@ export interface LoginRequest {
 export interface LoginResponse extends ApiResponse {
   data: {
     nickname: string;
-    token: string;
   };
 }
 
