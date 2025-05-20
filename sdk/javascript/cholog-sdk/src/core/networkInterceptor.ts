@@ -32,7 +32,7 @@ export class NetworkInterceptor {
 
       const startTime = Date.now();
       const requestDetails: LogHttp = {
-        method: (
+        requestMethod: (
           modifiedInit.method ||
           (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") ||
           "GET"
@@ -48,10 +48,10 @@ export class NetworkInterceptor {
         const responseTime = Date.now() - startTime;
 
         Logger.logHttp(
-          `Fetch 요청 => ${requestDetails.method} ${requestDetails.requestUri} - 상태 => ${response.status}`,
+          `Fetch 요청 => ${requestDetails.requestMethod} ${requestDetails.requestUri} - 상태 => ${response.status}`,
           {
             ...requestDetails,
-            status: response.status,
+            httpStatus: response.status,
             responseTime,
           },
           undefined // clientDetails
@@ -65,7 +65,7 @@ export class NetworkInterceptor {
           stacktrace: error?.stack,
         };
         Logger.logHttp(
-          `Fetch 오류 => ${requestDetails.method} ${requestDetails.requestUri}`,
+          `Fetch 오류 => ${requestDetails.requestMethod} ${requestDetails.requestUri}`,
           {
             ...requestDetails,
             responseTime,
@@ -116,7 +116,7 @@ export class NetworkInterceptor {
       this.setRequestHeader("X-Request-ID", requestId);
 
       const requestDetails: LogHttp = {
-        method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
+        requestMethod: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
         requestUri: xhr._chologUrl || "UnknownURL",
       };
 
@@ -140,10 +140,10 @@ export class NetworkInterceptor {
         }
 
         Logger.logHttp(
-          `XHR 요청 => ${requestDetails.method} ${requestDetails.requestUri} - 상태 => ${xhr.status}`,
+          `XHR 요청 => ${requestDetails.requestMethod} ${requestDetails.requestUri} - 상태 => ${xhr.status}`,
           {
             ...requestDetails,
-            status: xhr.status,
+            httpStatus: xhr.status,
             responseTime,
           },
           undefined, // clientDetails

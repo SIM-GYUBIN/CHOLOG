@@ -267,7 +267,7 @@ var Logger = class {
   }
   // 네트워크 로깅 (NetworkInterceptor에서 사용, logType: "network")
   static logHttp(message, httpDetails, clientDetails, errorDetails) {
-    const level = errorDetails || httpDetails.status && httpDetails.status >= 400 ? "error" : "info";
+    const level = errorDetails || httpDetails.httpStatus && httpDetails.httpStatus >= 400 ? "error" : "info";
     this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
   // 이벤트 로깅 (EventTracker에서 사용, logType: "event")
@@ -307,17 +307,17 @@ var NetworkInterceptor = class _NetworkInterceptor {
       }
       const startTime = Date.now();
       const requestDetails = {
-        method: (modifiedInit.method || (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") || "GET").toUpperCase(),
+        requestMethod: (modifiedInit.method || (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET") || "GET").toUpperCase(),
         requestUri: requestUrl
       };
       try {
         const response = await _NetworkInterceptor.originalFetch.call(window, input, modifiedInit);
         const responseTime = Date.now() - startTime;
         Logger.logHttp(
-          `Fetch \uC694\uCCAD => ${requestDetails.method} ${requestDetails.requestUri} - \uC0C1\uD0DC => ${response.status}`,
+          `Fetch \uC694\uCCAD => ${requestDetails.requestMethod} ${requestDetails.requestUri} - \uC0C1\uD0DC => ${response.status}`,
           {
             ...requestDetails,
-            status: response.status,
+            httpStatus: response.status,
             responseTime
           },
           void 0
@@ -332,7 +332,7 @@ var NetworkInterceptor = class _NetworkInterceptor {
           stacktrace: error?.stack
         };
         Logger.logHttp(
-          `Fetch \uC624\uB958 => ${requestDetails.method} ${requestDetails.requestUri}`,
+          `Fetch \uC624\uB958 => ${requestDetails.requestMethod} ${requestDetails.requestUri}`,
           {
             ...requestDetails,
             responseTime
@@ -367,7 +367,7 @@ var NetworkInterceptor = class _NetworkInterceptor {
       const requestId = RequestContext.getCurrentRequestId() || RequestContext.startNewRequest();
       this.setRequestHeader("X-Request-ID", requestId);
       const requestDetails = {
-        method: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
+        requestMethod: (xhr._chologMethod || "UnknownMethod").toUpperCase(),
         requestUri: xhr._chologUrl || "UnknownURL"
       };
       const onLoadEnd = () => {
@@ -382,10 +382,10 @@ var NetworkInterceptor = class _NetworkInterceptor {
           };
         }
         Logger.logHttp(
-          `XHR \uC694\uCCAD => ${requestDetails.method} ${requestDetails.requestUri} - \uC0C1\uD0DC => ${xhr.status}`,
+          `XHR \uC694\uCCAD => ${requestDetails.requestMethod} ${requestDetails.requestUri} - \uC0C1\uD0DC => ${xhr.status}`,
           {
             ...requestDetails,
-            status: xhr.status,
+            httpStatus: xhr.status,
             responseTime
           },
           void 0,
@@ -601,7 +601,7 @@ var Cholog = {
     const loggedEnvironment = environment || "default (by Logger)";
     Logger.info("Cholog SDK Initialized", {
       sdk: "cholog-sdk",
-      version: "1.0.6",
+      version: "1.0.7",
       // SDK 버전에 맞게 수정하세요.
       features: {
         eventTracker: enableEventTracker,

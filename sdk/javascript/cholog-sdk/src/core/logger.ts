@@ -304,7 +304,7 @@ export class Logger {
     errorDetails?: LogError // 네트워크 오류 시 함께 전달 가능
   ): void {
     const level: InternalLogLevel =
-      errorDetails || (httpDetails.status && httpDetails.status >= 400) ? "error" : "info";
+      errorDetails || (httpDetails.httpStatus && httpDetails.httpStatus >= 400) ? "error" : "info";
     this.prepareAndQueueLog(level, "cholog", [message], errorDetails, httpDetails, clientDetails);
   }
 

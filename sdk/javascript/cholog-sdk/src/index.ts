@@ -43,7 +43,7 @@ export const Cholog = {
     // SDK 초기화 성공 로그
     Logger.info("Cholog SDK Initialized", {
       sdk: "cholog-sdk",
-      version: "1.0.6", // SDK 버전에 맞게 수정하세요.
+      version: "1.0.7", // SDK 버전에 맞게 수정하세요.
       features: {
         eventTracker: enableEventTracker,
         errorCatcher: enableErrorCatcher,

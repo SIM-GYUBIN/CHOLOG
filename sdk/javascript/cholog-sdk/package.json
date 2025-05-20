@@ -1,6 +1,6 @@
 {
   "name": "cholog-sdk",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "dist/cholog.mjs",
   "types": "dist/index.d.ts",
   "files": [

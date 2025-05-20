@@ -14,9 +14,9 @@ export interface LogError {
 }
 
 export interface LogHttp {
-  method: string;
+  requestMethod: string;
   requestUri: string;
-  status?: number;
+  httpStatus?: number;
   responseTime?: number;
 }
 
