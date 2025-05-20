@@ -541,7 +541,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                     <button
                       onClick={handleSubmit}
                       disabled={!isFormValid || isSubmitting}
-                      className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? "bg-lime-600 hover:bg-lime-700" : "bg-lime-300 cursor-not-allowed"} text-white rounded-lg transition-colors`}
+                      className={`text-[12px] px-3 py-2 ${isFormValid && !isSubmitting ? "bg-lime-600 hover:bg-lime-700" : "bg-gray-400 cursor-not-allowed"} text-white rounded-lg transition-colors`}
                     >
                       {isSubmitting
                         ? "처리 중..."
@@ -566,7 +566,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                   className={`py-2 px-4 text-[14px] ${
                     jiraActiveSection === "personal"
                       ? "border-b-2 border-lime-500 text-lime-600 font-[paperlogy6]"
-                      : "text-slate-500 hover:text-slate-700"
+                      : "text-[var(--helpertext)] hover:text-slate-400/20"
                   }`}
                 >
                   개인 설정
@@ -576,7 +576,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
                   className={`py-2 px-4 text-[14px] ${
                     jiraActiveSection === "project"
                       ? "border-b-2 border-lime-500 text-lime-600 font-[paperlogy6]"
-                      : "text-slate-500 hover:text-slate-700"
+                      : "text-[var(--helpertext)] hover:text-slate-400/20"
                   }`}
                 >
                   프로젝트 설정
@@ -585,7 +585,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
 
               {/* 에러 메시지 표시 */}
               {jiraError && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-md mb-4 text-[12px]">
+                <div className="bg-red-500/10 border border-red-500/40 text-red-600 px-4 py-2 rounded-md mb-4 text-[12px]">
                   {jiraError}
                 </div>
               )}
