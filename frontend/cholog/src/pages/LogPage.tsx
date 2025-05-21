@@ -534,10 +534,10 @@ const LogPage = () => {
             </motion.div>
           )}
 
-          {/* CHO:LOG EXPLANE 섹션 */}
+          {/* CHO:LOG EXPLAIN 섹션 */}
           <motion.div variants={sectionVariants} className="mb-8">
             <div className="text-left p-4 text-[18px] font-[paperlogy6]">
-              CHO:LOG EXPLANE
+              CHO:LOG EXPLAIN
             </div>
             <motion.div
               variants={itemVariants}
