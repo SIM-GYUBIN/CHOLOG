@@ -64,7 +64,7 @@ const JiraMakingButton: React.FC = () => {
 
       // 에러 처리
       if (fetchJiraIssueInfo.rejected.match(resultAction)) {
-        setError("유저 정보를 불러오는데 실패했습니다.");
+        setError("JIRA 유저 정보를 등록 해주세요.");
       } else if (resultAction.payload && "data" in resultAction.payload) {
         // API 응답 구조에 맞게 사용자 데이터 처리
         const userList = resultAction.payload.data?.userNames || [];
