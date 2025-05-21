@@ -594,7 +594,7 @@ public class ReportService {
 
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
                     .setFormat("A4")
-                    .setScale(0.5)
+                    .setScale(0.6)
                     .setPrintBackground(true);
             log.debug("프로젝트 ID {}: PDF 생성 옵션 설정 완료.", projectId);
 
