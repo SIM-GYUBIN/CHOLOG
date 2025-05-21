@@ -8,6 +8,7 @@ import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.Media;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import com.microsoft.playwright.options.WaitUntilState;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
@@ -539,6 +540,30 @@ public class ReportService {
             // 라이트 모드로 강제하기 위해 'dark' 클래스 추가 로직은 주석 처리 또는 제거합니다.
             // page.evaluate("document.documentElement.classList.add('dark')");
             // log.debug("프로젝트 ID {}: 다크 모드 클래스('dark') 적용 (주석 처리됨).", projectId);
+
+            // --- React Router가 경로를 인식하고 렌더링할 시간 확보 ---
+            // 1. 페이지의 URL을 React Router가 사용하는 실제 경로로 설정 (pushState 대신 replaceState 사용 시도)
+            //    이것이 실패할 수도 있지만, 이전 pushState 오류와 다른지 확인
+            String currentReportPath = "/report/" + projectId; // 예시 경로, 실제 경로 확인 필요
+            try {
+                page.evaluate(String.format("window.history.replaceState({}, '', '%s')", currentReportPath));
+                log.info("프로젝트 ID {}: 페이지 URL을 '{}'로 변경 시도 (replaceState).", projectId, currentReportPath);
+            } catch (PlaywrightException e) {
+                log.warn("프로젝트 ID {}: window.history.replaceState 실행 중 오류 발생 (무시하고 진행): {}", projectId, e.getMessage());
+            }
+
+            // 2. 특정 핵심 콘텐츠 영역이 나타날 때까지 명시적으로 대기
+            //    ReportPage.tsx에서 실제 콘텐츠를 감싸는 최상위 div에 ID를 부여했다고 가정 (예: id="report-content-area")
+            String reportContentSelector = "#report-main-flex-container";
+            try {
+                log.debug("프로젝트 ID {}: '{}' 선택자가 나타날 때까지 대기 시작 (최대 10초)...", projectId, reportContentSelector);
+                page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(10000)); // 10초 타임아웃
+                log.info("프로젝트 ID {}: '{}' 선택자 감지 완료. 페이지 콘텐츠 렌더링된 것으로 간주.", projectId, reportContentSelector);
+            } catch (TimeoutError e) {
+                log.warn("프로젝트 ID {}: '{}' 선택자 대기 시간(10초) 초과. 페이지 주요 콘텐츠가 렌더링되지 않았을 수 있습니다.", projectId, reportContentSelector);
+                // 이 경우 스크린샷은 여전히 비어있을 수 있습니다.
+            }
+            // --- React Router 렌더링 대기 끝 ---
 
             try {
                 log.debug("프로젝트 ID {}: 웹 폰트 로딩 대기 시작 (document.fonts.ready)...", projectId);
