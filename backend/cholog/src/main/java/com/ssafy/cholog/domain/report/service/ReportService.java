@@ -568,7 +568,7 @@ public class ReportService {
             String reportContentSelector = "#actual-report-content"; // 실제 사용하는 ID로 변경!
             try {
                 log.debug("프로젝트 ID {}: '{}' 선택자가 나타날 때까지 대기 시작 (최대 15초)...", projectId, reportContentSelector);
-                page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5000));
+                page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(2500));
                 log.info("프로젝트 ID {}: '{}' 선택자 감지 완료. 페이지 콘텐츠 렌더링된 것으로 간주.", projectId, reportContentSelector);
             } catch (TimeoutError e) {
                 log.warn("프로젝트 ID {}: '{}' 선택자 대기 시간(15초) 초과. 페이지 주요 콘텐츠가 렌더링되지 않았을 수 있습니다.", projectId, reportContentSelector);
@@ -577,7 +577,7 @@ public class ReportService {
 
             try {
                 log.debug("프로젝트 ID {}: 웹 폰트 로딩 대기 시작 (document.fonts.ready)...", projectId);
-                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(5000));
+                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(2500));
                 log.info("프로젝트 ID {}: 모든 폰트 로딩 완료 (document.fonts.ready).", projectId);
             } catch (TimeoutError e) {
                 log.warn("프로젝트 ID {}: 폰트 로딩 대기 시간(15초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.", projectId);
@@ -595,7 +595,7 @@ public class ReportService {
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
                     .setFormat("A4")
                     .setScale(0.5)
-                    .setLandscape(true);
+                    .setPrintBackground(true);
             log.debug("프로젝트 ID {}: PDF 생성 옵션 설정 완료.", projectId);
 
             log.debug("프로젝트 ID {}: PDF 데이터 생성 시작...", projectId);
