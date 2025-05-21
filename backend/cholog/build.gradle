@@ -54,7 +54,7 @@ dependencies {
 	implementation("com.microsoft.playwright:playwright:1.52.0")
 
 	// test
-//	implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.1.0'
+	implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.1.0'
 }
 
 tasks.named('test') {

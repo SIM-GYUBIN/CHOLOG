@@ -510,8 +510,6 @@ public class ReportService {
                     log.error("BROWSER CONSOLE (Playwright) - 프로젝트 ID {}: type=[{}], text=[{}]", projectId, msg.type(), msg.text());
                 } else if ("warning".equals(logType)) {
                     log.warn("BROWSER CONSOLE (Playwright) - 프로젝트 ID {}: type=[{}], text=[{}]", projectId, msg.type(), msg.text());
-                } else {
-                    log.info("BROWSER CONSOLE (Playwright) - 프로젝트 ID {}: type=[{}], text=[{}]", projectId, msg.type(), msg.text());
                 }
             });
 
@@ -528,7 +526,6 @@ public class ReportService {
 
             log.debug("프로젝트 ID {}: 초기 컨텍스트 설정을 위해 {} 로 navigate 시도...", projectId, initialPageLoadUrl);
             page.navigate(initialPageLoadUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-            log.info("프로젝트 ID {}: 초기 URL 컨텍스트를 {} 로 설정 완료.", projectId, initialPageLoadUrl);
 
             // 2. 그 다음, 실제 렌더링된 HTML 콘텐츠를 페이지에 설정합니다.
             //    <base> 태그는 modifiedHtmlContent 안에 이미 삽입되어 있으므로, 리소스 로딩에 사용됩니다.
@@ -546,9 +543,7 @@ public class ReportService {
             String currentReportPath = "/report/" + projectId; // 프론트엔드 라우팅 경로
             try {
                 page.evaluate(String.format("window.history.replaceState({}, '', '%s')", currentReportPath));
-                log.info("프로젝트 ID {}: 페이지 URL을 '{}'로 변경 시도 (replaceState, after setContent).", projectId, currentReportPath);
             } catch (PlaywrightException e) {
-                // 이 오류는 'null' origin에서 발생할 수 있으므로, 경고로만 처리하고 계속 진행합니다.
                 log.warn("프로젝트 ID {}: window.history.replaceState 실행 중 오류 발생 (무시하고 진행): {}", projectId, e.getMessage());
             }
 
@@ -569,7 +564,6 @@ public class ReportService {
             try {
                 log.debug("프로젝트 ID {}: '{}' 선택자가 나타날 때까지 대기 시작 (최대 15초)...", projectId, reportContentSelector);
                 page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(2500));
-                log.info("프로젝트 ID {}: '{}' 선택자 감지 완료. 페이지 콘텐츠 렌더링된 것으로 간주.", projectId, reportContentSelector);
             } catch (TimeoutError e) {
                 log.warn("프로젝트 ID {}: '{}' 선택자 대기 시간(15초) 초과. 페이지 주요 콘텐츠가 렌더링되지 않았을 수 있습니다.", projectId, reportContentSelector);
             }
@@ -578,7 +572,6 @@ public class ReportService {
             try {
                 log.debug("프로젝트 ID {}: 웹 폰트 로딩 대기 시작 (document.fonts.ready)...", projectId);
                 page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(2500));
-                log.info("프로젝트 ID {}: 모든 폰트 로딩 완료 (document.fonts.ready).", projectId);
             } catch (TimeoutError e) {
                 log.warn("프로젝트 ID {}: 폰트 로딩 대기 시간(15초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.", projectId);
             }
@@ -587,20 +580,18 @@ public class ReportService {
             String screenshotPath = "/tmp/" + screenshotFilename;
             try {
                 page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)).setFullPage(true));
-                log.info("프로젝트 ID {}: PDF 생성 직전 디버그 스크린샷 저장 완료: {}", projectId, screenshotPath);
             } catch (PlaywrightException e) {
                 log.error("프로젝트 ID {}: 스크린샷 저장 중 오류 발생: {}", projectId, e.getMessage(), e);
             }
 
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
                     .setFormat("A4")
-                    .setScale(0.6)
+                    .setScale(0.55)
                     .setPrintBackground(true);
             log.debug("프로젝트 ID {}: PDF 생성 옵션 설정 완료.", projectId);
 
             log.debug("프로젝트 ID {}: PDF 데이터 생성 시작...", projectId);
             byte[] pdfBytes = page.pdf(pdfOptions);
-            log.info("프로젝트 ID {}: PDF 데이터 생성 완료. PDF 크기: {} bytes", projectId, pdfBytes.length);
 
             browser.close();
             log.debug("프로젝트 ID {}: Playwright 브라우저 종료.", projectId);
