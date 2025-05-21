@@ -489,11 +489,12 @@ public class ReportService {
             Page page = browser.newPage();
             log.debug("Playwright 브라우저 및 새 페이지 생성 완료.");
 
-//            // 페이지 내 JavaScript 오류 로깅
-//            page.onPageError((PageError pageError) -> {
-//                log.error("!!! Playwright Page JavaScript UNCAUGHT Error: {}", pageError.message());
-//                log.error("!!! Playwright Page JavaScript UNCAUGHT Error STACK: {}", pageError.stack());
-//            });
+            // --- 로깅 핸들러 등록 (page.onPageError 수정) ---
+            // 페이지 내 JavaScript 오류 로깅 (문서 예시 스타일)
+            page.onPageError(exception -> { // 파라미터 타입을 명시하지 않고 'exception'으로 받음
+                // 'exception' 객체가 어떤 타입인지, 어떤 정보를 담고 있는지 확인하기 위해 toString() 또는 getClass().getName() 로깅
+                log.error("!!! Playwright Page JavaScript UNCAUGHT Exception (raw): {}", exception.toString());
+            });
 
             // 네트워크 요청 로깅
             page.onRequest(request -> log.debug(">> Playwright Request: {} {}", request.method(), request.url()));
