@@ -222,7 +222,7 @@ const ReportPage: React.FC = () => {
 
       {/* 리포트 내용 (실제 PDF로 변환될 주요 영역) */}
       {/* document.documentElement.outerHTML을 사용하므로 특정 ref는 필요 없음 */}
-      <div className="flex flex-col">
+      <div id="report-main-flex-container" className="flex flex-col">
         {/* 리포트 데이터가 없을 때 안내 메시지 */}
         {!isReportLoading && !reportData && !reportError && (
           <motion.div
