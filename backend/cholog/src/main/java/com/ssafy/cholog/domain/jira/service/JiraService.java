@@ -181,10 +181,10 @@ public class JiraService {
                         .addParameter("projectId", project.getId()));
 
         JiraUser myJiraUser = jiraUserRepository.findByUser(user)
-                .orElseThrow(() -> new CustomException(ErrorCode.JIRA_USER_NOT_FOUND, "userId",userId));
+                .orElseThrow(() -> new CustomException(ErrorCode.JIRA_USER_NOT_FOUND, "JIRA 개인 설정을 등록해주세요."));
 
         JiraProject jiraProject = jiraProjectRepository.findByProject(project)
-                .orElseThrow(() -> new CustomException(ErrorCode.JIRA_PROJECT_NOT_FOUND, "projectId",projectId));
+                .orElseThrow(() -> new CustomException(ErrorCode.JIRA_PROJECT_NOT_FOUND, "JIRA 프로젝트 설정을 등록해주세요."));
 
         List<ProjectUser> projectMembers = projectUserRepository.findAllByProject(project);
 

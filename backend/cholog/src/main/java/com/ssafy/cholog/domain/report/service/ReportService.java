@@ -7,7 +7,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.Media;
 import com.microsoft.playwright.options.WaitUntilState;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
@@ -471,8 +470,6 @@ public class ReportService {
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
                     .setFormat("A4") // 용지 크기
                     .setPrintBackground(true); // 배경 그래픽(색상, 이미지 등) 인쇄 여부
-
-            page.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.SCREEN));
 
             byte[] pdfBytes = page.pdf(pdfOptions);
 
