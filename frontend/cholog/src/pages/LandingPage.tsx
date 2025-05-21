@@ -70,7 +70,7 @@ function AppContent() {
             ✅ main.tsx에 초기화 코드 추가
           </h3>
           <CopyableCode
-            code={`import Cholog from "cholog-sdk";
+              code={`import Cholog from "cholog-sdk";
 
 Cholog.init({
   apiKey: "YOUR_API_KEY",
@@ -79,6 +79,9 @@ Cholog.init({
           />
           <p className="text-sm text-gray-500 mt-2">
             ※ 개발 환경에서는 <code>environment: "dev"</code>로 설정해도 됩니다.
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            ※ <code>api-key</code>는 프로젝트 고유 키입니다. 프로젝트를 생성하고 키를 발급받으세요!
           </p>
         </div>
       </FullpageScroll.Section>
@@ -122,8 +125,7 @@ dependencies {
     cors-enabled: true`}
           />
           <p className="text-sm text-gray-500 mt-2">
-            ※ <code>url</code>은 로그 수신 서버, <code>api-key</code>는 사용자
-            고유 키입니다.
+            ※ <code>api-key</code>는 프로젝트 고유 키입니다. 프로젝트를 생성하고 키를 발급받으세요!
           </p>
         </div>
       </FullpageScroll.Section>

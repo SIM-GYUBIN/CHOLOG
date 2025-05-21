@@ -61,7 +61,7 @@ function GuidePage() {
                 ✅ main.tsx에 초기화 코드 추가
               </h3>
               <CopyableCode
-                code={`import Cholog from "cholog-sdk";
+                  code={`import Cholog from "cholog-sdk";
 
 Cholog.init({
   apiKey: "YOUR_API_KEY",
@@ -70,6 +70,9 @@ Cholog.init({
               />
               <p className="text-sm text-gray-500 mt-2">
                 ※ 개발 환경에서는 environment: "dev"로 설정해도 됩니다.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                ※ api-key는 프로젝트 고유 키입니다. 발급된 ProjectID를 입력해주세요!
               </p>
             </div>
           </div>
@@ -102,13 +105,13 @@ dependencies {
                 ✅ application.yml 설정
               </h3>
               <CopyableCode
-                code={`cholog:
+                  code={`cholog:
   logger:
     api-key: YOUR_API_KEY
     cors-enabled: true`}
               />
               <p className="text-sm text-gray-500 mt-2">
-                ※ url은 로그 수신 서버, api-key는 사용자 고유 키입니다.
+                ※ api-key는 프로젝트 고유 키입니다. 발급된 ProjectID를 입력해주세요!
               </p>
             </div>
           </div>
