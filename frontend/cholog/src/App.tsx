@@ -15,6 +15,7 @@ import LogPage from "./pages/LogPage";
 import ReportPage from "./pages/ReportPage";
 import ArchiveListPage from "./pages/ArchiveListPage";
 import GuidePage from "./pages/GuidePage";
+import PrivateRoute from "./components/common/PrivateRoute";
 
 function NotFoundPage() {
   return (
@@ -53,15 +54,54 @@ function AppContent() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/landing" element={<LandingPage />} />
-          <Route path="/projectlist" element={<ProjectListPage />} />
+          <Route
+            path="/projectlist"
+            element={
+              <PrivateRoute>
+                <ProjectListPage />
+              </PrivateRoute>
+            }
+          />
           <Route path="/guide" element={<GuidePage />} />
-          <Route path="/project/:projectId" element={<ProjectPage />} />
-          <Route path="/project/:projectId/log/:logId" element={<LogPage />} />
-          <Route path="/report/:projectId" element={<ReportPage />} />
-          <Route path="/archive/:projectId" element={<ArchiveListPage />} />
+          <Route
+            path="/project/:projectId"
+            element={
+              <PrivateRoute>
+                <ProjectPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/project/:projectId/log/:logId"
+            element={
+              <PrivateRoute>
+                <LogPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/report/:projectId"
+            element={
+              <PrivateRoute>
+                <ReportPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/archive/:projectId"
+            element={
+              <PrivateRoute>
+                <ArchiveListPage />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/project/:projectId/archives"
-            element={<ArchiveListPage />}
+            element={
+              <PrivateRoute>
+                <ArchiveListPage />
+              </PrivateRoute>
+            }
           />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

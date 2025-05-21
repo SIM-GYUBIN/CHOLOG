@@ -96,4 +96,5 @@ export interface UserState {
   error: ApiError | null;
   signupSuccess: boolean;
   isLoggedIn: boolean;
+  isAuthChecked: boolean;
 }
