@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.Media;
 import com.microsoft.playwright.options.WaitUntilState;
 import com.ssafy.cholog.domain.log.entity.LogDocument;
 import com.ssafy.cholog.domain.project.entity.Project;
@@ -438,16 +439,11 @@ public class ReportService {
 
     @PostConstruct
     public void initializePlaywrightAndBrowsers() {
-        log.info("Playwright 초기화 및 브라우저 자동 다운로드/확인 프로세스를 시작합니다...");
-
         try (Playwright playwright = Playwright.create()) {
-            log.info("Chromium 브라우저 상태를 확인하고 필요시 다운로드합니다.");
             BrowserType chromium = playwright.chromium();
             Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(true));
             log.info("Chromium 브라우저가 성공적으로 실행되었습니다. 버전: {}", browser.version());
             browser.close();
-            log.info("Chromium 브라우저 준비가 완료되었습니다.");
-            log.info("Playwright 브라우저 초기화가 성공적으로 완료되었습니다.");
         } catch (PlaywrightException e) {
             log.error("애플리케이션 시작 중 Playwright 초기화 또는 브라우저 다운로드에 실패했습니다: {}", e.getMessage(), e);
         } catch (Exception e) {
@@ -464,32 +460,97 @@ public class ReportService {
      */
     public byte[] generatePdfFromHtml(String htmlContent) throws PlaywrightException, IllegalArgumentException {
         if (htmlContent == null || htmlContent.trim().isEmpty()) {
+            log.warn("PDF 생성을 위한 HTML 내용이 비어있거나 null입니다.");
             throw new IllegalArgumentException("HTML content cannot be null or empty for PDF generation.");
         }
 
-        try (Playwright playwright = Playwright.create()) {
-            Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-                            .setHeadless(true) // 백그라운드에서 실행
-            );
-            Page page = browser.newPage();
+        log.info("Playwright를 사용하여 PDF 생성을 시작합니다. Frontend Base URL: {}", frontendBaseUrl);
 
-            page.setContent(htmlContent, new Page.SetContentOptions()
-                    .setWaitUntil(WaitUntilState.NETWORKIDLE)
+        // --- <base> 태그 삽입을 위한 수정 ---
+        String effectiveBaseUrl = frontendBaseUrl;
+        if (!effectiveBaseUrl.endsWith("/")) { // baseURL이 슬래시로 끝나도록 보장
+            effectiveBaseUrl += "/";
+        }
+
+        String modifiedHtmlContent;
+        // HTML의 <head> 태그를 찾아 그 안에 <base> 태그를 삽입합니다.
+        // 정규식을 사용하여 대소문자 구분 없이 <head> 태그를 찾습니다.
+        if (htmlContent.toLowerCase().contains("<head>")) {
+            modifiedHtmlContent = htmlContent.replaceFirst("(?i)<head>", "<head><base href=\"" + effectiveBaseUrl + "\">");
+            log.debug("<base> 태그가 <head> 내에 삽입되었습니다.");
+        } else if (htmlContent.toLowerCase().contains("<html>")){
+            // <head>는 없지만 <html> 태그가 있는 경우, <head>와 <base>를 함께 삽입 시도
+            modifiedHtmlContent = htmlContent.replaceFirst("(?i)<html>", "<html><head><base href=\"" + effectiveBaseUrl + "\"></head>");
+            log.debug("<head>와 <base> 태그가 <html> 내에 삽입되었습니다.");
+        }
+        else {
+            // <head> 태그가 없는 경우 (예: HTML 조각), <base> 태그를 맨 앞에 추가합니다.
+            // 이 경우 CSS나 다른 리소스가 제대로 로드되지 않을 수 있으므로 주의가 필요합니다.
+            log.warn("HTML 내용에 <head> 태그를 찾을 수 없어 <base> 태그를 맨 앞에 추가합니다. 전체 HTML 문서가 아닐 경우 문제가 발생할 수 있습니다.");
+            modifiedHtmlContent = "<!DOCTYPE html><html><head><base href=\"" + effectiveBaseUrl + "\"></head><body>" + htmlContent + "</body></html>";
+        }
+        // --- <base> 태그 삽입 끝 ---
+
+
+        try (Playwright playwright = Playwright.create()) {
+            Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+            Page page = browser.newPage();
+            log.debug("Playwright 브라우저 및 새 페이지 생성 완료.");
+
+            // 네트워크 요청 및 콘솔 메시지 로깅 (setContent 전에 설정)
+            page.onRequest(request -> log.debug(">> Playwright Request: {} {}", request.method(), request.url()));
+            page.onResponse(response -> log.debug("<< Playwright Response: {} {} {}", response.status(), response.request().method(), response.url()));
+            page.onRequestFailed(request -> {
+                String errorText = request.failure();
+                log.warn("!! Playwright Request Failed: ({} {}) Error: {}", request.method(), request.url(), errorText);
+            });
+            page.onConsoleMessage(msg -> log.info("BROWSER CONSOLE (Playwright): [{}] {}", msg.type(), msg.text()));
+
+            log.debug("수정된 HTML 콘텐츠로 페이지 내용 설정 시작...");
+            page.setContent(modifiedHtmlContent, new Page.SetContentOptions()
+                            .setWaitUntil(WaitUntilState.NETWORKIDLE)
             );
+            log.debug("HTML 콘텐츠 설정 완료.");
 
             page.setViewportSize(1200, 800);
+            log.debug("뷰포트 크기 설정 완료: 1200x800");
+
+            page.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.SCREEN));
+            log.debug("스크린 미디어 타입으로 에뮬레이트 완료.");
+
+            page.evaluate("document.documentElement.classList.add('dark')");
+            log.debug("다크 모드 클래스('dark') 적용 완료.");
+
+            try {
+                log.debug("웹 폰트 로딩 대기 시작 (document.fonts.ready)...");
+                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(10000)); // 10초 타임아웃
+                log.info("모든 폰트 로딩 완료 (document.fonts.ready).");
+            } catch (TimeoutError e) { // com.microsoft.playwright.TimeoutError 임포트 필요
+                log.warn("폰트 로딩 대기 시간(10초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.");
+            }
 
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
-                    .setFormat("A4") // 용지 크기
-                    .setPrintBackground(true); // 배경 그래픽(색상, 이미지 등) 인쇄 여부
+                    .setFormat("A4")
+                    .setPrintBackground(true);
+            log.debug("PDF 생성 옵션 설정 완료.");
 
+            log.debug("PDF 데이터 생성 시작...");
             byte[] pdfBytes = page.pdf(pdfOptions);
+            log.info("PDF 데이터 생성 완료. PDF 크기: {} bytes", pdfBytes.length);
 
             browser.close();
+            log.debug("Playwright 브라우저 종료.");
             return pdfBytes;
 
         } catch (PlaywrightException e) {
+            log.error("Playwright를 사용하여 PDF 생성 중 오류가 발생했습니다: {}", e.getMessage(), e);
             throw e;
+        } catch (IllegalArgumentException e) { // htmlContent가 비어있을 때의 예외는 이미 위에서 처리됨
+            log.error("잘못된 인자로 PDF 생성 시도: {}", e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("PDF 생성 중 알 수 없는 오류 발생: {}", e.getMessage(), e);
+            throw new PlaywrightException("Unknown error during PDF generation: " + e.getMessage(), e);
         }
     }
 }
