@@ -160,13 +160,27 @@ const LogList = ({ logs, pagination }: LogListProps) => {
           onChange={(e) => setSelectedLevel(e.target.value)}
           className="h-11 w-24 text-sm px-2 rounded-xl border border-[var(--line)] bg-transparent text-[var(--text)] hover:border-lime-500 focus:outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500"
         >
-          <option value="">레벨</option>
-          <option value="TRACE">TRACE</option>
-          <option value="DEBUG">DEBUG</option>
-          <option value="INFO">INFO</option>
-          <option value="WARN">WARN</option>
-          <option value="ERROR">ERROR</option>
-          <option value="FATAL">FATAL</option>
+          <option value="" className="bg-[var(--nav)]">
+            레벨
+          </option>
+          <option value="TRACE" className="bg-[var(--nav)]">
+            TRACE
+          </option>
+          <option value="DEBUG" className="bg-[var(--nav)]">
+            DEBUG
+          </option>
+          <option value="INFO" className="bg-[var(--nav)]">
+            INFO
+          </option>
+          <option value="WARN" className="bg-[var(--nav)]">
+            WARN
+          </option>
+          <option value="ERROR" className="bg-[var(--nav)]">
+            ERROR
+          </option>
+          <option value="FATAL" className="bg-[var(--nav)]">
+            FATAL
+          </option>
         </select>
 
         {/* 소스 셀렉터 */}
@@ -175,9 +189,15 @@ const LogList = ({ logs, pagination }: LogListProps) => {
           onChange={(e) => setSelectedSource(e.target.value)}
           className="h-11 w-24 text-sm px-2 rounded-xl border border-[var(--line)] bg-transparent text-[var(--text)] hover:border-lime-500 focus:outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500"
         >
-          <option value="">소스</option>
-          <option value="frontend">Frontend</option>
-          <option value="backend">Backend</option>
+          <option value="" className="bg-[var(--nav)]">
+            소스
+          </option>
+          <option value="frontend" className="bg-[var(--nav)]">
+            Frontend
+          </option>
+          <option value="backend" className="bg-[var(--nav)]">
+            Backend
+          </option>
         </select>
 
         {/* 검색 버튼 */}
