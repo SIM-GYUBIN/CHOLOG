@@ -153,9 +153,9 @@ dependencies {
             <div className="text-[3rem] mb-4">🤖</div>
             <h3 className="text-xl font-semibold mb-2">AI 로그 분석</h3>
             <p className="text-gray-500 text-sm">
-              AI가 중요한 로그만 골라서 분석해주니
+              AI가 로그를 분석해주니
               <br />
-              놓치던 이슈도 놓치지 않아요.
+              어려운 로그도 쉽게 이해 할 수 있습니다.
             </p>
           </div>
 
