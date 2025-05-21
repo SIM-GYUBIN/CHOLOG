@@ -137,7 +137,8 @@ const LogPage = () => {
   const handleArchive = (reason: string) => {
     console.log("아카이빙 완료:", reason);
     setIsArchiveModalOpen(false);
-    // 필요한 후속 처리
+    // 아카이브 리스트 페이지로 리다이렉트
+    nav(`/project/${projectId}/archives`);
   };
 
   const {
@@ -501,7 +502,10 @@ const LogPage = () => {
                     </motion.div>
                   )}
                   {logDetail.event.targetSelector && (
-                    <motion.div variants={itemVariants}>
+                    <motion.div
+                      variants={itemVariants}
+                      className="bg-[var(--bg)] text-[var(--text)]"
+                    >
                       <span className="font-bold">Target: </span>
                       {logDetail.event.targetSelector}
                     </motion.div>
@@ -510,7 +514,10 @@ const LogPage = () => {
 
                 {logDetail.event.properties &&
                   Object.keys(logDetail.event.properties).length > 0 && (
-                    <motion.div variants={itemVariants}>
+                    <motion.div
+                      variants={itemVariants}
+                      className="bg-[var(--bg)] text-[var(--text)]"
+                    >
                       <div className="font-bold mb-2">Properties:</div>
                       {renderJsonObject(logDetail.event.properties)}
                     </motion.div>

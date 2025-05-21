@@ -1,42 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../store/store';
-import { fetchJiraIssueInfo, createJiraIssue } from '../store/slices/jiraSlice';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../store/store";
+import { fetchJiraIssueInfo, createJiraIssue } from "../store/slices/jiraSlice";
 
 interface JiraUser {
   userName: string;
 }
 
 // 이슈 타입 목록
-const ISSUE_TYPES = ['에픽', '스토리', '작업', '버그'];
+const ISSUE_TYPES = ["에픽", "스토리", "작업", "버그"];
 
 // 이슈 타입 매핑 (한글 -> 영어)
 const ISSUE_TYPE_MAPPING: Record<string, string> = {
-    '에픽': 'Epic',
-    '스토리': 'Story',
-    '작업': 'Task',
-    '버그': 'Bug'
-  };
+  에픽: "Epic",
+  스토리: "Story",
+  작업: "Task",
+  버그: "Bug",
+};
 
 const JiraMakingButton: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const dispatch = useDispatch<AppDispatch>();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [users, setUsers] = useState<JiraUser[]>([]);
-  const [successInfo, setSuccessInfo] = useState<{ issueKey: string; issueUrl: string } | null>(null);
-  
+  const [successInfo, setSuccessInfo] = useState<{
+    issueKey: string;
+    issueUrl: string;
+  } | null>(null);
+
   // 폼 상태 관리
-  const [summary, setSummary] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const [summary, setSummary] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [issueType, setIssueType] = useState<string>(ISSUE_TYPES[0]);
-  const [reporterName, setReporterName] = useState<string>('');
-  const [assigneeName, setAssigneeName] = useState<string>('');
+  const [reporterName, setReporterName] = useState<string>("");
+  const [assigneeName, setAssigneeName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  
+
   // jiraSlice에서 상태 가져오기
-  const { issueInfo, isLoading } = useSelector((state: RootState) => state.jira);
+  const { issueInfo, isLoading } = useSelector(
+    (state: RootState) => state.jira
+  );
 
   // 모달이 열릴 때 유저 조회 API 호출
   useEffect(() => {
@@ -53,16 +58,18 @@ const JiraMakingButton: React.FC = () => {
 
     try {
       // jiraSlice의 fetchJiraIssueInfo 액션 디스패치
-      const resultAction = await dispatch(fetchJiraIssueInfo(Number(projectId)));
-      
+      const resultAction = await dispatch(
+        fetchJiraIssueInfo(Number(projectId))
+      );
+
       // 에러 처리
       if (fetchJiraIssueInfo.rejected.match(resultAction)) {
-        setError('유저 정보를 불러오는데 실패했습니다.');
-      } else if (resultAction.payload && 'data' in resultAction.payload) {
+        setError("유저 정보를 불러오는데 실패했습니다.");
+      } else if (resultAction.payload && "data" in resultAction.payload) {
         // API 응답 구조에 맞게 사용자 데이터 처리
         const userList = resultAction.payload.data?.userNames || [];
         setUsers(userList);
-        
+
         if (userList.length > 0) {
           // 첫 번째 유저를 기본값으로 설정
           setReporterName(userList[0].userName);
@@ -70,8 +77,8 @@ const JiraMakingButton: React.FC = () => {
         }
       }
     } catch (err: any) {
-      console.error('Jira 유저 조회 중 오류:', err);
-      setError('유저 정보를 불러오는데 실패했습니다.');
+      console.error("Jira 유저 조회 중 오류:", err);
+      setError("유저 정보를 불러오는데 실패했습니다.");
     }
   };
 
@@ -83,11 +90,11 @@ const JiraMakingButton: React.FC = () => {
   // 모달 닫기 및 상태 초기화
   const closeModal = () => {
     setIsModalOpen(false);
-    setSummary('');
-    setDescription('');
+    setSummary("");
+    setDescription("");
     setIssueType(ISSUE_TYPES[0]);
-    setReporterName('');
-    setAssigneeName('');
+    setReporterName("");
+    setAssigneeName("");
     setError(null);
   };
 
@@ -95,12 +102,12 @@ const JiraMakingButton: React.FC = () => {
   const handleCreateIssue = async () => {
     // 필수 필드 검증
     if (!summary.trim()) {
-      setError('요약을 입력해주세요.');
+      setError("요약을 입력해주세요.");
       return;
     }
 
     if (!reporterName) {
-      setError('보고자를 선택해주세요.');
+      setError("보고자를 선택해주세요.");
       return;
     }
 
@@ -108,28 +115,30 @@ const JiraMakingButton: React.FC = () => {
     setError(null);
 
     try {
-      const resultAction = await dispatch(createJiraIssue({
-        projectId: Number(projectId),
-        summary,
-        description,
-        issueType: ISSUE_TYPE_MAPPING[issueType],
-        reporterName,
-        assigneeName: assigneeName || undefined
-      }));
+      const resultAction = await dispatch(
+        createJiraIssue({
+          projectId: Number(projectId),
+          summary,
+          description,
+          issueType: ISSUE_TYPE_MAPPING[issueType],
+          reporterName,
+          assigneeName: assigneeName || undefined,
+        })
+      );
 
       if (createJiraIssue.fulfilled.match(resultAction)) {
         // 성공 정보 설정
         setSuccessInfo({
           issueKey: resultAction.payload.data.issueKey,
-          issueUrl: resultAction.payload.data.issueUrl
+          issueUrl: resultAction.payload.data.issueUrl,
         });
         // 모달은 닫지 않고 성공 메시지 표시
       } else {
-        setError('이슈 생성에 실패했습니다.');
+        setError("이슈 생성에 실패했습니다.");
       }
     } catch (err: any) {
-      console.error('Jira 이슈 생성 중 오류:', err);
-      setError('이슈 생성 중 오류가 발생했습니다.');
+      console.error("Jira 이슈 생성 중 오류:", err);
+      setError("이슈 생성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -150,12 +159,24 @@ const JiraMakingButton: React.FC = () => {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-[500px] max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-[20px] font-[paperlogy6]">Jira 이슈 생성</h2>
+              <h2 className="text-[20px] font-[paperlogy6]  text-black">
+                Jira 이슈 생성
+              </h2>
               <button
                 onClick={closeModal}
                 className="p-2 rounded-full hover:bg-slate-100 transition-colors"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
@@ -165,10 +186,12 @@ const JiraMakingButton: React.FC = () => {
             {successInfo && (
               <div className="bg-lime-50 border-l-4 border-lime-500 text-lime-700 p-4 mb-4 rounded">
                 <div className="flex flex-col gap-2">
-                  <p className="text-[14px] font-semibold">이슈가 성공적으로 생성되었습니다!</p>
+                  <p className="text-[14px] font-semibold">
+                    이슈가 성공적으로 생성되었습니다!
+                  </p>
                   <div className="flex justify-center items-center gap-2 text-[12px]">
                     <span className="">이슈 키: {successInfo.issueKey}</span>
-                    <a 
+                    <a
                       href={successInfo.issueUrl}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -185,8 +208,17 @@ const JiraMakingButton: React.FC = () => {
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5 text-red-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div className="ml-3">
@@ -306,11 +338,11 @@ const JiraMakingButton: React.FC = () => {
                   disabled={isSubmitting || !summary || !reporterName}
                   className={`px-4 py-2 text-[14px] text-white rounded-lg transition-colors ${
                     isSubmitting || !summary || !reporterName
-                      ? 'bg-gray-300 cursor-not-allowed'
-                      : 'bg-lime-500 hover:bg-lime-600'
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-lime-500 hover:bg-lime-600"
                   }`}
                 >
-                  {isSubmitting ? '생성 중...' : '이슈 생성'}
+                  {isSubmitting ? "생성 중..." : "이슈 생성"}
                 </button>
               </div>
             </div>
