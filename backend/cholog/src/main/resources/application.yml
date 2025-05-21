@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: cholog
+  profiles:
+    include: secret
+    active: local
+
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true  # 페이징 1부터
