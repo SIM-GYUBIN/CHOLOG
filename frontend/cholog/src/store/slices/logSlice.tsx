@@ -48,7 +48,6 @@ export const fetchLogStats = createAsyncThunk<LogStatsResponse, number>(
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -107,7 +106,6 @@ export const fetchErrorStats = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -156,7 +154,6 @@ export const fetchErrorTimeline = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -205,7 +202,6 @@ export const fetchErrorTypeRatio = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -255,7 +251,6 @@ export const fetchErrorTrend = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -303,7 +298,6 @@ export const fetchLogs = createAsyncThunk<LogListResponse, LogListRequest>(
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -367,7 +361,6 @@ export const searchLogs = createAsyncThunk<LogSearchResponse, LogSearchRequest>(
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -429,7 +422,6 @@ export const fetchLogsByApiPath = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -482,7 +474,6 @@ export const fetchTraceLog = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -529,7 +520,6 @@ export const fetchLogDetail = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -580,7 +570,6 @@ export const archiveLog = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -637,7 +626,6 @@ export const fetchArchivedLogs = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );

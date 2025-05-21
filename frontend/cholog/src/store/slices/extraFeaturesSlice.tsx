@@ -36,7 +36,6 @@ export const updateJiraToken = createAsyncThunk<
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -83,7 +82,6 @@ export const getJiraToken = createAsyncThunk<GetJiraTokenResponse, number>(
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -132,7 +130,6 @@ export const getWebhookSetting = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -181,7 +178,6 @@ export const createWebhookSetting = createAsyncThunk<
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
@@ -231,7 +227,6 @@ export const updateWebhookSetting = createAsyncThunk<
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );

@@ -37,43 +37,6 @@ interface SaveWebhookRequest {
   };
 }
 
-// 웹훅 조회 API 요청
-// export const fetchWebhook = createAsyncThunk<
-//   WebhookResponse,
-//   FetchWebhookRequest
-// >('webhook/fetchWebhook', async (params, { rejectWithValue }) => {
-//   try {
-//     const response = await api.get<WebhookResponse>(
-//       `/api/webhook/${params.projectId}`,
-//       {
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${localStorage.getItem('token')}`,
-//         },
-//       }
-//     );
-//     return response.data;
-//   } catch (error: any) {
-//     const status = error.response?.status;
-//     let errorCode = 'INTERNAL_ERROR';
-    
-//     if (status === 400) errorCode = 'INVALID_REQUEST';
-//     else if (status === 401) errorCode = 'UNAUTHORIZED';
-
-//     return rejectWithValue({
-//       success: false,
-//       data: {
-//         exists: false
-//       },
-//       error: {
-//         code: errorCode,
-//         message: error.response?.data?.error?.message || '웹훅 설정 조회 중 오류가 발생했습니다.',
-//       },
-//       timestamp: new Date().toISOString(),
-//     } as WebhookResponse);
-//   }
-// });
-
 export const fetchWebhook = createAsyncThunk(
     'webhook/fetchWebhook',
     async (projectId: number, { rejectWithValue }) => {
@@ -99,7 +62,6 @@ export const saveWebhook = createAsyncThunk<
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       }
     );
@@ -148,7 +110,6 @@ interface UpdateWebhookRequest {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
       );

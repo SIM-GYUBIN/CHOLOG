@@ -95,7 +95,6 @@ export const userLogout = createAsyncThunk<LogoutResponse, void>(
       const response = await api.post<LogoutResponse>("/user/logout", null, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       localStorage.removeItem("token");

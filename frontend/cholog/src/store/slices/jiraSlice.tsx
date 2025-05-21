@@ -121,7 +121,6 @@ export const fetchJiraUserSettings = createAsyncThunk<JiraUserGetResponse>(
       const response = await api.get<JiraUserGetResponse>('/jira/user', {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       return response.data;
@@ -152,7 +151,6 @@ export const updateJiraUserSettings = createAsyncThunk<JiraUserCreateUpdateRespo
       const response = await api.put<JiraUserCreateUpdateResponse>('/jira/user', userSettings, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       return response.data;
@@ -184,7 +182,6 @@ export const createJiraUserSettings = createAsyncThunk<JiraUserCreateUpdateRespo
       const response = await api.post<JiraUserCreateUpdateResponse>('/jira/user', userSettings, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       return response.data;
@@ -216,7 +213,6 @@ export const fetchJiraProjectSettings = createAsyncThunk<JiraProjectResponse, nu
       const response = await api.get<JiraProjectResponse>(`/jira/project/${projectId}`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       return response.data;
@@ -253,7 +249,6 @@ export const updateJiraProjectSettings = createAsyncThunk<
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         }
       );
@@ -291,7 +286,6 @@ export const createJiraProjectSettings = createAsyncThunk<
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         }
       );
@@ -323,7 +317,6 @@ export const fetchJiraIssueInfo = createAsyncThunk<JiraIssueInfoResponse, number
       const response = await api.get<JiraIssueInfoResponse>(`/jira/issue/${projectId}`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       return response.data;
@@ -363,7 +356,6 @@ export const createJiraIssue = createAsyncThunk<JiraIssueCreateResponse, JiraIss
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         }
       );

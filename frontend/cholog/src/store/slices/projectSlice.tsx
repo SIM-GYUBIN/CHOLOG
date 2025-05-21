@@ -81,7 +81,6 @@ export const createProject = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -127,7 +126,6 @@ export const updateProject = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -218,7 +216,6 @@ export const generateProjectToken = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -264,7 +261,6 @@ export const joinProject = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -310,7 +306,6 @@ export const leaveProject = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
@@ -356,7 +351,6 @@ export const fetchProjectDetail = createAsyncThunk<
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       }
     );
