@@ -14,6 +14,7 @@ import ProjectPage from "./pages/ProjectPage";
 import LogPage from "./pages/LogPage";
 import ReportPage from "./pages/ReportPage";
 import ArchiveListPage from "./pages/ArchiveListPage";
+import GuidePage from "./pages/GuidePage";
 
 function NotFoundPage() {
   return (
@@ -41,7 +42,8 @@ function AppContent() {
     location.pathname.toLowerCase() === "/projectlist" ||
     location.pathname.toLowerCase() === "/login" ||
     location.pathname.toLowerCase() === "/" ||
-    location.pathname.toLowerCase() === "/landing";
+    location.pathname.toLowerCase() === "/landing" ||
+    location.pathname.toLowerCase() === "/guide";
 
   return (
     <div className="app">
@@ -52,6 +54,7 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/projectlist" element={<ProjectListPage />} />
+          <Route path="/guide" element={<GuidePage />} />
           <Route path="/project/:projectId" element={<ProjectPage />} />
           <Route path="/project/:projectId/log/:logId" element={<LogPage />} />
           <Route path="/report/:projectId" element={<ReportPage />} />
