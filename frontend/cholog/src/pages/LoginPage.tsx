@@ -121,7 +121,7 @@ const LoginPage: React.FC = () => {
             <form onSubmit={handleSignup} className="flex flex-col gap-4">
               {/* 닉네임 */}
               <div className="flex flex-col">
-                <label className="text-sm text-gray-700 text-left mb-0.5">
+                <label className="text-sm text-[var(--text)] text-left mb-0.5">
                   닉네임
                 </label>
                 <input
@@ -135,7 +135,7 @@ const LoginPage: React.FC = () => {
 
               {/* 이메일 */}
               <div className="flex flex-col">
-                <label className="text-sm text-gray-700 text-left mb-0.5">
+                <label className="text-sm text-[var(--text)] text-left mb-0.5">
                   이메일
                 </label>
                 <input
@@ -214,14 +214,14 @@ const LoginPage: React.FC = () => {
               placeholder="이메일"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400"
+              className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 placeholder:text-gray-500"
             />
             <input
               type="password"
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400"
+              className="caret-lime-500 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400 placeholder:text-gray-500"
             />
 
             {error?.code && (
