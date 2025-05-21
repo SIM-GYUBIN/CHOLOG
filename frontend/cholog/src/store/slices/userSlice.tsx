@@ -122,6 +122,27 @@ export const userLogout = createAsyncThunk<LogoutResponse, void>(
   }
 );
 
+//
+export const getCurrentUser = createAsyncThunk<ApiResponse, void>(
+  "user/getCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get<ApiResponse>("/user");
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue({
+        success: false,
+        data: {},
+        error: {
+          code: "UNAUTHORIZED",
+          message: "로그인이 필요합니다.",
+        },
+        timestamp: new Date().toISOString(),
+      } as ApiResponse);
+    }
+  }
+);
+
 /**
  * ==========================
  * User Slice & State 설정
@@ -134,6 +155,7 @@ const initialState: UserState = {
   error: null,
   signupSuccess: false,
   isLoggedIn: false,
+  isAuthChecked: false,
 };
 
 // userSlice 생성
@@ -208,6 +230,14 @@ const userSlice = createSlice({
       .addCase(userLogout.rejected, (state, action) => {
         state.isLoading = false;
         state.error = (action.payload as ApiResponse)?.error || null;
+      })
+      .addCase(getCurrentUser.fulfilled, (state) => {
+        state.isLoggedIn = true;
+        state.isAuthChecked = true;
+      })
+      .addCase(getCurrentUser.rejected, (state) => {
+        state.isLoggedIn = false;
+        state.isAuthChecked = true;
       });
   },
 });
