@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { AppDispatch, RootState } from "../store/store";
 import {
   fetchProjects,
@@ -13,6 +14,7 @@ import ProjectModal from "../components/ProjectList/ProjectModal";
 import { motion } from "framer-motion";
 
 const ProjectListPage = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { projects, isLoading, error } = useSelector(
     (state: RootState) => state.project
@@ -97,6 +99,15 @@ const ProjectListPage = () => {
         transition={{ delay: 0.2 }}
       >
         <img src={logo} alt="Cholog logo" className="h-12 mx-auto" />
+        <motion.button
+          onClick={() => navigate("/guide")}
+          className="mt-4 px-4 py-2 text-sm text-[var(--helpertext)] hover:text-[var(--text)] transition-colors"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+        >
+          📖 설치 가이드 보기
+        </motion.button>
       </motion.div>
 
       <motion.div
