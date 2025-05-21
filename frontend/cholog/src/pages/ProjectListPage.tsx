@@ -1,115 +1,151 @@
-import ProjectCard from '../components/projectCard';
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { AppDispatch, RootState } from "../store/store";
+import {
+  fetchProjects,
+  createProject,
+  joinProject,
+} from "../store/slices/projectSlice";
+import logo from "@/assets/logo2.svg";
+import ProjectActions from "../components/ProjectList/ProjectActions";
+import ProjectTable from "../components/ProjectList/ProjectTable";
+import ProjectModal from "../components/ProjectList/ProjectModal";
+import { motion } from "framer-motion";
 
 const ProjectListPage = () => {
-  // 임시 프로젝트 데이터
-  const recentProjects = [
-    { name: "Project name", status: "정상", lastLog: "2025.04.28" },
-    { name: "Project name", status: "정상", lastLog: "2025.04.28" },
-    { name: "Project name", status: "정상", lastLog: "2025.04.28" },
-    { name: "Project name", status: "정상", lastLog: "2025.04.28" },
-  ];
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { projects, isLoading, error } = useSelector(
+    (state: RootState) => state.project
+  );
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"add" | "join" | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const projectList = [
-    { name: "프로젝트명", projectId: "프로젝트ID", date: "방문 시간" },
-    { name: "프로젝트명", projectId: "프로젝트ID", date: "방문 시간" },
-    { name: "프로젝트명", projectId: "프로젝트ID", date: "방문 시간" },
-    { name: "프로젝트명", projectId: "프로젝트ID", date: "방문 시간" },
-    { name: "프로젝트명", projectId: "프로젝트ID", date: "방문 시간" },
-  ];
+  useEffect(() => {
+    dispatch(fetchProjects());
+  }, [dispatch]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  const filteredProjects =
+    projects?.filter(
+      (project) =>
+        project?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project?.projectToken?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+  const openModal = (type: "add" | "join") => {
+    setModalType(type);
+    setShowModal(true);
+    setInputValue("");
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalType(null);
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      if (modalType === "add") {
+        const result = await dispatch(
+          createProject({ name: inputValue, token: "" })
+        ).unwrap();
+        if (result.success) {
+          dispatch(fetchProjects());
+          alert("프로젝트가 성공적으로 생성되었습니다.");
+        }
+      } else if (modalType === "join") {
+        const result = await dispatch(
+          joinProject({ projectToken: inputValue })
+        ).unwrap();
+        if (result.success) {
+          dispatch(fetchProjects());
+          alert("프로젝트에 성공적으로 참가했습니다.");
+        }
+      }
+    } catch (error: any) {
+      alert(error.message || "작업 중 오류가 발생했습니다.");
+    }
+
+    closeModal();
+    setIsSubmitting(false);
+  };
+
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* 로고 섹션 */}
-      <div className="text-center text-32px font-paperlogy7 mb-12">CHOLOG</div>
+    <motion.div
+      className="max-w-[65vw] mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
+      <motion.div
+        className="text-center my-18"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <img src={logo} alt="Cholog logo" className="h-12 mx-auto" />
+        <motion.button
+          onClick={() => navigate("/guide")}
+          className="mt-4 px-4 py-2 text-sm text-[var(--helpertext)] hover:text-[var(--text)] transition-colors"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.25 }}
+        >
+          📖 설치 가이드 보기
+        </motion.button>
+      </motion.div>
 
-      {/* 최근 프로젝트 섹션 */}
-      <section className="mb-12">
-        <p className="text-left text-[28px] leading-tight tracking-wide font-paperlogy7 mb-6">
-          최근 프로젝트
-        </p>
-        <div className="grid grid-cols-4 gap-4">
-          {recentProjects.map((project, index) => (
-            <ProjectCard
-              key={index}
-              name={project.name}
-              status={project.status}
-              lastLog={project.lastLog}
-            />
-          ))}
-        </div>
-      </section>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <ProjectActions
+          onAdd={() => openModal("add")}
+          onJoin={() => openModal("join")}
+          onSearch={handleSearch}
+        />
+      </motion.div>
 
-      {/* ADD, JOIN 버튼 섹션 */}
-      <div className="flex justify-start gap-4 mb-8">
-        <button className="px-6 py-2 bg-white text-black border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-paperlogy5">
-          ADD
-        </button>
-        <button className="px-6 py-2 bg-white text-black border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors font-paperlogy5">
-          JOIN
-        </button>
-      </div>
+      <motion.section
+        className="mt-8"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <ProjectTable
+          projects={filteredProjects}
+          onCopy={handleCopy}
+          isLoading={isLoading}
+          error={error}
+        />
+      </motion.section>
 
-      {/* 프로젝트 리스트 섹션 */}
-      <section className="mt-8">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="w-1/3 p-4 font-paperlogy5 text-left">
-                프로젝트명
-              </th>
-              <th className="w-1/3 p-4 font-paperlogy5 text-left">
-                프로젝트 ID
-              </th>
-              <th className="w-1/4 p-4 font-paperlogy5 text-left">방문 시간</th>
-              <th className="w-12 p-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {projectList.map((project, index) => (
-              <tr key={index} className="border-b border-gray-200">
-                <td className="w-1/3 p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 bg-gray-200 rounded-full flex-shrink-0"></span>
-                    <span className="truncate">{project.name}</span>
-                  </div>
-                </td>
-                <td className="w-1/3 p-4 text-gray-600 text-left">
-                  <div className="flex items-center gap-2">
-                    <span>{project.projectId}</span>
-                    <button
-                      onClick={() => handleCopy(project.projectId)}
-                      className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 text-gray-400"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-                <td className="w-1/4 p-4 text-gray-600 text-left">
-                  {project.date}
-                </td>
-                <td className="w-12 p-4">
-                  <button className="text-gray-400 hover:text-gray-600">
-                    →
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </div>
+      <ProjectModal
+        showModal={showModal}
+        modalType={modalType}
+        inputValue={inputValue}
+        setInputValue={setInputValue}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
+    </motion.div>
   );
 };
 

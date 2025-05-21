@@ -1,3 +1,4 @@
+// React import 제거
 interface ProjectCardProps {
   name: string;
   status: string;
@@ -23,7 +24,7 @@ const ProjectCard = ({ name, status, lastLog }: ProjectCardProps) => {
         <div className="flex items-center gap-2 text-gray-600 text-14px">
           <span>상태:</span>
           <div className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span className="w-2 h-2 bg-lime-500 rounded-full"></span>
             <span>{status}</span>
           </div>
         </div>
