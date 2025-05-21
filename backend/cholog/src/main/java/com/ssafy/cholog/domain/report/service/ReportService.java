@@ -489,18 +489,34 @@ public class ReportService {
             Page page = browser.newPage();
             log.debug("Playwright 브라우저 및 새 페이지 생성 완료.");
 
-            // 네트워크 요청 및 콘솔 메시지 로깅 (setContent 전에 설정)
+//            // 페이지 내 JavaScript 오류 로깅
+//            page.onPageError((PageError pageError) -> {
+//                log.error("!!! Playwright Page JavaScript UNCAUGHT Error: {}", pageError.message());
+//                log.error("!!! Playwright Page JavaScript UNCAUGHT Error STACK: {}", pageError.stack());
+//            });
+
+            // 네트워크 요청 로깅
             page.onRequest(request -> log.debug(">> Playwright Request: {} {}", request.method(), request.url()));
             page.onResponse(response -> log.debug("<< Playwright Response: {} {} {}", response.status(), response.request().method(), response.url()));
             page.onRequestFailed(request -> {
                 String errorText = request.failure();
                 log.warn("!! Playwright Request Failed: ({} {}) Error: {}", request.method(), request.url(), errorText != null ? errorText : "N/A");
             });
+
+            // 브라우저 콘솔 메시지 로깅
             page.onConsoleMessage(msg -> {
-                log.info("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
+                // type=[log, warning, error, info, debug, etc.]
+                if ("error".equals(msg.type())) {
+                    log.error("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
+                } else if ("warning".equals(msg.type())) {
+                    log.warn("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
+                } else {
+                    log.info("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
+                }
                 // 상세 내용을 위해 args() 로깅 (필요시 주석 해제)
-                // msg.args().forEach(arg -> log.info("    BROWSER CONSOLE ARG: {}", arg.jsonValue()));
+                // msg.args().forEach(arg -> log.debug("    BROWSER CONSOLE ARG: {}", arg.jsonValue()));
             });
+            // --- 로깅 핸들러 등록 끝 ---
 
             log.debug("수정된 HTML 콘텐츠로 페이지 내용 설정 시작...");
             page.setContent(modifiedHtmlContent, new Page.SetContentOptions()
@@ -520,16 +536,16 @@ public class ReportService {
             try {
                 log.debug("웹 폰트 로딩 대기 시작 (document.fonts.ready)...");
                 page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(10000)); // 10초 타임아웃
-                log.info("모든 폰트 로딩 완료 (document.fonts.ready).");
+                log.info("모든 폰트 로딩 완료 (document.fonts.ready)."); // 이 로그는 이전에도 나왔었습니다.
             } catch (TimeoutError e) {
                 log.warn("폰트 로딩 대기 시간(10초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.");
             }
 
             // 스크린샷 저장 (PDF 생성 직전)
-            String screenshotPath = "/tmp/pdf_debug_screenshot_" + System.currentTimeMillis() + ".png"; // 저장 경로 예시
+            String screenshotPath = "/tmp/pdf_debug_screenshot_" + System.currentTimeMillis() + ".png";
             try {
                 page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)).setFullPage(true));
-                log.info("PDF 생성 직전 디버그 스크린샷 저장 완료: {}", screenshotPath);
+                log.info("PDF 생성 직전 디버그 스크린샷 저장 완료: {}", screenshotPath); // 이 로그는 이전에도 나왔었습니다.
             } catch (PlaywrightException e) {
                 log.error("스크린샷 저장 중 오류 발생: {}", e.getMessage(), e);
             }
@@ -541,20 +557,20 @@ public class ReportService {
 
             log.debug("PDF 데이터 생성 시작...");
             byte[] pdfBytes = page.pdf(pdfOptions);
-            log.info("PDF 데이터 생성 완료. PDF 크기: {} bytes", pdfBytes.length);
+            log.info("PDF 데이터 생성 완료. PDF 크기: {} bytes", pdfBytes.length); // 이 로그는 이전에도 나왔었습니다.
 
             browser.close();
             log.debug("Playwright 브라우저 종료.");
             return pdfBytes;
 
         } catch (PlaywrightException e) {
-            log.error("Playwright를 사용하여 PDF 생성 중 오류가 발생했습니다: {}", e.getMessage(), e);
+            log.error("Playwright를 사용하여 PDF 생성 중 오류가 발생했습니다 (PlaywrightException): {}", e.getMessage(), e);
             throw e;
         } catch (IllegalArgumentException e) {
-            log.error("잘못된 인자로 PDF 생성 시도: {}", e.getMessage(), e);
+            log.error("잘못된 인자로 PDF 생성 시도 (IllegalArgumentException): {}", e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            log.error("PDF 생성 중 알 수 없는 오류 발생: {}", e.getMessage(), e);
+            log.error("PDF 생성 중 알 수 없는 오류 발생 (Exception): {}", e.getMessage(), e);
             throw new PlaywrightException("Unknown error during PDF generation: " + e.getMessage(), e);
         }
     }

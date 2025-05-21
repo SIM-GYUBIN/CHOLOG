@@ -26,6 +26,7 @@ spring:
 
 logging.level:
   org.hibernate.SQL: info
+  com.ssafy.cholog.domain.report.service.ReportService: DEBUG
 
 app:
   domain:
