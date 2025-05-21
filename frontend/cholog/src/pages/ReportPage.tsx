@@ -311,7 +311,7 @@ const ReportPage: React.FC = () => {
               </div>
               <div className="bg-white/5 border border-[var(--line)] rounded-2xl p-6">
                 <h2 className="text-xl font-semibold mb-6 text-[var(--text)]">
-                  응답이 느린 API TOP 3
+                  응답이 느린 API TOP 5
                 </h2>
                 {topApis.length > 0 ? (
                   <RankingCardList
