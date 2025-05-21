@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.Margin;
 import com.microsoft.playwright.options.Media;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.microsoft.playwright.options.WaitUntilState;
@@ -576,7 +577,7 @@ public class ReportService {
 
             try {
                 log.debug("프로젝트 ID {}: 웹 폰트 로딩 대기 시작 (document.fonts.ready)...", projectId);
-                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(15000));
+                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(5000));
                 log.info("프로젝트 ID {}: 모든 폰트 로딩 완료 (document.fonts.ready).", projectId);
             } catch (TimeoutError e) {
                 log.warn("프로젝트 ID {}: 폰트 로딩 대기 시간(15초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.", projectId);
@@ -593,9 +594,8 @@ public class ReportService {
 
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
                     .setFormat("A4")
-                    .setScale(0.8)
-                    .setLandscape(true)
-                    .setPrintBackground(true);
+                    .setScale(0.5)
+                    .setLandscape(true);
             log.debug("프로젝트 ID {}: PDF 생성 옵션 설정 완료.", projectId);
 
             log.debug("프로젝트 ID {}: PDF 데이터 생성 시작...", projectId);
