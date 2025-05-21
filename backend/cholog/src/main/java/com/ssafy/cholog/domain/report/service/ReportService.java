@@ -472,23 +472,20 @@ public class ReportService {
         String effectiveBaseUrl = frontendBaseUrl;
         if (effectiveBaseUrl != null && !effectiveBaseUrl.endsWith("/")) {
             effectiveBaseUrl += "/";
-        } else if (effectiveBaseUrl == null) {
-            log.error("Frontend Base URL이 설정되지 않았습니다! HTML 내 상대 경로 리소스 로딩에 문제가 발생할 수 있습니다.");
-            // 기본값을 설정하거나 예외를 던질 수 있습니다. 여기서는 경고만 로깅합니다.
-            effectiveBaseUrl = ""; // 또는 적절한 기본값
+        } else if (effectiveBaseUrl == null || effectiveBaseUrl.trim().isEmpty()) {
+            log.error("Frontend Base URL이 설정되지 않았습니다! HTML 내 상대 경로 리소스 로딩에 문제가 발생할 수 있습니다. 기본 URL을 '/'로 사용합니다.");
+            effectiveBaseUrl = "/"; // 또는 적절한 기본값, 혹은 예외 발생
         }
 
         String modifiedHtmlContent;
-        // HTML의 <head> 태그를 찾아 그 안에 <base> 태그를 삽입 (대소문자 구분 없이 첫 번째 <head> 태그)
         if (htmlContent.toLowerCase().contains("<head>")) {
             modifiedHtmlContent = htmlContent.replaceFirst("(?i)<head>", "<head><base href=\"" + effectiveBaseUrl + "\">");
             log.debug("프로젝트 ID {}: <base href=\"{}\"> 태그가 <head> 내에 삽입되었습니다.", projectId, effectiveBaseUrl);
         } else if (htmlContent.toLowerCase().contains("<html>")){
             modifiedHtmlContent = htmlContent.replaceFirst("(?i)<html>", "<html><head><base href=\"" + effectiveBaseUrl + "\"></head>");
             log.debug("프로젝트 ID {}: <head>와 <base href=\"{}\"> 태그가 <html> 내에 삽입되었습니다.", projectId, effectiveBaseUrl);
-        }
-        else {
-            log.warn("프로젝트 ID {}: HTML 내용에 <head> 또는 <html> 태그를 찾을 수 없어 <base> 태그를 포함한 기본 구조를 맨 앞에 추가합니다. 전체 HTML 문서가 아닐 경우 문제가 발생할 수 있습니다.", projectId);
+        } else {
+            log.warn("프로젝트 ID {}: HTML 내용에 <head> 또는 <html> 태그를 찾을 수 없어 <base> 태그를 포함한 기본 구조를 맨 앞에 추가합니다.", projectId);
             modifiedHtmlContent = "<!DOCTYPE html><html><head><base href=\"" + effectiveBaseUrl + "\"></head><body>" + htmlContent + "</body></html>";
         }
 
@@ -497,11 +494,9 @@ public class ReportService {
             Page page = browser.newPage();
             log.debug("프로젝트 ID {}: Playwright 브라우저 및 새 페이지 생성 완료.", projectId);
 
-            // --- 로깅 핸들러 등록 (page.setContent() 전에!) ---
-            page.onPageError(exception -> { // 파라미터 타입을 명시하지 않음 (이전 문서 예시 참고)
+            page.onPageError(exception -> {
                 log.error("!!! 프로젝트 ID {}: Playwright Page JavaScript UNCAUGHT Exception (raw): {}", projectId, exception.toString());
             });
-
             page.onRequest(request -> log.debug(">> 프로젝트 ID {}: Playwright Request: METHOD=[{}], URL=[{}]", projectId, request.method(), request.url()));
             page.onResponse(response -> log.debug("<< 프로젝트 ID {}: Playwright Response: STATUS=[{}], METHOD=[{}], URL=[{}]", projectId, response.status(), response.request().method(), response.url()));
             page.onRequestFailed(request -> {
@@ -518,18 +513,44 @@ public class ReportService {
                     log.info("BROWSER CONSOLE (Playwright) - 프로젝트 ID {}: type=[{}], text=[{}]", projectId, msg.type(), msg.text());
                 }
             });
-            // --- 로깅 핸들러 등록 끝 ---
 
+            // 1. 먼저 빈 페이지라도 frontendBaseUrl로 이동하여 페이지의 origin을 설정합니다.
+            //    이렇게 하면 React Router가 초기 경로를 인식하는 데 도움이 될 수 있고,
+            //    localStorage 접근 시 origin 'null' 문제를 피하는 데도 도움이 될 수 있습니다.
+            //    (주의: 이 navigate 호출은 modifiedHtmlContent를 사용하는 setContent 전에 이루어져야 합니다.)
+            //    waitUntil 옵션은 필요에 따라 DOMCONTENTLOADED 또는 LOAD로 조정할 수 있습니다.
+            String initialPageLoadUrl = effectiveBaseUrl; // 기본적으로는 도메인 루트
+            // 만약 리포트 페이지가 특정 경로를 가져야 한다면 해당 경로를 포함한 URL로 navigate 할 수도 있습니다.
+            // String initialPageLoadUrl = effectiveBaseUrl + "report/" + projectId; // 예시
+            // 하지만 이 경우, 이후 setContent가 이 내용을 덮어씁니다.
+            // 따라서, 여기서는 origin 설정을 위해 도메인 루트로만 navigate 하는 것이 더 적절할 수 있습니다.
+
+            log.debug("프로젝트 ID {}: 초기 컨텍스트 설정을 위해 {} 로 navigate 시도...", projectId, initialPageLoadUrl);
+            page.navigate(initialPageLoadUrl, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+            log.info("프로젝트 ID {}: 초기 URL 컨텍스트를 {} 로 설정 완료.", projectId, initialPageLoadUrl);
+
+            // 2. 그 다음, 실제 렌더링된 HTML 콘텐츠를 페이지에 설정합니다.
+            //    <base> 태그는 modifiedHtmlContent 안에 이미 삽입되어 있으므로, 리소스 로딩에 사용됩니다.
             log.debug("프로젝트 ID {}: 수정된 HTML 콘텐츠로 페이지 내용 설정 시작...", projectId);
             page.setContent(modifiedHtmlContent, new Page.SetContentOptions()
                     .setWaitUntil(WaitUntilState.NETWORKIDLE)
             );
             log.debug("프로젝트 ID {}: HTML 콘텐츠 설정 완료.", projectId);
 
-            // `history.pushState` 관련 코드는 보안 오류를 일으켰으므로 제거된 상태입니다.
-            // 만약 "No routes matched location 'blank'" 경고가 계속 문제가 된다면,
-            // 이 시점에서 React Router가 올바른 경로를 인식하도록 다른 방법을 강구해야 합니다.
-            // (예: page.goto(frontendBaseUrl + "/report/" + projectId) 후, 필요한 부분만 evaluate로 주입 - 더 복잡함)
+
+            // 3. (선택 사항, 여전히 "No routes matched location 'blank'"가 문제라면 시도)
+            // setContent 후 React Router가 실제 의도된 경로를 인식하도록 URL을 다시 설정합니다.
+            // replaceState는 history 스택에 새 항목을 만들지 않습니다.
+            // 이 작업은 setContent 이후에 실행되어야 React 앱의 History 객체에 작용합니다.
+            String currentReportPath = "/report/" + projectId; // 프론트엔드 라우팅 경로
+            try {
+                page.evaluate(String.format("window.history.replaceState({}, '', '%s')", currentReportPath));
+                log.info("프로젝트 ID {}: 페이지 URL을 '{}'로 변경 시도 (replaceState, after setContent).", projectId, currentReportPath);
+            } catch (PlaywrightException e) {
+                // 이 오류는 'null' origin에서 발생할 수 있으므로, 경고로만 처리하고 계속 진행합니다.
+                log.warn("프로젝트 ID {}: window.history.replaceState 실행 중 오류 발생 (무시하고 진행): {}", projectId, e.getMessage());
+            }
+
 
             page.setViewportSize(1200, 800);
             log.debug("프로젝트 ID {}: 뷰포트 크기 설정 완료: 1200x800", projectId);
@@ -537,45 +558,32 @@ public class ReportService {
             page.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.SCREEN));
             log.debug("프로젝트 ID {}: 스크린 미디어 타입으로 에뮬레이트 완료.", projectId);
 
-            // 라이트 모드로 강제하기 위해 'dark' 클래스 추가 로직은 주석 처리 또는 제거합니다.
-            // page.evaluate("document.documentElement.classList.add('dark')");
-            // log.debug("프로젝트 ID {}: 다크 모드 클래스('dark') 적용 (주석 처리됨).", projectId);
+            // 라이트 모드로 강제 (dark 클래스 추가 안 함)
+            log.debug("프로젝트 ID {}: 라이트 모드로 PDF 생성 (dark 클래스 미적용).", projectId);
 
-            // --- React Router가 경로를 인식하고 렌더링할 시간 확보 ---
-            // 1. 페이지의 URL을 React Router가 사용하는 실제 경로로 설정 (pushState 대신 replaceState 사용 시도)
-            //    이것이 실패할 수도 있지만, 이전 pushState 오류와 다른지 확인
-            String currentReportPath = "/report/" + projectId; // 예시 경로, 실제 경로 확인 필요
-            try {
-                page.evaluate(String.format("window.history.replaceState({}, '', '%s')", currentReportPath));
-                log.info("프로젝트 ID {}: 페이지 URL을 '{}'로 변경 시도 (replaceState).", projectId, currentReportPath);
-            } catch (PlaywrightException e) {
-                log.warn("프로젝트 ID {}: window.history.replaceState 실행 중 오류 발생 (무시하고 진행): {}", projectId, e.getMessage());
-            }
 
-            // 2. 특정 핵심 콘텐츠 영역이 나타날 때까지 명시적으로 대기
-            //    ReportPage.tsx에서 실제 콘텐츠를 감싸는 최상위 div에 ID를 부여했다고 가정 (예: id="report-content-area")
-            String reportContentSelector = "#report-main-flex-container";
+            // 4. 실제 콘텐츠가 렌더링될 때까지 대기 (CSS 선택자 사용)
+            //    ReportPage.tsx에서 실제 리포트 내용을 감싸는 div에 id="actual-report-content"를 추가했다고 가정합니다.
+            String reportContentSelector = "#actual-report-content"; // 실제 사용하는 ID로 변경!
             try {
-                log.debug("프로젝트 ID {}: '{}' 선택자가 나타날 때까지 대기 시작 (최대 10초)...", projectId, reportContentSelector);
-                page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(10000)); // 10초 타임아웃
+                log.debug("프로젝트 ID {}: '{}' 선택자가 나타날 때까지 대기 시작 (최대 15초)...", projectId, reportContentSelector);
+                page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(15000));
                 log.info("프로젝트 ID {}: '{}' 선택자 감지 완료. 페이지 콘텐츠 렌더링된 것으로 간주.", projectId, reportContentSelector);
             } catch (TimeoutError e) {
-                log.warn("프로젝트 ID {}: '{}' 선택자 대기 시간(10초) 초과. 페이지 주요 콘텐츠가 렌더링되지 않았을 수 있습니다.", projectId, reportContentSelector);
-                // 이 경우 스크린샷은 여전히 비어있을 수 있습니다.
+                log.warn("프로젝트 ID {}: '{}' 선택자 대기 시간(15초) 초과. 페이지 주요 콘텐츠가 렌더링되지 않았을 수 있습니다.", projectId, reportContentSelector);
             }
-            // --- React Router 렌더링 대기 끝 ---
+
 
             try {
                 log.debug("프로젝트 ID {}: 웹 폰트 로딩 대기 시작 (document.fonts.ready)...", projectId);
-                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(15000)); // 타임아웃 15초로 늘림
+                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(15000));
                 log.info("프로젝트 ID {}: 모든 폰트 로딩 완료 (document.fonts.ready).", projectId);
             } catch (TimeoutError e) {
                 log.warn("프로젝트 ID {}: 폰트 로딩 대기 시간(15초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.", projectId);
             }
 
-            // 스크린샷 저장 (PDF 생성 직전)
             String screenshotFilename = "pdf_debug_screenshot_project_" + projectId + "_" + System.currentTimeMillis() + ".png";
-            String screenshotPath = "/tmp/" + screenshotFilename; // 저장 경로 예시
+            String screenshotPath = "/tmp/" + screenshotFilename;
             try {
                 page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)).setFullPage(true));
                 log.info("프로젝트 ID {}: PDF 생성 직전 디버그 스크린샷 저장 완료: {}", projectId, screenshotPath);
