@@ -3,9 +3,6 @@
 # Spring Boot 프로젝트의 Playwright Java 라이브러리 버전도 1.51.0으로 맞춰주세요.
 FROM mcr.microsoft.com/playwright/java:v1.51.0-jammy
 
-# (선택 사항) 애플리케이션 작업 디렉토리 설정
-WORKDIR /app
-
 # (선택 사항) 한글 폰트가 기본 이미지에 충분하지 않다고 판단되면 추가 설치
 # Playwright 기본 이미지에도 다양한 폰트가 포함되어 있을 수 있으므로, 먼저 테스트 후 필요시 추가하세요.
 # RUN apt-get update && \
