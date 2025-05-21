@@ -473,7 +473,8 @@ public class LogService {
                     DateHistogramAggregate dateHistogram = elcAggregate.dateHistogram();
                     for (DateHistogramBucket bucket : dateHistogram.buckets().array()) {
                         long epochMillis = bucket.key();
-                        LocalDateTime bucketTimestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC);
+//                        LocalDateTime bucketTimestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneOffset.UTC);
+                        LocalDateTime bucketTimestamp = LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneId.of("Asia/Seoul"));
                         Integer logCount = (int) bucket.docCount();
 
                         timelineResponses.add(LogTimelineResponse.builder()
