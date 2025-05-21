@@ -33,6 +33,7 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Paths;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -533,6 +534,14 @@ public class ReportService {
                     .setFormat("A4")
                     .setPrintBackground(true);
             log.debug("PDF 생성 옵션 설정 완료.");
+
+            String screenshotPath = "debug_before_pdf_" + System.currentTimeMillis() + ".png"; // 파일명 중복 방지
+            try {
+                page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)).setFullPage(true));
+                log.info("PDF 생성 직전 디버그 스크린샷 저장 완료: {}", screenshotPath);
+            } catch (PlaywrightException e) {
+                log.error("스크린샷 저장 중 오류 발생: {}", e.getMessage(), e);
+            }
 
             log.debug("PDF 데이터 생성 시작...");
             byte[] pdfBytes = page.pdf(pdfOptions);
