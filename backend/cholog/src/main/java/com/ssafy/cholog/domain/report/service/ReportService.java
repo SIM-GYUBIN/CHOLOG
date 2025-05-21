@@ -525,6 +525,11 @@ public class ReportService {
             );
             log.debug("HTML 콘텐츠 설정 완료.");
 
+            // page.setContent(...) 호출 후
+            String initialPath = "/report/" + "siba"; // 예시: 실제 리포트 페이지 경로로 설정
+            page.evaluate(String.format("window.history.pushState({}, '', '%s')", initialPath));
+            log.debug("페이지 경로를 {}로 설정했습니다.", initialPath);
+
             page.setViewportSize(1200, 800);
             log.debug("뷰포트 크기 설정 완료: 1200x800");
 
