@@ -119,7 +119,7 @@ dependencies {
             code={`cholog:
   logger:
     api-key: YOUR_API_KEY
-  cors-enabled: true`}
+    cors-enabled: true`}
           />
           <p className="text-sm text-gray-500 mt-2">
             ※ <code>url</code>은 로그 수신 서버, <code>api-key</code>는 사용자
