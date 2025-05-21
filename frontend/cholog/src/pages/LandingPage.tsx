@@ -105,7 +105,7 @@ Cholog.init({
 }
 
 dependencies {
-  implementation 'com.ssafy.lab.s12-final:S12P31B207:LATEST_VERSION'
+  implementation 'com.ssafy.lab.s12-final:S12P31B207:v1.1.0'
 }`}
           />
         </div>
