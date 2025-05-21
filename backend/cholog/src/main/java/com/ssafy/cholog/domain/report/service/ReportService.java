@@ -17,6 +17,7 @@ import com.ssafy.cholog.domain.report.dto.request.ReportRequest;
 import com.ssafy.cholog.domain.report.dto.response.ReportResponse;
 import com.ssafy.cholog.global.exception.CustomException;
 import com.ssafy.cholog.global.exception.code.ErrorCode;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -435,6 +436,25 @@ public class ReportService {
         return String.format("%s ~ %s", startDateStr, endDateStr);
     }
 
+    @PostConstruct
+    public void initializePlaywrightAndBrowsers() {
+        log.info("Playwright 초기화 및 브라우저 자동 다운로드/확인 프로세스를 시작합니다...");
+
+        try (Playwright playwright = Playwright.create()) {
+            log.info("Chromium 브라우저 상태를 확인하고 필요시 다운로드합니다.");
+            BrowserType chromium = playwright.chromium();
+            Browser browser = chromium.launch(new BrowserType.LaunchOptions().setHeadless(true));
+            log.info("Chromium 브라우저가 성공적으로 실행되었습니다. 버전: {}", browser.version());
+            browser.close();
+            log.info("Chromium 브라우저 준비가 완료되었습니다.");
+            log.info("Playwright 브라우저 초기화가 성공적으로 완료되었습니다.");
+        } catch (PlaywrightException e) {
+            log.error("애플리케이션 시작 중 Playwright 초기화 또는 브라우저 다운로드에 실패했습니다: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Playwright 초기화 중 알 수 없는 오류 발생: {}", e.getMessage(), e);
+        }
+    }
+
     /**
      * 제공된 HTML 콘텐츠를 사용하여 PDF를 생성합니다.
      * @param htmlContent PDF로 변환할 전체 HTML 문자열
@@ -448,32 +468,24 @@ public class ReportService {
         }
 
         try (Playwright playwright = Playwright.create()) {
-            // Chromium 브라우저 실행 (다른 브라우저도 선택 가능: playwright.firefox(), playwright.webkit())
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
                             .setHeadless(true) // 백그라운드에서 실행
-                    // 일부 Docker 또는 Linux 환경에서는 sandbox 옵션이 필요할 수 있습니다.
-                    // .setArgs(java.util.Arrays.asList("--no-sandbox", "--disable-setuid-sandbox"))
             );
             Page page = browser.newPage();
 
-            // HTML 콘텐츠 설정.
-            // baseURL은 HTML 내의 상대 경로(CSS, 이미지, 폰트 등)를 해석하는 기준이 됩니다.
-            // 이 값을 프론트엔드 애플리케이션의 실제 주소로 설정하는 것이 중요합니다.
             page.setContent(htmlContent, new Page.SetContentOptions()
                     .setWaitUntil(WaitUntilState.NETWORKIDLE)
             );
 
-            // 뷰포트 크기 설정 (일관된 PDF 출력을 위해 권장)
-            page.setViewportSize(1200, 800); // 필요에 따라 페이지 콘텐츠에 맞게 조절
+            page.setViewportSize(1200, 800);
 
-            // PDF 생성 옵션 설정
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
                     .setFormat("A4") // 용지 크기
                     .setPrintBackground(true); // 배경 그래픽(색상, 이미지 등) 인쇄 여부
 
             byte[] pdfBytes = page.pdf(pdfOptions);
 
-            browser.close(); // 브라우저 종료 (리소스 해제)
+            browser.close();
             return pdfBytes;
 
         } catch (PlaywrightException e) {
