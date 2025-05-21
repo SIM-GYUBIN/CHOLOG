@@ -467,31 +467,22 @@ public class ReportService {
 
         log.info("Playwright를 사용하여 PDF 생성을 시작합니다. Frontend Base URL: {}", frontendBaseUrl);
 
-        // --- <base> 태그 삽입을 위한 수정 ---
         String effectiveBaseUrl = frontendBaseUrl;
-        if (!effectiveBaseUrl.endsWith("/")) { // baseURL이 슬래시로 끝나도록 보장
+        if (!effectiveBaseUrl.endsWith("/")) {
             effectiveBaseUrl += "/";
         }
 
         String modifiedHtmlContent;
-        // HTML의 <head> 태그를 찾아 그 안에 <base> 태그를 삽입합니다.
-        // 정규식을 사용하여 대소문자 구분 없이 <head> 태그를 찾습니다.
         if (htmlContent.toLowerCase().contains("<head>")) {
             modifiedHtmlContent = htmlContent.replaceFirst("(?i)<head>", "<head><base href=\"" + effectiveBaseUrl + "\">");
             log.debug("<base> 태그가 <head> 내에 삽입되었습니다.");
         } else if (htmlContent.toLowerCase().contains("<html>")){
-            // <head>는 없지만 <html> 태그가 있는 경우, <head>와 <base>를 함께 삽입 시도
             modifiedHtmlContent = htmlContent.replaceFirst("(?i)<html>", "<html><head><base href=\"" + effectiveBaseUrl + "\"></head>");
             log.debug("<head>와 <base> 태그가 <html> 내에 삽입되었습니다.");
-        }
-        else {
-            // <head> 태그가 없는 경우 (예: HTML 조각), <base> 태그를 맨 앞에 추가합니다.
-            // 이 경우 CSS나 다른 리소스가 제대로 로드되지 않을 수 있으므로 주의가 필요합니다.
+        } else {
             log.warn("HTML 내용에 <head> 태그를 찾을 수 없어 <base> 태그를 맨 앞에 추가합니다. 전체 HTML 문서가 아닐 경우 문제가 발생할 수 있습니다.");
             modifiedHtmlContent = "<!DOCTYPE html><html><head><base href=\"" + effectiveBaseUrl + "\"></head><body>" + htmlContent + "</body></html>";
         }
-        // --- <base> 태그 삽입 끝 ---
-
 
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
@@ -503,13 +494,17 @@ public class ReportService {
             page.onResponse(response -> log.debug("<< Playwright Response: {} {} {}", response.status(), response.request().method(), response.url()));
             page.onRequestFailed(request -> {
                 String errorText = request.failure();
-                log.warn("!! Playwright Request Failed: ({} {}) Error: {}", request.method(), request.url(), errorText);
+                log.warn("!! Playwright Request Failed: ({} {}) Error: {}", request.method(), request.url(), errorText != null ? errorText : "N/A");
             });
-            page.onConsoleMessage(msg -> log.info("BROWSER CONSOLE (Playwright): [{}] {}", msg.type(), msg.text()));
+            page.onConsoleMessage(msg -> {
+                log.info("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
+                // 상세 내용을 위해 args() 로깅 (필요시 주석 해제)
+                // msg.args().forEach(arg -> log.info("    BROWSER CONSOLE ARG: {}", arg.jsonValue()));
+            });
 
             log.debug("수정된 HTML 콘텐츠로 페이지 내용 설정 시작...");
             page.setContent(modifiedHtmlContent, new Page.SetContentOptions()
-                            .setWaitUntil(WaitUntilState.NETWORKIDLE)
+                    .setWaitUntil(WaitUntilState.NETWORKIDLE)
             );
             log.debug("HTML 콘텐츠 설정 완료.");
 
@@ -526,22 +521,23 @@ public class ReportService {
                 log.debug("웹 폰트 로딩 대기 시작 (document.fonts.ready)...");
                 page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(10000)); // 10초 타임아웃
                 log.info("모든 폰트 로딩 완료 (document.fonts.ready).");
-            } catch (TimeoutError e) { // com.microsoft.playwright.TimeoutError 임포트 필요
+            } catch (TimeoutError e) {
                 log.warn("폰트 로딩 대기 시간(10초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.");
             }
 
-            Page.PdfOptions pdfOptions = new Page.PdfOptions()
-                    .setFormat("A4")
-                    .setPrintBackground(true);
-            log.debug("PDF 생성 옵션 설정 완료.");
-
-            String screenshotPath = "debug_before_pdf_" + System.currentTimeMillis() + ".png"; // 파일명 중복 방지
+            // 스크린샷 저장 (PDF 생성 직전)
+            String screenshotPath = "/tmp/pdf_debug_screenshot_" + System.currentTimeMillis() + ".png"; // 저장 경로 예시
             try {
                 page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)).setFullPage(true));
                 log.info("PDF 생성 직전 디버그 스크린샷 저장 완료: {}", screenshotPath);
             } catch (PlaywrightException e) {
                 log.error("스크린샷 저장 중 오류 발생: {}", e.getMessage(), e);
             }
+
+            Page.PdfOptions pdfOptions = new Page.PdfOptions()
+                    .setFormat("A4")
+                    .setPrintBackground(true);
+            log.debug("PDF 생성 옵션 설정 완료.");
 
             log.debug("PDF 데이터 생성 시작...");
             byte[] pdfBytes = page.pdf(pdfOptions);
@@ -554,7 +550,7 @@ public class ReportService {
         } catch (PlaywrightException e) {
             log.error("Playwright를 사용하여 PDF 생성 중 오류가 발생했습니다: {}", e.getMessage(), e);
             throw e;
-        } catch (IllegalArgumentException e) { // htmlContent가 비어있을 때의 예외는 이미 위에서 처리됨
+        } catch (IllegalArgumentException e) {
             log.error("잘못된 인자로 PDF 생성 시도: {}", e.getMessage(), e);
             throw e;
         } catch (Exception e) {
