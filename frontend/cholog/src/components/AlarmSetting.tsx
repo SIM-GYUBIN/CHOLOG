@@ -15,6 +15,7 @@ import JiraGuideModal from "./JiraGuideModal";
 import { useParams } from "react-router-dom";
 import domainhelpimg from "@/assets/jiraimg/domain_projectkey.png";
 import useremailhelpimg from "@/assets/jiraimg/user email.png";
+import { motion, AnimatePresence } from "framer-motion"; // framer-motion 추가
 
 interface AlarmSettingProps {
   isOpen: boolean;
@@ -39,6 +40,9 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const { projectId } = useParams<{ projectId: string }>();
 
+
+
+  
   // exists 값에 따라 초기값 설정
   const [mmURL, setMmURL] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -62,6 +66,9 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
   const [jiraProjectExists, setJiraProjectExists] = useState(false);
   const [jiraLoading, setJiraLoading] = useState(false);
   const [jiraError, setJiraError] = useState("");
+  
+  // 성공 메시지 상태 추가
+  const [jiraSuccessInfo, setJiraSuccessInfo] = useState<string | null>(null);
 
   const [isDomainHelpModalOpen, setIsDomainHelpModalOpen] =
     useState<boolean>(false);
@@ -96,6 +103,21 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
 
   // Jira 상태 가져오기
   const jira = useSelector((state: any) => state.jira);
+
+
+
+// 성공 메시지 설정 시 타이머 설정
+useEffect(() => {
+  if (jiraSuccessInfo) {
+    const timer = setTimeout(() => {
+      setJiraSuccessInfo(null);
+    }, 1500); // 1.5초 후 메시지 사라짐
+    
+    return () => clearTimeout(timer);
+  }
+}, [jiraSuccessInfo]);
+
+
 
   // Jira 프로젝트 설정 로드
   useEffect(() => {
@@ -316,6 +338,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
 
     setIsSubmitting(true);
     setJiraError("");
+    setJiraSuccessInfo(null); // 성공 메시지 초기화
 
     try {
       // 사용자 설정 데이터 준비
@@ -337,6 +360,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
         ).unwrap();
         console.log("Jira 개인 설정 수정 응답:", updateResponse);
         console.log("Jira 개인 설정이 성공적으로 수정되었습니다.");
+        setJiraSuccessInfo("Jira 개인 설정이 성공적으로 수정되었습니다!"); // 성공 메시지 설정
       } else {
         // 설정이 존재하지 않으면 새로 생성
         const createResponse = await dispatch(
@@ -345,6 +369,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
         console.log("Jira 개인 설정 등록 응답:", createResponse);
         console.log("Jira 개인 설정이 성공적으로 등록되었습니다.");
         setJiraUserExists(true);
+        setJiraSuccessInfo("Jira 개인 설정이 성공적으로 등록되었습니다!"); // 성공 메시지 설정
       }
     } catch (error: any) {
       console.error("Jira 개인 설정 저장 중 오류가 발생했습니다:", error);
@@ -360,6 +385,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
 
     setIsSubmitting(true);
     setJiraError("");
+    setJiraSuccessInfo(null); // 성공 메시지 초기화
 
     try {
       const jiraProjectData = {
@@ -376,6 +402,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
           })
         ).unwrap();
         console.log("Jira 프로젝트 설정이 성공적으로 수정되었습니다.");
+        setJiraSuccessInfo("Jira 프로젝트 설정이 성공적으로 수정되었습니다!"); // 성공 메시지 설정
       } else {
         await dispatch(
           createJiraProjectSettings({
@@ -385,6 +412,7 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
         ).unwrap();
         console.log("Jira 프로젝트 설정이 성공적으로 등록되었습니다.");
         setJiraProjectExists(true);
+        setJiraSuccessInfo("Jira 프로젝트 설정이 성공적으로 등록되었습니다!"); // 성공 메시지 설정
       }
     } catch (error: any) {
       console.error("Jira 프로젝트 설정 저장 중 오류가 발생했습니다:", error);
@@ -555,12 +583,34 @@ const AlarmSetting: React.FC<AlarmSettingProps> = ({
             </>
           ) : (
             <>
-              <div className="text-[18px] font-[paperlogy6] mb-4">
-                Jira 연동
-              </div>
-
-              {/* Jira 탭 내부 네비게이션 */}
-              <div className="flex border-b border-slate-200 mb-4">
+              <div className="text-[18px] font-[paperlogy6] mb-4">Jira 연동</div>
+              
+              {/* 성공 메시지 표시 부분 */}
+              <AnimatePresence>
+                {jiraSuccessInfo && (
+                  <motion.div
+                    className="bg-lime-50 border-l-4 border-lime-500 text-lime-700 p-4 mb-4 rounded"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex flex-col gap-2">
+                      <p className="text-[14px] font-semibold">{jiraSuccessInfo}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* 에러 메시지 표시 */}
+              {jiraError && (
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+                  <p className="text-[14px]">{jiraError}</p>
+                </div>
+              )}
+              
+              {/* 탭 메뉴 */}
+              <div className="flex border-b border-[var(--line)] mb-6">
                 <button
                   onClick={() => setJiraActiveSection("personal")}
                   className={`py-2 px-4 text-[14px] ${
