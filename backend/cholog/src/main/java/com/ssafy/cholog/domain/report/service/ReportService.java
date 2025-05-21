@@ -455,124 +455,131 @@ public class ReportService {
     /**
      * 제공된 HTML 콘텐츠를 사용하여 PDF를 생성합니다.
      * @param htmlContent PDF로 변환할 전체 HTML 문자열
+     * @param projectId 현재 컨텍스트의 프로젝트 ID (로그나 파일명 등에 사용 가능)
      * @return 생성된 PDF의 byte 배열
      * @throws PlaywrightException PDF 생성 중 Playwright 관련 오류 발생 시
      * @throws IllegalArgumentException htmlContent가 null이거나 비어있을 경우
      */
-    public byte[] generatePdfFromHtml(String htmlContent) throws PlaywrightException, IllegalArgumentException {
+    public byte[] generatePdfFromHtml(String htmlContent, Integer projectId) throws PlaywrightException, IllegalArgumentException {
         if (htmlContent == null || htmlContent.trim().isEmpty()) {
-            log.warn("PDF 생성을 위한 HTML 내용이 비어있거나 null입니다.");
+            log.warn("PDF 생성을 위한 HTML 내용이 비어있거나 null입니다. 프로젝트 ID: {}", projectId);
             throw new IllegalArgumentException("HTML content cannot be null or empty for PDF generation.");
         }
 
-        log.info("Playwright를 사용하여 PDF 생성을 시작합니다. Frontend Base URL: {}", frontendBaseUrl);
+        log.info("Playwright를 사용하여 PDF 생성을 시작합니다. 프로젝트 ID: {}, Frontend Base URL: {}", projectId, frontendBaseUrl);
 
         String effectiveBaseUrl = frontendBaseUrl;
-        if (!effectiveBaseUrl.endsWith("/")) {
+        if (effectiveBaseUrl != null && !effectiveBaseUrl.endsWith("/")) {
             effectiveBaseUrl += "/";
+        } else if (effectiveBaseUrl == null) {
+            log.error("Frontend Base URL이 설정되지 않았습니다! HTML 내 상대 경로 리소스 로딩에 문제가 발생할 수 있습니다.");
+            // 기본값을 설정하거나 예외를 던질 수 있습니다. 여기서는 경고만 로깅합니다.
+            effectiveBaseUrl = ""; // 또는 적절한 기본값
         }
 
         String modifiedHtmlContent;
+        // HTML의 <head> 태그를 찾아 그 안에 <base> 태그를 삽입 (대소문자 구분 없이 첫 번째 <head> 태그)
         if (htmlContent.toLowerCase().contains("<head>")) {
             modifiedHtmlContent = htmlContent.replaceFirst("(?i)<head>", "<head><base href=\"" + effectiveBaseUrl + "\">");
-            log.debug("<base> 태그가 <head> 내에 삽입되었습니다.");
+            log.debug("프로젝트 ID {}: <base href=\"{}\"> 태그가 <head> 내에 삽입되었습니다.", projectId, effectiveBaseUrl);
         } else if (htmlContent.toLowerCase().contains("<html>")){
             modifiedHtmlContent = htmlContent.replaceFirst("(?i)<html>", "<html><head><base href=\"" + effectiveBaseUrl + "\"></head>");
-            log.debug("<head>와 <base> 태그가 <html> 내에 삽입되었습니다.");
-        } else {
-            log.warn("HTML 내용에 <head> 태그를 찾을 수 없어 <base> 태그를 맨 앞에 추가합니다. 전체 HTML 문서가 아닐 경우 문제가 발생할 수 있습니다.");
+            log.debug("프로젝트 ID {}: <head>와 <base href=\"{}\"> 태그가 <html> 내에 삽입되었습니다.", projectId, effectiveBaseUrl);
+        }
+        else {
+            log.warn("프로젝트 ID {}: HTML 내용에 <head> 또는 <html> 태그를 찾을 수 없어 <base> 태그를 포함한 기본 구조를 맨 앞에 추가합니다. 전체 HTML 문서가 아닐 경우 문제가 발생할 수 있습니다.", projectId);
             modifiedHtmlContent = "<!DOCTYPE html><html><head><base href=\"" + effectiveBaseUrl + "\"></head><body>" + htmlContent + "</body></html>";
         }
 
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
             Page page = browser.newPage();
-            log.debug("Playwright 브라우저 및 새 페이지 생성 완료.");
+            log.debug("프로젝트 ID {}: Playwright 브라우저 및 새 페이지 생성 완료.", projectId);
 
-            // --- 로깅 핸들러 등록 (page.onPageError 수정) ---
-            // 페이지 내 JavaScript 오류 로깅 (문서 예시 스타일)
-            page.onPageError(exception -> { // 파라미터 타입을 명시하지 않고 'exception'으로 받음
-                // 'exception' 객체가 어떤 타입인지, 어떤 정보를 담고 있는지 확인하기 위해 toString() 또는 getClass().getName() 로깅
-                log.error("!!! Playwright Page JavaScript UNCAUGHT Exception (raw): {}", exception.toString());
+            // --- 로깅 핸들러 등록 (page.setContent() 전에!) ---
+            page.onPageError(exception -> { // 파라미터 타입을 명시하지 않음 (이전 문서 예시 참고)
+                log.error("!!! 프로젝트 ID {}: Playwright Page JavaScript UNCAUGHT Exception (raw): {}", projectId, exception.toString());
             });
 
-            // 네트워크 요청 로깅
-            page.onRequest(request -> log.debug(">> Playwright Request: {} {}", request.method(), request.url()));
-            page.onResponse(response -> log.debug("<< Playwright Response: {} {} {}", response.status(), response.request().method(), response.url()));
+            page.onRequest(request -> log.debug(">> 프로젝트 ID {}: Playwright Request: METHOD=[{}], URL=[{}]", projectId, request.method(), request.url()));
+            page.onResponse(response -> log.debug("<< 프로젝트 ID {}: Playwright Response: STATUS=[{}], METHOD=[{}], URL=[{}]", projectId, response.status(), response.request().method(), response.url()));
             page.onRequestFailed(request -> {
                 String errorText = request.failure();
-                log.warn("!! Playwright Request Failed: ({} {}) Error: {}", request.method(), request.url(), errorText != null ? errorText : "N/A");
+                log.warn("!! 프로젝트 ID {}: Playwright Request Failed: METHOD=[{}], URL=[{}], Error=[{}]", projectId, request.method(), request.url(), errorText != null ? errorText : "N/A");
             });
-
-            // 브라우저 콘솔 메시지 로깅
             page.onConsoleMessage(msg -> {
-                // type=[log, warning, error, info, debug, etc.]
-                if ("error".equals(msg.type())) {
-                    log.error("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
-                } else if ("warning".equals(msg.type())) {
-                    log.warn("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
+                String logType = msg.type().toLowerCase();
+                if ("error".equals(logType)) {
+                    log.error("BROWSER CONSOLE (Playwright) - 프로젝트 ID {}: type=[{}], text=[{}]", projectId, msg.type(), msg.text());
+                } else if ("warning".equals(logType)) {
+                    log.warn("BROWSER CONSOLE (Playwright) - 프로젝트 ID {}: type=[{}], text=[{}]", projectId, msg.type(), msg.text());
                 } else {
-                    log.info("BROWSER CONSOLE (Playwright): type=[{}], text=[{}]", msg.type(), msg.text());
+                    log.info("BROWSER CONSOLE (Playwright) - 프로젝트 ID {}: type=[{}], text=[{}]", projectId, msg.type(), msg.text());
                 }
-                // 상세 내용을 위해 args() 로깅 (필요시 주석 해제)
-                // msg.args().forEach(arg -> log.debug("    BROWSER CONSOLE ARG: {}", arg.jsonValue()));
             });
             // --- 로깅 핸들러 등록 끝 ---
 
-            log.debug("수정된 HTML 콘텐츠로 페이지 내용 설정 시작...");
+            log.debug("프로젝트 ID {}: 수정된 HTML 콘텐츠로 페이지 내용 설정 시작...", projectId);
             page.setContent(modifiedHtmlContent, new Page.SetContentOptions()
                     .setWaitUntil(WaitUntilState.NETWORKIDLE)
             );
-            log.debug("HTML 콘텐츠 설정 완료.");
+            log.debug("프로젝트 ID {}: HTML 콘텐츠 설정 완료.", projectId);
+
+            // `history.pushState` 관련 코드는 보안 오류를 일으켰으므로 제거된 상태입니다.
+            // 만약 "No routes matched location 'blank'" 경고가 계속 문제가 된다면,
+            // 이 시점에서 React Router가 올바른 경로를 인식하도록 다른 방법을 강구해야 합니다.
+            // (예: page.goto(frontendBaseUrl + "/report/" + projectId) 후, 필요한 부분만 evaluate로 주입 - 더 복잡함)
 
             page.setViewportSize(1200, 800);
-            log.debug("뷰포트 크기 설정 완료: 1200x800");
+            log.debug("프로젝트 ID {}: 뷰포트 크기 설정 완료: 1200x800", projectId);
 
             page.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.SCREEN));
-            log.debug("스크린 미디어 타입으로 에뮬레이트 완료.");
+            log.debug("프로젝트 ID {}: 스크린 미디어 타입으로 에뮬레이트 완료.", projectId);
 
-            page.evaluate("document.documentElement.classList.add('dark')");
-            log.debug("다크 모드 클래스('dark') 적용 완료.");
+            // 라이트 모드로 강제하기 위해 'dark' 클래스 추가 로직은 주석 처리 또는 제거합니다.
+            // page.evaluate("document.documentElement.classList.add('dark')");
+            // log.debug("프로젝트 ID {}: 다크 모드 클래스('dark') 적용 (주석 처리됨).", projectId);
 
             try {
-                log.debug("웹 폰트 로딩 대기 시작 (document.fonts.ready)...");
-                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(10000)); // 10초 타임아웃
-                log.info("모든 폰트 로딩 완료 (document.fonts.ready)."); // 이 로그는 이전에도 나왔었습니다.
+                log.debug("프로젝트 ID {}: 웹 폰트 로딩 대기 시작 (document.fonts.ready)...", projectId);
+                page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(15000)); // 타임아웃 15초로 늘림
+                log.info("프로젝트 ID {}: 모든 폰트 로딩 완료 (document.fonts.ready).", projectId);
             } catch (TimeoutError e) {
-                log.warn("폰트 로딩 대기 시간(10초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.");
+                log.warn("프로젝트 ID {}: 폰트 로딩 대기 시간(15초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.", projectId);
             }
 
             // 스크린샷 저장 (PDF 생성 직전)
-            String screenshotPath = "/tmp/pdf_debug_screenshot_" + System.currentTimeMillis() + ".png";
+            String screenshotFilename = "pdf_debug_screenshot_project_" + projectId + "_" + System.currentTimeMillis() + ".png";
+            String screenshotPath = "/tmp/" + screenshotFilename; // 저장 경로 예시
             try {
                 page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get(screenshotPath)).setFullPage(true));
-                log.info("PDF 생성 직전 디버그 스크린샷 저장 완료: {}", screenshotPath); // 이 로그는 이전에도 나왔었습니다.
+                log.info("프로젝트 ID {}: PDF 생성 직전 디버그 스크린샷 저장 완료: {}", projectId, screenshotPath);
             } catch (PlaywrightException e) {
-                log.error("스크린샷 저장 중 오류 발생: {}", e.getMessage(), e);
+                log.error("프로젝트 ID {}: 스크린샷 저장 중 오류 발생: {}", projectId, e.getMessage(), e);
             }
 
             Page.PdfOptions pdfOptions = new Page.PdfOptions()
                     .setFormat("A4")
                     .setPrintBackground(true);
-            log.debug("PDF 생성 옵션 설정 완료.");
+            log.debug("프로젝트 ID {}: PDF 생성 옵션 설정 완료.", projectId);
 
-            log.debug("PDF 데이터 생성 시작...");
+            log.debug("프로젝트 ID {}: PDF 데이터 생성 시작...", projectId);
             byte[] pdfBytes = page.pdf(pdfOptions);
-            log.info("PDF 데이터 생성 완료. PDF 크기: {} bytes", pdfBytes.length); // 이 로그는 이전에도 나왔었습니다.
+            log.info("프로젝트 ID {}: PDF 데이터 생성 완료. PDF 크기: {} bytes", projectId, pdfBytes.length);
 
             browser.close();
-            log.debug("Playwright 브라우저 종료.");
+            log.debug("프로젝트 ID {}: Playwright 브라우저 종료.", projectId);
             return pdfBytes;
 
         } catch (PlaywrightException e) {
-            log.error("Playwright를 사용하여 PDF 생성 중 오류가 발생했습니다 (PlaywrightException): {}", e.getMessage(), e);
+            log.error("프로젝트 ID {}: Playwright를 사용하여 PDF 생성 중 오류가 발생했습니다 (PlaywrightException): {}", projectId, e.getMessage(), e);
             throw e;
         } catch (IllegalArgumentException e) {
-            log.error("잘못된 인자로 PDF 생성 시도 (IllegalArgumentException): {}", e.getMessage(), e);
+            log.error("프로젝트 ID {}: 잘못된 인자로 PDF 생성 시도 (IllegalArgumentException): {}", projectId, e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            log.error("PDF 생성 중 알 수 없는 오류 발생 (Exception): {}", e.getMessage(), e);
-            throw new PlaywrightException("Unknown error during PDF generation: " + e.getMessage(), e);
+            log.error("프로젝트 ID {}: PDF 생성 중 알 수 없는 오류 발생 (Exception): {}", projectId, e.getMessage(), e);
+            throw new PlaywrightException("Unknown error during PDF generation for project " + projectId + ": " + e.getMessage(), e);
         }
     }
 }

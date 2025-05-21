@@ -57,7 +57,7 @@ public class ReportController {
             @RequestBody PdfReportRequest request
     ) {
         try {
-            byte[] pdfBytes = reportService.generatePdfFromHtml(request.getHtmlContent());
+            byte[] pdfBytes = reportService.generatePdfFromHtml(request.getHtmlContent(), projectId);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF); // 응답 타입을 PDF로 설정
