@@ -1,7 +1,7 @@
 # Playwright v1.51.0 Java 이미지를 베이스로 사용 (Ubuntu 22.04 Jammy 기반)
 # 이 이미지는 OpenJDK, Playwright 브라우저들, 모든 시스템 의존성을 포함합니다.
 # Spring Boot 프로젝트의 Playwright Java 라이브러리 버전도 1.51.0으로 맞춰주세요.
-FROM https://www.google.com/search?q=mcr.microsoft.com/playwright/java:v1.51.0-jammy
+FROM mcr.microsoft.com/playwright/java:v1.51.0-jammy
 
 # (선택 사항) 애플리케이션 작업 디렉토리 설정
 WORKDIR /app
