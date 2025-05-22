@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.3'
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group = 'com.ssafy.lab.eddy1219'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot 스타터
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // 개발 도구
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // 테스트 의존성
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// 왜인지 dockerfile에서 jar를 찾지 못해서 추가함 (jar가 2개 생김..)
+bootJar {
+    archiveFileName = 'log-server.jar' // 생성될 fat JAR 파일의 이름을 'log-server.jar'로 고정합니다.
+}
+
+jar {
+    enabled = false // 기본 'jar' 태스크를 비활성화하여 '-plain.jar' 파일이 생성되지 않도록 합니다.
+}

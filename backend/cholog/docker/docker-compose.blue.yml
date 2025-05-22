@@ -1,0 +1,20 @@
+version: '3'
+services:
+  backend:
+    # 현재 디렉토리에서의 Dockerfile을 사용하여 Docker 이미지를 빌드
+    build: .
+    # 호스트의 8111 포트와 컨테이너의 8080 포트를 매핑
+    ports:
+      - "8111:8080"
+    # 컨테이너의 이름
+    container_name: spring-cholog-blue
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - servernetwork
+
+networks:
+  servernetwork:
+    external: true
+    driver: bridge

@@ -1,0 +1,17 @@
+version: '3'
+services:
+  backend:
+    build: .
+    ports:
+      - "8112:8080"
+    container_name: spring-cholog-green
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - servernetwork
+
+networks:
+  servernetwork:
+    external: true
+    driver: bridge
