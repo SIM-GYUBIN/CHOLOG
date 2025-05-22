@@ -163,7 +163,7 @@ const LogPage = () => {
   const renderJsonObject = (obj: any) => {
     if (!obj) return null;
     return (
-      <pre className="text-[12px] bg-slate-100 p-2 rounded overflow-x-auto">
+      <pre className="text-[12px] bg-[var(--sub)] p-2 rounded overflow-x-auto">
         {JSON.stringify(obj, null, 2)}
       </pre>
     );
