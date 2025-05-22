@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -214,9 +215,11 @@ public class WebhookPollingService {
                 );
 
                 if (logDoc.getTimestampOriginal() != null) {
+                    ZoneId seoulZoneId = ZoneId.of("Asia/Seoul");
+                    LocalDateTime kstHitTimestamp = LocalDateTime.ofInstant(logDoc.getTimestampOriginal(), seoulZoneId);
                     LocalDateTime hitTimestamp = LocalDateTime.ofInstant(logDoc.getTimestampOriginal(), ZoneOffset.UTC);
                     if (latestLogTimestampForUpdate == null || hitTimestamp.isAfter(latestLogTimestampForUpdate)) {
-                        latestLogTimestampForUpdate = hitTimestamp;
+                        latestLogTimestampForUpdate = kstHitTimestamp;
                     }
                 }
             }
