@@ -89,7 +89,7 @@ public class MattermostService {
         StringBuilder mainTextBuilder = new StringBuilder();
         mainTextBuilder.append(String.format("### 🚨 **로그 발생 - %s**\n\n", ruleName));
         mainTextBuilder.append(String.format("⏰ **시간**: %s\n", timestampStr));
-        mainTextBuilder.append(String.format("📜 **메시지**: %s\n", message));
+        mainTextBuilder.append(String.format("📜 **메시지**:\n```\n%s\n```\n", message));
         mainTextBuilder.append(String.format("**환경**: %s", appEnv));
 
         if (matchedKeywords != null && !matchedKeywords.isEmpty()) {
