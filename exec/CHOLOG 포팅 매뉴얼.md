@@ -40,7 +40,47 @@
 
 ### 1.1.3 배포 시 특이사항
 
--
+- nginx 설정
+
+> pdf 생성 시 playwright가 asset에 접근하기 위해 CORS 설정을 해줘야 합니다.
+> 
+
+nginx/default.conf
+
+```bash
+server {
+    listen 443 ssl;
+    server_name {YOUR_SERVER_NAME};
+
+    ssl_certificate {}
+    ssl_certificate_key {}
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    root {YOUR_ROOT_DIRECTORY};
+
+    # /assets 경로에 대한 CORS 설정 추가 (CSS, JS, 폰트, 이미지 등 정적 에셋)
+    location /assets {
+        # --- CORS 헤더 추가 ---
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, HEAD, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Range' always;
+
+        # OPTIONS 메서드 (preflight 요청) 처리
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, HEAD, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Range';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+        # --- CORS 헤더 추가 끝 ---
+
+        add_header Cache-Control "public, max-age=31536000, immutable";
+
+        try_files $uri =404;
+    }
+```
 
 ### 1.1.4 주요 설정 파일 목록
 
