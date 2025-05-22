@@ -1,0 +1,118 @@
+// 적용할 플러그인 목록 정의
+plugins {
+    // Java 라이브러리 빌드를 위한 기본 기능 제공 (API/구현 분리 등)
+    id 'java-library'
+    // Maven 저장소로 라이브러리를 배포(publish)하기 위한 플러그인
+    id 'maven-publish'
+    // Spring Boot 애플리케이션 개발 및 의존성 관리를 위한 플러그인
+    // 참고: 라이브러리 프로젝트이지만, Spring Boot 자동 설정(AutoConfiguration) 및
+    // 의존성 관리를 위해 사용합니다.
+    id 'org.springframework.boot' version '3.4.3' // Spring Boot 버전 명시 (최신 안정 버전 또는 프로젝트 요구사항에 맞게)
+    // Spring Boot의 의존성 관리(BOM - Bill of Materials)를 적용하기 위한 플러그인
+    id 'io.spring.dependency-management' version '1.1.5' // 의존성 관리 플러그인 버전
+}
+
+group = 'com.ssafy.lab.s12-final'
+version = '1.0.9'
+
+// Java 버전 설정
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // --- Spring Boot 관련 의존성 ---
+    // Spring Boot 핵심 기능 (AutoConfiguration, Logging 등) 제공
+    implementation 'org.springframework.boot:spring-boot-starter'
+    // Spring Web 기능 (MVC, 내장 Tomcat/Jetty 등) 제공
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // --- HTTP 클라이언트 ---
+    // LogSenderService에서 로그 전송 시 HTTP(S) 통신을 위해 사용
+    implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+
+    // --- 로깅 프레임워크 ---
+    // Logback 구현체 (CentralLogAppender가 의존)
+    implementation 'ch.qos.logback:logback-classic'
+
+    // --- Jakarta EE / Java EE 관련 ---
+    // @PostConstruct, @PreDestroy 등 표준 어노테이션 사용 위해 필요 (Spring Boot 3.x / Jakarta EE 9+ 환경)
+    implementation 'jakarta.annotation:jakarta.annotation-api'
+
+    // --- 설정 처리 ---
+    // @ConfigurationProperties 사용 시 메타데이터 자동 생성을 위해 필요
+    // 라이브러리 사용자에게 설정 자동완성 기능 제공 (컴파일 시점에만 필요)
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    // --- 테스트 관련 의존성 ---
+    // JUnit 5, Mockito, Spring Test 등 테스트 프레임워크 포함
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+// 프로젝트를 Spring Boot 실행 가능 JAR로 빌드하지 않음
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+    archiveClassifier.set('')
+}
+
+// Javadoc과 소스 JAR 생성
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+// JitPack 배포를 위한 Maven 게시 설정
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            // POM 메타데이터 추가
+            pom {
+                name = 'CHO:LOG Central Logging Library' // 라이브러리 이름
+                description = 'A Spring Boot auto-configured library for sending enriched logs to a central CHO:LOG server' // 라이브러리 설명
+                url = 'https://lab.ssafy.com/s12-final/S12P31B207'
+
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'eddy1219'
+                        name = 'Daehyun'
+                        email = 'eddy152264@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+// JitPack 빌드 시 UTF-8 인코딩 보장
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+// Javadoc에 대한 인코딩 설정
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+}
+
+// JUnit 테스트 사용
+test {
+    useJUnitPlatform()
+}

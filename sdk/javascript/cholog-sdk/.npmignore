@@ -1,0 +1,15 @@
+src/
+
+node_modules/
+
+*.tsbuildinfo
+
+.DS_Store
+
+tests/
+__tests__/
+
+tsconfig.json
+webpack.config.js 
+.gitignore
+README.md
