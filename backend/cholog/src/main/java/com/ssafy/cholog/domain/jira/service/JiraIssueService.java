@@ -71,19 +71,19 @@ public class JiraIssueService {
         String jiraInstanceUrl = jiraProject.getInstanceUrl();
         String jiraProjectKey = jiraProject.getProjectKey();
 
-        // Jira API 요청 본문(payload) 생성 (Lombok 빌더 활용)
+        // Jira API 요청 본문 생성
         JiraIssueFieldsPayload.JiraIssueFieldsPayloadBuilder fieldsBuilder = JiraIssueFieldsPayload.builder()
                 .project(JiraIssueIdentifierPayload.builder().key(jiraProjectKey).build())
                 .summary(request.getSummary())
                 .issuetype(JiraIssueIdentifierPayload.builder().name(request.getIssueType()).build());
 
         if (request.getDescription() != null && !request.getDescription().isBlank()) {
-            fieldsBuilder.description(request.getDescription()); // ADF 사용 시 객체로 설정
+            fieldsBuilder.description(request.getDescription());
         }
 
         // 보고자(Reporter) 설정
         String reporterAccountIdToUse = null;
-        if (request.getReporterName() != null && !request.getReporterName().isBlank()) { // 이메일로 조회 시도
+        if (request.getReporterName() != null && !request.getReporterName().isBlank()) {
             reporterAccountIdToUse = fetchAccountIdByReporterIdentifier(jiraInstanceUrl, request.getReporterName(), jiraApiUsername, jiraToken);
             if (reporterAccountIdToUse == null) {
                 log.warn("Could not fetch accountId for reporterName: {}. Falling back or issue creation might fail.", request.getReporterName());
@@ -93,17 +93,29 @@ public class JiraIssueService {
         if (reporterAccountIdToUse != null) {
             fieldsBuilder.reporter(JiraIssueIdentifierPayload.builder().accountId(reporterAccountIdToUse).build());
         } else if (jiraApiUsername != null && !jiraApiUsername.isBlank()) {
-            // API 호출자 본인을 보고자로 지정 (이 경우에도 API 호출자의 accountId를 미리 저장해두고 사용하는 것이 최선)
-            fieldsBuilder.reporter(JiraIssueIdentifierPayload.builder().name(jiraApiUsername).build()); // 이메일로 시도
-            log.info("Setting reporter to API user by name/email: {}", jiraApiUsername);
-            // }
+            fieldsBuilder.reporter(JiraIssueIdentifierPayload.builder().name(jiraApiUsername).build());
         } else {
             log.error("Reporter could not be determined. Issue creation will likely fail if reporter is required.");
         }
 
         // 담당자(Assignee) 설정
+        String assigneeAccountIdToUse = null;
         if (request.getAssigneeName() != null && !request.getAssigneeName().isBlank()) {
-            fieldsBuilder.assignee(JiraIssueIdentifierPayload.builder().name(request.getAssigneeName()).build());
+            assigneeAccountIdToUse = fetchAccountIdByReporterIdentifier(
+                    jiraInstanceUrl,
+                    request.getAssigneeName(),
+                    jiraApiUsername,
+                    jiraToken
+            );
+            if (assigneeAccountIdToUse == null) {
+                log.warn("Could not fetch accountId for assignee identifier: {}. Assignee will not be set by this identifier.", request.getAssigneeName());
+            }
+        }
+
+        if (assigneeAccountIdToUse != null) {
+            fieldsBuilder.assignee(JiraIssueIdentifierPayload.builder().accountId(assigneeAccountIdToUse).build());
+        } else {
+            log.info("No valid assignee accountId could be determined. Issue will follow Jira's default assignment rules or remain unassigned if allowed.");
         }
 
         JiraIssueFieldsPayload fieldsPayload = fieldsBuilder.build();
@@ -137,8 +149,6 @@ public class JiraIssueService {
         String jiraApiEndpoint = jiraInstanceUrl.endsWith("/") ? jiraInstanceUrl : jiraInstanceUrl + "/";
         jiraApiEndpoint += "rest/api/2/issue";
 
-        log.info("Sending JIRA Issue Creation Request to: {}", jiraApiEndpoint);
-
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(jiraApiEndpoint, entity, String.class);
 
@@ -158,7 +168,6 @@ public class JiraIssueService {
                 } catch (JsonProcessingException e) {
                     log.error("Failed to parse Jira issue creation response: {}", responseBody, e);
                     // 이슈는 생성되었지만, 응답 파싱에 실패한 경우.
-                    // 이 경우 어떻게 처리할지 정책이 필요합니다. (예: 기본 응답 반환 또는 에러)
                     // 여기서는 에러를 던져서 트랜잭션 롤백 등을 유도 (만약 DB 변경이 있었다면)
                     throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "Jira 이슈는 생성되었으나 응답을 파싱하는데 실패했습니다.");
                 }
@@ -199,7 +208,6 @@ public class JiraIssueService {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         try {
-            log.info("Fetching accountId for reporter identifier: {}", reporterIdentifier);
             ResponseEntity<String> response = restTemplate.exchange(userSearchUrl, HttpMethod.GET, entity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -208,7 +216,6 @@ public class JiraIssueService {
                     JsonNode firstUser = usersNode.get(0);
                     if (firstUser.has("accountId")) {
                         String accountId = firstUser.get("accountId").asText();
-                        log.info("Found accountId: {} for identifier: {}", accountId, reporterIdentifier);
                         return accountId;
                     }
                 } else {
@@ -237,7 +244,6 @@ public class JiraIssueService {
         }
         try {
             JsonNode rootNode = objectMapper.readTree(responseBody);
-            // Jira Cloud 에러 형식 중 하나
             if (rootNode.has("errorMessages")) {
                 JsonNode errorMessages = rootNode.get("errorMessages");
                 if (errorMessages.isArray() && !errorMessages.isEmpty()) {

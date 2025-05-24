@@ -50,7 +50,7 @@ public class ReportController {
     @PostMapping(value = "/{projectId}/pdf", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "로그 리포트 PDF 다운로드", description = "제공된 HTML 콘텐츠를 기반으로 로그 리포트 PDF를 생성하여 다운로드합니다.")
     @PreAuthorize("isAuthenticated()")
-    @ApiErrorCodeExamples({ErrorCode.PROJECT_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR}) // 예시 에러 코드, 필요시 PDF 관련 에러 추가
+    @ApiErrorCodeExamples({ErrorCode.PROJECT_NOT_FOUND, ErrorCode.INTERNAL_SERVER_ERROR})
     public ResponseEntity<byte[]> downloadReportAsPdf(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @PathVariable Integer projectId,

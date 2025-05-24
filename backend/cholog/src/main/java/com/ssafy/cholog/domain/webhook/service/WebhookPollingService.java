@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,8 +79,6 @@ public class WebhookPollingService {
     }
 
     protected void processSingleWebhook(Webhook webhookSetting, LocalDateTime currentPollExecutionTime) {
-        log.debug("Processing webhook ID: {}", webhookSetting.getId());
-
         LocalDateTime queryStartTime;
         if (webhookSetting.getLastCheckedTimestamp() == null) {
             queryStartTime = currentPollExecutionTime.minusMinutes(initialLookbackMinutes);
@@ -139,12 +138,11 @@ public class WebhookPollingService {
         boolQueryBuilder.filter(QueryBuilders.range(r -> r.field("@timestamp").gt(JsonData.of(queryStartTimeMillis))));
 
         String envTagToFilter = webhookSetting.getNotificationENV();
-        if (StringUtils.hasText(envTagToFilter) && !"ALL".equalsIgnoreCase(envTagToFilter)) { // "ALL" (대소문자 무관)이면 환경 필터링 안함
+        if (StringUtils.hasText(envTagToFilter)) {
             boolQueryBuilder.must(QueryBuilders.match(m -> m.field("environment").query(envTagToFilter)));
             log.debug("Applying 'environment' filter for webhook ID {}: {}", webhookSetting.getId(), envTagToFilter);
         }
 
-        // 동적으로 검색할 인덱스 이름 (또는 패턴) 결정
         String indexName = "pjt-*-" + project.getProjectToken();
 
         org.springframework.data.elasticsearch.core.query.Query searchQuery = NativeQuery.builder()
@@ -158,8 +156,8 @@ public class WebhookPollingService {
                 LogDocument.class,
                 IndexCoordinates.of(indexName)
         );
-        log.debug("Found {} logs for webhook ID {} from index/pattern '{}'",
-                searchHits.getTotalHits(), webhookSetting.getId(), indexName);
+//        log.debug("Found {} logs for webhook ID {} from index/pattern '{}'",
+//                searchHits.getTotalHits(), webhookSetting.getId(), indexName);
 
         LocalDateTime latestLogTimestampForUpdate = null;
 
@@ -214,9 +212,11 @@ public class WebhookPollingService {
                 );
 
                 if (logDoc.getTimestampOriginal() != null) {
+                    ZoneId seoulZoneId = ZoneId.of("Asia/Seoul");
+                    LocalDateTime kstHitTimestamp = LocalDateTime.ofInstant(logDoc.getTimestampOriginal(), seoulZoneId);
                     LocalDateTime hitTimestamp = LocalDateTime.ofInstant(logDoc.getTimestampOriginal(), ZoneOffset.UTC);
                     if (latestLogTimestampForUpdate == null || hitTimestamp.isAfter(latestLogTimestampForUpdate)) {
-                        latestLogTimestampForUpdate = hitTimestamp;
+                        latestLogTimestampForUpdate = kstHitTimestamp;
                     }
                 }
             }
@@ -224,11 +224,8 @@ public class WebhookPollingService {
 
         if (latestLogTimestampForUpdate != null) {
             webhookSetting.updateLastCheckedTimestamp(latestLogTimestampForUpdate);
-            log.debug("Updating lastCheckedTimestamp to {} for webhook ID {}", latestLogTimestampForUpdate, webhookSetting.getId());
         } else {
             webhookSetting.updateLastCheckedTimestamp(currentPollExecutionTime);
-            log.debug("No new logs found for webhook ID {}. Updating lastCheckedTimestamp to current poll time {}.",
-                    webhookSetting.getId(), currentPollExecutionTime);
         }
     }
 }

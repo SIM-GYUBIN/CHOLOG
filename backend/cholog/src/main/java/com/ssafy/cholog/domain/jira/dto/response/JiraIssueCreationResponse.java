@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class JiraIssueCreationResponse {
     private String issueKey;
-    private String issueUrl; // 사용자가 Jira에서 이슈를 바로 볼 수 있는 URL
+    private String issueUrl;
 }
