@@ -162,8 +162,8 @@ public class MattermostService {
             ResponseEntity<String> response = restTemplate.postForEntity(userWebhookUrl, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful() && "ok".equalsIgnoreCase(response.getBody())) {
-                log.info("Successfully sent rich Mattermost notification for log via setting ID {}.",
-                        setting.getId());
+//                log.info("Successfully sent rich Mattermost notification for log via setting ID {}.",
+//                        setting.getId());
             } else {
                 log.warn("Rich Mattermost notification sent for log, but received status: {} - Body: {}",
                         response.getStatusCode(), response.getBody());
