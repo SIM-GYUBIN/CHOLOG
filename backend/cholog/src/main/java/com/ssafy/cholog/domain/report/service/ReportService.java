@@ -560,12 +560,12 @@ public class ReportService {
 
             // 4. 실제 콘텐츠가 렌더링될 때까지 대기 (CSS 선택자 사용)
             //    ReportPage.tsx에서 실제 리포트 내용을 감싸는 div에 id="actual-report-content"를 추가했다고 가정합니다.
-            String reportContentSelector = "#actual-report-content"; // 실제 사용하는 ID로 변경!
+            String reportContentSelector = "#actual-report-content";
             try {
                 log.debug("프로젝트 ID {}: '{}' 선택자가 나타날 때까지 대기 시작 (최대 15초)...", projectId, reportContentSelector);
-                page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(2500));
+                page.waitForSelector(reportContentSelector, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(5000));
             } catch (TimeoutError e) {
-                log.warn("프로젝트 ID {}: '{}' 선택자 대기 시간(15초) 초과. 페이지 주요 콘텐츠가 렌더링되지 않았을 수 있습니다.", projectId, reportContentSelector);
+                log.warn("프로젝트 ID {}: '{}' 선택자 대기 시간(5초) 초과. 페이지 주요 콘텐츠가 렌더링되지 않았을 수 있습니다.", projectId, reportContentSelector);
             }
 
 
@@ -573,7 +573,7 @@ public class ReportService {
                 log.debug("프로젝트 ID {}: 웹 폰트 로딩 대기 시작 (document.fonts.ready)...", projectId);
                 page.waitForFunction("() => document.fonts.ready.then(() => true)", null, new Page.WaitForFunctionOptions().setTimeout(2500));
             } catch (TimeoutError e) {
-                log.warn("프로젝트 ID {}: 폰트 로딩 대기 시간(15초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.", projectId);
+                log.warn("프로젝트 ID {}: 폰트 로딩 대기 시간(2초) 초과. 일부 폰트가 제대로 로드되지 않았을 수 있습니다.", projectId);
             }
 
             String screenshotFilename = "pdf_debug_screenshot_project_" + projectId + "_" + System.currentTimeMillis() + ".png";
