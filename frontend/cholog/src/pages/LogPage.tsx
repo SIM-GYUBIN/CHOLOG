@@ -514,10 +514,7 @@ const LogPage = () => {
 
                 {logDetail.event.properties &&
                   Object.keys(logDetail.event.properties).length > 0 && (
-                    <motion.div
-                      variants={itemVariants}
-                      className="bg-[var(--bg)] text-[var(--text)]"
-                    >
+                    <motion.div variants={itemVariants} className="mt-2">
                       <div className="font-bold mb-2">Properties:</div>
                       {renderJsonObject(logDetail.event.properties)}
                     </motion.div>
