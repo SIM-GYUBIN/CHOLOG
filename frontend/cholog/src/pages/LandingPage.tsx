@@ -32,13 +32,13 @@ function AppContent() {
       {/* Section 1: Hero */}
       <FullpageScroll.Section className="bg-white text-black flex flex-col items-center justify-center px-6">
         <h1 className="text-[5rem] md:text-[7rem] font-extrabold leading-tight text-center tracking-tighter">
-          <span className="text-[#5EA500]">초</span>보자를 위한
+          <span className="text-[#5EA500]">초-</span>간단
           <br />
           <span className="text-[#5EA500]">로그</span>관리 서비스
         </h1>
         <p className="mt-6 text-xl text-gray-600 max-w-xl text-center">
-          <span className="text-[#5EA500] font-semibold">CHO:LOG</span>을 로그
-          관리가 막막한 초보 개발자에게
+          <span className="text-[#5EA500] font-semibold">CHO:LOG</span>은 로그
+          관리가 막막한 개발자에게
           <br /> 가장 쉽고 똑똑한 로그 관리 방법을 제공합니다.
         </p>
       </FullpageScroll.Section>
@@ -47,7 +47,7 @@ function AppContent() {
       {/* Section 2: 프론트에서도 CHO:LOG를! */}
       <FullpageScroll.Section className="bg-[#F4FCE3] text-black flex flex-col items-center justify-center px-6 py-20">
         <h2 className="text-[2.5rem] md:text-[3rem] font-bold mb-6 text-[#5EA500] text-center">
-          ☘️ 프론트에서도 CHO:LOG를!
+          ☘️ 프론트에서도 CHO:LOG을!
         </h2>
         <p className="text-lg text-gray-700 text-center mb-10 max-w-2xl">
           프론트엔드에서도 단 1줄 설치로
@@ -70,7 +70,7 @@ function AppContent() {
             ✅ main.tsx에 초기화 코드 추가
           </h3>
           <CopyableCode
-              code={`import Cholog from "cholog-sdk";
+            code={`import Cholog from "cholog-sdk";
 
 Cholog.init({
   apiKey: "YOUR_API_KEY",
@@ -81,7 +81,8 @@ Cholog.init({
             ※ 개발 환경에서는 <code>environment: "dev"</code>로 설정해도 됩니다.
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            ※ <code>api-key</code>는 프로젝트 고유 키입니다. 프로젝트를 생성하고 키를 발급받으세요!
+            ※ <code>api-key</code>는 프로젝트 고유 키입니다. 프로젝트를 생성하고
+            키를 발급받으세요!
           </p>
         </div>
       </FullpageScroll.Section>
@@ -89,10 +90,10 @@ Cholog.init({
       {/* Section 3: 백엔드 설치 */}
       <FullpageScroll.Section className="bg-[#ECFBD9] text-black flex flex-col items-center justify-center px-6 py-20">
         <h2 className="text-[2.5rem] md:text-[3rem] font-bold mb-6 text-[#5EA500] text-center">
-          ☘️ 백엔드에서도 CHO:LOG를!
+          ☘️ 백엔드에서도 CHO:LOG을!
         </h2>
         <p className="text-lg text-gray-700 text-center mb-10 max-w-2xl">
-          Gradle 의존성 추가와 간단한 YML 설정만으로 <br />
+          Spring Boot 의존성 추가와 간단한 YML 설정만으로 <br />
           백엔드 에러 로그도 자동으로 수집할 수 있어요.
         </p>
 
@@ -125,7 +126,8 @@ dependencies {
     cors-enabled: true`}
           />
           <p className="text-sm text-gray-500 mt-2">
-            ※ <code>api-key</code>는 프로젝트 고유 키입니다. 프로젝트를 생성하고 키를 발급받으세요!
+            ※ <code>api-key</code>는 프로젝트 고유 키입니다. 프로젝트를 생성하고
+            키를 발급받으세요!
           </p>
         </div>
       </FullpageScroll.Section>
@@ -183,7 +185,7 @@ dependencies {
         <p className="text-lg mb-6 max-w-xl">
           로그, 아직도 콘솔에서 보고 있나요?
           <br />
-          CHO:LOG는 <strong className="text-white">직관적 대시보드</strong>로
+          CHO:LOG은 <strong className="text-white">직관적 대시보드</strong>로
           로그를 쉽게 보여줍니다.
         </p>
         <button

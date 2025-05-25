@@ -22,8 +22,15 @@ const PrivateRoute = ({ children }: Props) => {
   }, [dispatch, isAuthChecked]);
 
   if (!isAuthChecked) {
-    // 아직 로그인 여부 확인 중
-    return <div>Loading...</div>; // 또는 로딩 스피너
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-lime-500 mx-auto mb-4"></div>
+          <h2 className="text-lg font-semibold text-[var(--text)] mb-2">로딩중...</h2>
+          <p className="text-sm text-gray-500">잠시만 기다려주세요</p>
+        </div>
+      </div>
+    );
   }
 
   if (!isLoggedIn) {
