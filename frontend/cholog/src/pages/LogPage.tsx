@@ -502,12 +502,11 @@ const LogPage = () => {
                     </motion.div>
                   )}
                   {logDetail.event.targetSelector && (
-                    <motion.div
-                      variants={itemVariants}
-                      className="bg-[var(--bg)] text-[var(--text)]"
-                    >
+                    <motion.div variants={itemVariants}>
                       <span className="font-bold">Target: </span>
-                      {logDetail.event.targetSelector}
+                      <span className="break-all">
+                        {logDetail.event.targetSelector}
+                      </span>
                     </motion.div>
                   )}
                 </div>
