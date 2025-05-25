@@ -642,7 +642,7 @@ const LogPage = () => {
                         initial={{ height: 0 }}
                         animate={{ height: "3rem" }}
                         transition={{ duration: 0.5, delay: index * 0.1 }}
-                        className="absolute h-12 md:h-14 w-[2px] bg-lime-500"
+                        className="absolute h-12 md:h-14 w-[2px] bg-[var(--helpertext)]"
                         style={{ left: "50%", zIndex: -1, top: "50%" }}
                       ></motion.div>
                     )}

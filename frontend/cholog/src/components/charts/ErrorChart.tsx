@@ -115,8 +115,8 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({
           >
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#84CC16" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#84CC16" stopOpacity={0.05} />
+                <stop offset="5%" stopColor="#4B5563" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#4B5563" stopOpacity={0.05} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -157,13 +157,13 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({
             <Area
               type="monotone"
               dataKey="count"
-              stroke="#84CC16"
+              stroke="#4B5563"
               strokeWidth={2}
               fill="url(#colorCount)"
               dot={false}
               activeDot={{
                 r: 4,
-                stroke: "#84CC16",
+                stroke: "#4B5563",
                 strokeWidth: 2,
                 fill: "white"
               }}
