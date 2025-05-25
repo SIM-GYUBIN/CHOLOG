@@ -1,6 +1,7 @@
 package com.ssafy.cholog.domain.project.entity;
 
 import com.ssafy.cholog.domain.jira.entity.JiraProject;
+import com.ssafy.cholog.domain.log.entity.LogArchive;
 import com.ssafy.cholog.domain.webhook.entity.Webhook;
 import com.ssafy.cholog.global.common.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -36,6 +37,10 @@ public class Project extends BaseEntity {
 
     @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Webhook webhook;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<LogArchive> logArchives = new ArrayList<>();
 
     public void updateProjectToken(String token){
         this.projectToken = token;
