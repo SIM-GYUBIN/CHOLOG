@@ -36,8 +36,8 @@ const ErrorCountChart: React.FC<ErrorChartProps> = ({
       dispatch(
         fetchErrorTimeline({
           projectId,
-          startDate: startDate || yesterday.toISOString().split("T")[0],
-          endDate: endDate || today.toISOString().split("T")[0],
+          // startDate: startDate || yesterday.toISOString().split("T")[0],
+          // endDate: endDate || today.toISOString().split("T")[0],
         })
       );
     }
