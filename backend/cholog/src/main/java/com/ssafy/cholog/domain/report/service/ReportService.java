@@ -7,7 +7,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.util.NamedValue;
 import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.Margin;
 import com.microsoft.playwright.options.Media;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.microsoft.playwright.options.WaitUntilState;
@@ -106,8 +105,17 @@ public class ReportService {
                 .lt(JsonData.of(endDateTimeUtc.toInstant().toEpochMilli()))
         );
 
+        // 메시지 필드 존재 여부 확인 쿼리 (LogService 참고)
+        Query messageExistsQuery = QueryBuilders.exists(e -> e.field("message"));
+
+        // 두 쿼리를 Bool 쿼리로 결합 (두 조건 모두 만족해야 함)
+        Query finalQuery = QueryBuilders.bool(b -> b
+                .must(timeRangeQuery)
+                .must(messageExistsQuery)
+        );
+
         nativeQueryBuilder
-                .withQuery(timeRangeQuery)
+                .withQuery(finalQuery)
                 .withMaxResults(0)
                 .withTrackTotalHits(true);
 
