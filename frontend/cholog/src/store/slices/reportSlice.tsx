@@ -245,11 +245,6 @@ const reportSlice = createSlice({
       })
       .addCase(downloadPdfReport.fulfilled, (state, action) => {
         state.isGeneratingPdf = false;
-        console.log(
-          action.payload.message,
-          "다운로드 파일명:",
-          action.payload.filename
-        );
         // 필요시 여기에 성공 알림(toast 등) 로직 추가
       })
       .addCase(downloadPdfReport.rejected, (state, action) => {

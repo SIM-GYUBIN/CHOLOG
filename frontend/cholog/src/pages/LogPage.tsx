@@ -164,7 +164,7 @@ const LogPage = () => {
   const renderJsonObject = (obj: any) => {
     if (!obj) return null;
     return (
-      <pre className="text-[12px] bg-slate-100 p-2 rounded overflow-x-auto">
+      <pre className="text-[12px] bg-[var(--sub)] p-2 rounded overflow-x-auto">
         {JSON.stringify(obj, null, 2)}
       </pre>
     );
@@ -502,22 +502,18 @@ const LogPage = () => {
                     </motion.div>
                   )}
                   {logDetail.event.targetSelector && (
-                    <motion.div
-                      variants={itemVariants}
-                      className="bg-[var(--bg)] text-[var(--text)]"
-                    >
+                    <motion.div variants={itemVariants}>
                       <span className="font-bold">Target: </span>
-                      {logDetail.event.targetSelector}
+                      <span className="break-all">
+                        {logDetail.event.targetSelector}
+                      </span>
                     </motion.div>
                   )}
                 </div>
 
                 {logDetail.event.properties &&
                   Object.keys(logDetail.event.properties).length > 0 && (
-                    <motion.div
-                      variants={itemVariants}
-                      className="bg-[var(--bg)] text-[var(--text)]"
-                    >
+                    <motion.div variants={itemVariants} className="mt-2">
                       <div className="font-bold mb-2">Properties:</div>
                       {renderJsonObject(logDetail.event.properties)}
                     </motion.div>

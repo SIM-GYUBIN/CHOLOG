@@ -97,9 +97,9 @@ const ProjectPage = () => {
           <div className="text-[20px] sm:text-[24px] text-slate-500">
             {currentProject?.name || "프로젝트를 찾을 수 없습니다"}
           </div>
-          <div className="text-[16px] sm:text-[20px] text-slate-300">
+          {/* <div className="text-[16px] sm:text-[20px] text-slate-300">
             {currentProject?.projectToken}
-          </div>
+          </div> */}
           <div
             className="rounded-sm p-1 cursor-pointer hover:bg-gray-200"
             onClick={() =>
